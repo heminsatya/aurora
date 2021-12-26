@@ -77,13 +77,13 @@ $ venv\scripts\activate
 
 ## Next Steps
 
-Documentation: [Aurora Docs](https://github.com/heminsatya/aurora/docs/)
+Documentation: [Aurora Docs](https://github.com/heminsatya/aurora/tree/main/docs)
 
-Changelog: [Aurora Changes](https://github.com/heminsatya/aurora/changes/)
+Changelog: [Aurora Changes](https://github.com/heminsatya/aurora/tree/main/changes)
 
-Issues: [Aurora Bug Tracker](https://github.com/heminsatya/aurora/issues/)
+Issues: [Aurora Bug Tracker](https://github.com/heminsatya/aurora/issues)
 
-Source: [Aurora GitHub Repo](https://github.com/heminsatya/aurora/)
+Source: [Aurora GitHub Repo](https://github.com/heminsatya/aurora)
 
 PyPI: [Aurora PyPI Page](https://pypi.org/project/aurora-mvc/)
 
