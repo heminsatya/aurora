@@ -14,5 +14,5 @@ Error = Template().render_error
 
 
 # Descriptions
-__version__ = '0.5.1'
+__version__ = '0.5.2'
 __author__ = 'Hemin Satya <https://github.com/heminsatya>'
