@@ -1243,7 +1243,7 @@ class CLI:
                 # Create the initial migration
                 print('Creating the initial migration...')
 
-                date = datetime.now().strftime("%Y-%m-%d")
+                date = datetime.now().strftime("%m-%d-%Y")
                 version = f'1-{date}'
 
                 # Insert the initial migration to database
