@@ -18,7 +18,14 @@ secret_key = getattr(config, "SECRET_KEY")
 # @desc Forms class to handle WTForms CSRF Token
 ##
 class Forms(Form):
-    
+
+    ##
+    # @desc Constructor method
+    ##
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+
     ##
     # @desc WTForms Meta Class
     ##
