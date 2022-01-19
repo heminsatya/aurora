@@ -77,20 +77,20 @@ def redirect_to(app:str, controller:str=None):
         controllers = getattr(module, 'controllers')
 
         # Check controller existence
-        controller_exists = True
-        while controller_exists:
+        controller_exists = False
+        while True:
             i = 0
             for ctrl in controllers:
                 # Controller exists
                 if controller in ctrl:
+                    controller_exists = True
                     break
-                
+
                 i += 1
 
-            controller_exists = False
             break
 
-        if controller_exists:
+        if not controller_exists:
             # Produce error message
             error = f'The "{app}" app doesn\'t have the "{controller}" controller!'
 
@@ -299,20 +299,20 @@ def login_required(app:str, controller:str=None, validate:str='user'):
         controllers = getattr(module, 'controllers')
 
         # Check controller existence
-        controller_exists = True
-        while controller_exists:
+        controller_exists = False
+        while True:
             i = 0
             for ctrl in controllers:
                 # Controller exists
                 if controller in ctrl:
+                    controller_exists = True
                     break
-                
+
                 i += 1
 
-            controller_exists = False
             break
 
-        if controller_exists:
+        if not controller_exists:
             # Produce error message
             error = f'The "{app}" app doesn\'t have the "{controller}" controller!'
 
@@ -382,20 +382,20 @@ def login_abort(app:str, controller:str=None, validate:str='user'):
         controllers = getattr(module, 'controllers')
 
         # Check controller existence
-        controller_exists = True
-        while controller_exists:
+        controller_exists = False
+        while True:
             i = 0
             for ctrl in controllers:
                 # Controller exists
                 if controller in ctrl:
+                    controller_exists = True
                     break
-                
+
                 i += 1
 
-            controller_exists = False
             break
 
-        if controller_exists:
+        if not controller_exists:
             # Produce error message
             error = f'The "{app}" app doesn\'t have the "{controller}" controller!'
 
