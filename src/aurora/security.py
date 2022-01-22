@@ -115,6 +115,17 @@ def redirect_to(app:str, controller:str=None):
 
 
 ##
+# @desc Get session
+# 
+# @param name: str -- *Required session name
+# 
+# @return object
+##
+def get_session(name:str):
+    return session[name]
+
+
+##
 # @desc Set session
 # 
 # @param name: str -- *Required session name
@@ -151,6 +162,17 @@ def check_session(name:str):
 
 
 ##
+# @desc Get cookie
+# 
+# @param name: str -- *Required cookie name
+# 
+# @return object
+##
+def get_cookie(name:str):
+    return request.cookies.get(name)
+
+
+##
 # @desc Set cookie
 # 
 # @param name: str -- *Required cookie name
@@ -160,7 +182,7 @@ def check_session(name:str):
 # 
 # @return object
 ##
-def set_cookie(name:str, value:str, days:int=30, data:dict={}):
+def set_cookie(name:str, value:str, data:dict={}, days:int=30):
     # Check required params
     if not name and not value:
         # Produce error message
@@ -179,16 +201,16 @@ def set_cookie(name:str, value:str, days:int=30, data:dict={}):
     # Check data
     if data:
         if data["type"] == "redirect":
-            res = make_response(redirect(data["next"]))
+            res = make_response(redirect(data["response"]))
 
         elif data["type"] == "render":
-            res = make_response(render_template(data["next"]))
+            res = make_response(render_template(data["response"]))
 
         elif data["type"] == "json":
-            res = make_response(jsonify(data["next"]))
+            res = make_response(jsonify(data["response"]))
 
         elif data["type"] == "text":
-            res = make_response(data["next"])
+            res = make_response(data["response"])
 
     # Create response
     else:
@@ -229,22 +251,22 @@ def unset_cookie(name:str, data:dict={}):
     # Check data
     if data:
         if data["type"] == "redirect":
-            res = make_response(redirect(data["next"]))
+            res = make_response(redirect(data["response"]))
 
         elif data["type"] == "render":
-            res = make_response(render_template(data["next"]))
+            res = make_response(render_template(data["response"]))
 
         elif data["type"] == "json":
-            res = make_response(jsonify(data["next"]))
+            res = make_response(jsonify(data["response"]))
 
         elif data["type"] == "text":
-            res = make_response(data["next"])
+            res = make_response(data["response"])
 
     else:
         res = make_response("Cookie unset successfully!")
 
     # unset cookie
-    res.set_cookie(name, "", expires=0)
+    res.set_cookie(name, '', expires=0)
 
     # Return response
     return res
@@ -337,8 +359,12 @@ def login_required(app:str, controller:str=None, validate:str='user'):
             # Find next URL
             next = request.url.replace(request.url_root, '/')
 
+            # Check cookie
+            if check_cookie(validate):
+                set_session(validate, get_cookie(validate))
+
             # User is not logged-in
-            if not check_session(validate) and not check_cookie(validate):
+            if not check_session(validate):
                 if next:
                     return redirect(f'{url}?next={next}')
                 else:
@@ -417,10 +443,12 @@ def login_abort(app:str, controller:str=None, validate:str='user'):
 
     def wrapper(inner):
         def decorator(*args, **kwargs):
-            # return inner(*args, **kwargs)
+            # Check cookie
+            if check_cookie(validate):
+                set_session(validate, get_cookie(validate))
 
             # User is logged-in
-            if check_session(validate) or check_cookie(validate):
+            if check_session(validate):
                 return redirect(url)
 
             # User is not logged-in
