@@ -10,9 +10,8 @@ except:
     pass
 
 View = Template().render
-Error = Template().render_error
 
 
 # Descriptions
-__version__ = '0.5.9'
+__version__ = '0.6.0'
 __author__ = '<https://github.com/heminsatya>'

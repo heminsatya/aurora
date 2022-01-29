@@ -217,8 +217,9 @@ class Aurora():
                 rule = f'/{apps[app]}/'
                 endpoint = app
             else:
-                rule = f'/{apps[app]}/{controller[1]}/'
-                endpoint = f'{app}-{controller[1]}'
+                url = controller[1].replace('<str:', '<string:')
+                rule = f'/{apps[app]}/{url}/'
+                endpoint = f'{app}-{url}'
 
             # Generate the view function
             view_func = Controller.as_view(endpoint)
@@ -227,7 +228,7 @@ class Aurora():
             # Error pages app
             if app == error_app:
                 # Errors on abort
-                self.app.register_error_handler(int(controller[1]), Controller.err)
+                self.app.register_error_handler(int(controller[1]), view_func)
 
                 # Errors on GET method for developer
                 if self.debug:

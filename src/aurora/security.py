@@ -17,7 +17,7 @@ apps = getattr(apps_module, "apps")
 
 
 ##
-# @desc Redirect to HTTP error pages
+# @desc Redirects to HTTP error pages
 # 
 # @param code: int - HTTP status code
 #
@@ -32,29 +32,29 @@ def abort(code:int=404):
 
 
 ##
-# @desc Redirecty to relative URL
+# @desc Redirects to relative URL
 # 
 # @param url: str
 #
 # @return object
 ##
-def redirect(url:str):
+def redirect(url:str, code:int=302):
     # Dependencies
     from flask import redirect
 
     # Return results
-    return redirect(location=url, code=302)
+    return redirect(location=url, code=code)
 
 
 ##
-# @desc Redirecty to app URL
+# @desc Redirects to app URL
 # 
 # @param app: str - The app name
 # @param controller: str - The app controller name
 #
 # @return object
 ##
-def redirect_to(app:str, controller:str=None):
+def redirect_to(app:str, controller:str=None, code:int=302):
     # Check app name
     if not app in apps:
         # Produce error message
@@ -111,11 +111,28 @@ def redirect_to(app:str, controller:str=None):
         url = f'/{apps[app]}/'
     
     # Return result
-    return redirect(url=url)
+    return redirect(url=url, code=code)
 
 
 ##
-# @desc Get session
+# @desc Checks session for existence
+# 
+# @param name: str -- *Required session name
+# 
+# @return bool
+##
+def check_session(name:str):
+    # Session exists
+    if name in session:
+        return True
+
+    # Session not exists
+    else:
+        return False
+
+
+##
+# @desc Gets session
 # 
 # @param name: str -- *Required session name
 # 
@@ -126,7 +143,7 @@ def get_session(name:str):
 
 
 ##
-# @desc Set session
+# @desc Sets session
 # 
 # @param name: str -- *Required session name
 # @param value: str -- *Required session value
@@ -145,18 +162,18 @@ def unset_session(name:str):
 
 
 ##
-# @desc Check session for existence
+# @desc Checks cookie for existence
 # 
-# @param name: str -- *Required session name
+# @param name: str -- *Required cookie name
 # 
 # @return bool
 ##
-def check_session(name:str):
-    # Session exists
-    if name in session:
+def check_cookie(name:str):
+    # Cookie exists
+    if name in request.cookies:
         return True
 
-    # Session not exists
+    # Cookie not exists
     else:
         return False
 
@@ -173,7 +190,7 @@ def get_cookie(name:str):
 
 
 ##
-# @desc Set cookie
+# @desc Sets cookie
 # 
 # @param name: str -- *Required cookie name
 # @param value: str -- *Required cookie value
@@ -227,7 +244,7 @@ def set_cookie(name:str, value:str, data:dict={}, days:int=30):
 
 
 ##
-# @desc Unset cookie
+# @desc Unsets cookie
 # 
 # @param name: str -- *Required cookie name
 # @param data: dictionary -- Optional data
@@ -273,24 +290,7 @@ def unset_cookie(name:str, data:dict={}):
 
 
 ##
-# @desc Check cookie for existence
-# 
-# @param name: str -- *Required cookie name
-# 
-# @return bool
-##
-def check_cookie(name:str):
-    # Cookie exists
-    if name in request.cookies:
-        return True
-
-    # Cookie not exists
-    else:
-        return False
-
-
-##
-# @desc Redirect not logged-in users
+# @desc Redirects not logged-in users
 #
 # @param url: str -- *Required url for users app
 #
@@ -379,7 +379,7 @@ def login_required(app:str, controller:str=None, validate:str='user'):
 
 
 ##
-# @desc Redirect logged-in users
+# @desc Redirects logged-in users
 #
 # @param url: str -- *Required url for app
 #
