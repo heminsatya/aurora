@@ -228,21 +228,14 @@ class Aurora():
             # Error pages app
             if app == error_app:
                 # Errors on abort
-                self.app.register_error_handler(int(controller[1]), view_func)
+                self.app.register_error_handler(int(controller[1]), Controller.get)
 
-                # Errors on GET method for developer
-                if self.debug:
-                    self.app.add_url_rule(rule=rule, endpoint=endpoint, view_func=view_func, methods=methods)
+            # Root app index controller
+            if app == default_app and controller[1] == '':
+                rule='/'
 
-            # Other apps
-            else:
-
-                # Root app index controller
-                if app == default_app and controller[1] == '':
-                    self.app.add_url_rule(rule='/', endpoint='default-app', view_func=view_func, methods=methods)
-
-                # All apps controllers
-                self.app.add_url_rule(rule=rule, endpoint=endpoint, view_func=view_func, methods=methods)
+            # All apps controllers
+            self.app.add_url_rule(rule=rule, endpoint=endpoint, view_func=view_func, methods=methods)
 
 
     ##
