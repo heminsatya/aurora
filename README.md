@@ -22,7 +22,7 @@ $ pip install aurora-mvc
 
 To get started with Aurora simply do the following steps:
 
-1. Create the project (root app) directory:
+1. Create the root app (project) directory:
 
 ```
 $ mkdir my_app
