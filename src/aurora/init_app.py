@@ -3,6 +3,7 @@
 ################
 import os
 import platform
+import importlib
 from .helpers import dir_empty, copy_file, delete_file, unzip_file
 
 
@@ -46,6 +47,26 @@ def start():
 
         # Remove the zip file
         delete_file(init_file)
+
+        # Check the safe type
+        config = importlib.import_module(f'{app_path + url_div}config')
+        safe_type = getattr(config, 'SAFE_TYPE')
+
+        if safe_type:
+            users_model_bluprint = f'{aurora_path + url_div}blueprints{url_div}users_model_safe.zip'
+        else:
+            users_model_bluprint = f'{aurora_path + url_div}blueprints{url_div}users_model.zip'
+
+        users_model_file = f'{app_path + url_div}models{url_div}users_model.zip'
+
+        # Copy the Users model zip file
+        copy_file(users_model_bluprint, users_model_file)
+
+        # Unzip the file
+        unzip_file(users_model_file, app_path)
+
+        # Remove the zip file
+        delete_file(users_model_file)
 
         # Produce the message
         message = 'The root app initialized successfully!\n'

@@ -107,8 +107,50 @@ class Database:
             except DatabaseError as err:
                 print(err)
 
-        # PostgreSQL
-        elif  self.db_system == 'PostgreSQL':
+        # MySQL
+        elif  self.db_system =='MySQL':
+            # The special character
+            self.sp_char = '%s'
+
+            # The database configurations
+            self.host = getattr(self.config, "DB_CONFIG")['host']
+            self.user = getattr(self.config, "DB_CONFIG")['user']
+            self.password = getattr(self.config, "DB_CONFIG")['password']
+            self.database = getattr(self.config, "DB_CONFIG")['database']
+
+            # Try to create a database Connection
+            try:
+                # Database exists
+                if self._exist_database(database=self.database):
+                    # Create a database connection
+                    self.conn = DatabaseAPI.connect(
+                        host=self.host,
+                        user=self.user,
+                        password=self.password,
+                        database=self.database
+                    )
+
+                # Database not exists
+                else:
+                    # Create a root database connection
+                    self.conn = DatabaseAPI.connect(
+                        host=self.host,
+                        user=self.user,
+                        password=self.password
+                    )
+                
+                # Create the connection cursor
+                self.cur = self.conn.cursor(dictionary=True, buffered=True)
+
+                # For test
+                # print("Database Connection Created!")
+
+            # Catch error
+            except DatabaseError as err:
+                print(err)
+
+        # Postgres
+        elif  self.db_system == 'Postgres':
             # The special character
             self.sp_char = '%s'
 
@@ -152,48 +194,6 @@ class Database:
             # Catch error
             except DatabaseError as err:
             # except NameError as err:
-                print(err)
-
-        # MySQL
-        elif  self.db_system =='MySQL':
-            # The special character
-            self.sp_char = '%s'
-
-            # The database configurations
-            self.host = getattr(self.config, "DB_CONFIG")['host']
-            self.user = getattr(self.config, "DB_CONFIG")['user']
-            self.password = getattr(self.config, "DB_CONFIG")['password']
-            self.database = getattr(self.config, "DB_CONFIG")['database']
-
-            # Try to create a database Connection
-            try:
-                # Database exists
-                if self._exist_database(database=self.database):
-                    # Create a database connection
-                    self.conn = DatabaseAPI.connect(
-                        host=self.host,
-                        user=self.user,
-                        password=self.password,
-                        database=self.database
-                    )
-
-                # Database not exists
-                else:
-                    # Create a root database connection
-                    self.conn = DatabaseAPI.connect(
-                        host=self.host,
-                        user=self.user,
-                        password=self.password
-                    )
-                
-                # Create the connection cursor
-                self.cur = self.conn.cursor(dictionary=True, buffered=True)
-
-                # For test
-                # print("Database Connection Created!")
-
-            # Catch error
-            except DatabaseError as err:
                 print(err)
 
 
@@ -277,13 +277,14 @@ class Database:
 
         # Catch error
         except DatabaseError as err:
-            # Check debug mode
+            # Developer mode
             if self.debug:
                 # Raise error
                 raise Exception(err)
 
-            # Return the result
+            # Production mode
             else:
+                print(err)
                 return False
 
 
@@ -307,20 +308,21 @@ class Database:
 
         # Check required params
         if not table or not column:
-            # Check debug mode
+            # Developer mode
             if self.debug:
                 # Raise error
                 raise Exception("You must provide the required parameters: ['table', 'column']")
 
-            # Return the result
+            # Production mode
             else:
+                print("You must provide the required parameters: ['table', 'column']")
                 return False
 
         # Prepare sql statements
         # SQLite
         if self.db_system == 'SQLite':
             # Prepare sql
-            sql = f'PRAGMA foreign_key_list({table});'
+            sql = f'''PRAGMA foreign_key_list('{table}');'''
 
             # Check foreign key
             fk_fetch = self.query(sql).fetchall()
@@ -331,10 +333,30 @@ class Database:
 
             # Foreign key not exists
             return False
+        
+        # MySQL
+        elif self.db_system == 'MySQL':
+            # Prepare sql
+            sql = f'''
+            SELECT 
+                TABLE_SCHEMA,
+                TABLE_NAME,
+                COLUMN_NAME,
+                CONSTRAINT_NAME,
+                REFERENCED_TABLE_NAME,
+                REFERENCED_COLUMN_NAME
+            FROM
+                INFORMATION_SCHEMA.KEY_COLUMN_USAGE
+            where 
+                TABLE_SCHEMA = '{self.database}'
+                AND TABLE_NAME = '{table}'
+                AND COLUMN_NAME = '{column}'
+                AND REFERENCED_TABLE_NAME IS NOT NULL;
+            '''
 
-        # PostgreSQL
-        elif self.db_system == 'PostgreSQL':
-            sql = f"""
+        # Postgres
+        elif self.db_system == 'Postgres':
+            sql = f'''
                 SELECT
                     tc.table_schema, 
                     tc.constraint_name, 
@@ -353,29 +375,9 @@ class Database:
                     AND ccu.table_schema = tc.table_schema
                 WHERE 
                     tc.constraint_type = 'FOREIGN KEY' AND tc.table_name='{table}' AND kcu.column_name='{column}';
-            """
-        
-        # MySQL
-        elif self.db_system == 'MySQL':
-            # Prepare sql
-            sql = f"""
-            SELECT 
-                TABLE_SCHEMA,
-                TABLE_NAME,
-                COLUMN_NAME,
-                CONSTRAINT_NAME,
-                REFERENCED_TABLE_NAME,
-                REFERENCED_COLUMN_NAME
-            FROM
-                INFORMATION_SCHEMA.KEY_COLUMN_USAGE
-            where 
-                TABLE_SCHEMA = '{self.database}'
-                AND TABLE_NAME = '{table}'
-                AND COLUMN_NAME = '{column}'
-                AND REFERENCED_TABLE_NAME IS NOT NULL;
-            """
+            '''
 
-        # Check foreign key for PostgreSQL or MySQL
+        # Check foreign key (Postgres and MySQL)
         # Foreign key exists
         if self.query(sql).fetchone():
             return True
@@ -401,20 +403,21 @@ class Database:
 
         # Check required params
         if not table or not column:
-            # Check debug mode
+            # Developer mode
             if self.debug:
                 # Raise error
                 raise Exception("You must provide the required parameters: ['table', 'column']")
 
-            # Return the result
+            # Production mode
             else:
+                print("You must provide the required parameters: ['table', 'column']")
                 return False
 
         # Prepare sql
         # SQLite
         if self.db_system == 'SQLite':
             # Prepare sql
-            sql = f'''SELECT COUNT(*) AS {column} FROM pragma_table_info('{table}') WHERE name='{column}';'''
+            sql = f'''SELECT COUNT(*) AS '{column}' FROM pragma_table_info('{table}') WHERE name='{column}';'''
             
             # Return result (SQLite)
             # Column exists
@@ -425,16 +428,16 @@ class Database:
             else:
                 return False
 
-        # PostgreSQL
-        elif self.db_system == 'PostgreSQL':
-            sql = f'''SELECT column_name FROM information_schema.columns WHERE table_name='{table}' and column_name='{column}';'''
-
         # MySQL
         elif self.db_system == 'MySQL':
             # Prepare sql
             sql = f'''SHOW COLUMNS FROM `{table}` LIKE '{column}';'''
+
+        # Postgres
+        elif self.db_system == 'Postgres':
+            sql = f'''SELECT column_name FROM information_schema.columns WHERE table_name='{table}' and column_name='{column}';'''
             
-        # Return result (PostgreSQL or MySQL)
+        # Return result (Postgres and MySQL)
         # Column exists
         if self.query(sql).fetchone():
             return True
@@ -452,7 +455,7 @@ class Database:
     # @param table: str -- *Required table name
     # 
     # @var sql: str -- The sql statement
-    # @var cur: object - The custom connection cursor for PostgreSQL
+    # @var cur: object - The custom connection cursor for Postgres
     #
     # @return bool
     ##
@@ -460,20 +463,21 @@ class Database:
         
         # Check required params
         if not table:
-            # Check debug mode
+            # Developer mode
             if self.debug:
                 # Raise error
                 raise Exception("You must provide the required parameters: ['table']")
 
-            # Return the result
+            # Production mode
             else:
+                print("You must provide the required parameters: ['table']")
                 return False
 
         # Prepare sql
         # SQLite
         if self.db_system == 'SQLite':
             # Prepare sql
-            sql = f"SELECT name FROM sqlite_master WHERE type='table' AND name='{table}';"
+            sql = f'''SELECT name FROM sqlite_master WHERE type='table' AND name='{table}';'''
 
             # Table exists
             if self.query(sql).fetchone():
@@ -482,10 +486,23 @@ class Database:
             # Table not exists
             else:
                 return False
+
+        # MySQL
+        elif self.db_system == 'MySQL':
+            # Prepare sql
+            sql = f'''SHOW TABLES LIKE '{table}';'''
+
+            # Table exists
+            if self.query(sql=sql).fetchall():
+                return True
         
-        # PostgreSQL or MySQL
-        elif self.db_system == 'PostgreSQL':
-            sql = f"SELECT EXISTS(SELECT * FROM information_schema.tables WHERE table_name='{table}');"
+            # Table not exists
+            else:
+                return False
+        
+        # Postgres 
+        elif self.db_system == 'Postgres':
+            sql = f'''SELECT EXISTS(SELECT * FROM information_schema.tables WHERE table_name='{table}');'''
 
             cur = self.conn.cursor()
 
@@ -502,19 +519,6 @@ class Database:
                 else:
                     return False
 
-        # MySQL
-        elif self.db_system == 'MySQL':
-            # Prepare sql
-            sql = f"""SHOW TABLES LIKE '{table}';"""
-
-            # Table exists
-            if self.query(sql=sql).fetchall():
-                return True
-        
-            # Table not exists
-            else:
-                return False
-
 
     ##
     # CAUTION! Use this methods only in developement.
@@ -524,8 +528,8 @@ class Database:
     # @param database: str -- *Required database name (file - SQLite)
     # 
     # @var sql: str -- The sql statement
-    # @var conn: object - The custom database connection for MySQL and PostgreSQL
-    # @var cur: object - The custom connection cursor for MySQL and PostgreSQL
+    # @var conn: object - The custom database connection for MySQL and Postgres
+    # @var cur: object - The custom connection cursor for MySQL and Postgres
     #
     # @return bool
     ##
@@ -533,13 +537,14 @@ class Database:
 
         # Check the required params
         if not database:
-            # Check debug mode
+            # Developer mode
             if self.debug:
                 # Raise error
                 raise Exception("You must provide the required parameters: ['database']")
 
-            # Return the result
+            # Production mode
             else:
+                print("You must provide the required parameters: ['database']")
                 return False
 
         # SQLite
@@ -553,13 +558,12 @@ class Database:
             else:
                 return False
         
-        # PostgreSQL
-        elif self.db_system == 'PostgreSQL':
+        # MySQL
+        elif self.db_system == 'MySQL':
 
             # Create a database connection
             conn = DatabaseAPI.connect(
                 host=self.host,
-                port=self.port,
                 user=self.user,
                 password=self.password,
             )
@@ -568,7 +572,7 @@ class Database:
             cur = conn.cursor()
 
             # Prepare sql
-            sql = f"SELECT EXISTS(SELECT datname FROM pg_catalog.pg_database WHERE datname='{database}');"
+            sql = f'''SELECT EXISTS(SELECT SCHEMA_NAME FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME='{database}');'''
 
             # Excecute the query
             cur.execute(sql)
@@ -583,12 +587,13 @@ class Database:
                 else:
                     return False
         
-        # MySQL
-        elif self.db_system == 'MySQL':
+        # Postgres
+        elif self.db_system == 'Postgres':
 
             # Create a database connection
             conn = DatabaseAPI.connect(
                 host=self.host,
+                port=self.port,
                 user=self.user,
                 password=self.password,
             )
@@ -597,7 +602,7 @@ class Database:
             cur = conn.cursor()
 
             # Prepare sql
-            sql = f"SELECT EXISTS(SELECT SCHEMA_NAME FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME='{database}');"
+            sql = f'''SELECT EXISTS(SELECT datname FROM pg_catalog.pg_database WHERE datname='{database}');'''
 
             # Excecute the query
             cur.execute(sql)
@@ -633,13 +638,14 @@ class Database:
     def create(self, table:str, data:dict):
         # Check required params
         if not table or not data:
-            # Check debug mode
+            # Developer mode
             if self.debug:
                 # Raise error
                 raise Exception("You must provide the required parameters: ['table', 'data']")
 
-            # Return the result
+            # Production mode
             else:
+                print("You must provide the required parameters: ['table', 'data']")
                 return False
 
         # Default variables
@@ -647,23 +653,45 @@ class Database:
         data_key = []
         data_value = []
 
-        # Prepare data
-        for key, value in data.items():
-            data_key.append(key)
-            data_value.append(self.sp_char)
-            data_bind.append(value)
-
-        data_key = ', '.join(data_key)
-        data_value = ', '.join(data_value)
-
-        # Check database System
-        if self.db_system == 'PostgreSQL':
-            insert_id = ' RETURNING id'
-        else:
-            insert_id = ''
-
         # Prepare sql statement
-        sql = f'INSERT INTO {table} ({data_key}) VALUES({data_value}){insert_id}'
+        # SQLite
+        if self.db_system == 'SQLite':
+            # Prepare data
+            for key, value in data.items():
+                data_key.append(f"'{key}'")
+                data_value.append(self.sp_char)
+                data_bind.append(value)
+
+            data_key = ', '.join(data_key)
+            data_value = ', '.join(data_value)
+
+            sql = f'''INSERT INTO '{table}' ({data_key}) VALUES({data_value});'''
+        
+        # MySQL
+        elif self.db_system == 'MySQL':
+            # Prepare data
+            for key, value in data.items():
+                data_key.append(f'`{key}`')
+                data_value.append(self.sp_char)
+                data_bind.append(value)
+
+            data_key = ', '.join(data_key)
+            data_value = ', '.join(data_value)
+
+            sql = f'''INSERT INTO `{table}` ({data_key}) VALUES({data_value});'''
+        
+        # Postgres
+        elif self.db_system == 'Postgres':
+            # Prepare data
+            for key, value in data.items():
+                data_key.append(f'"{key}"')
+                data_value.append(self.sp_char)
+                data_bind.append(value)
+
+            data_key = ', '.join(data_key)
+            data_value = ', '.join(data_value)
+
+            sql = f'''INSERT INTO "{table}" ({data_key}) VALUES({data_value}) RETURNING id;'''
 
         # Return result
         if self.query(sql, data_bind):
@@ -672,9 +700,15 @@ class Database:
             if self.db_system == 'SQLite':
                 return self.cur.lastrowid
             
-            # PostgreSQL
-            elif self.db_system == 'PostgreSQL':
-                return self.cur.fetchone()['id']
+            # Postgres
+            elif self.db_system == 'Postgres':
+                result = self.cur.fetchone()
+
+                # Check 'id' existence
+                if self._exist_column(table=table, column='id'):
+                    return result['id']
+                else:
+                    return result
             
             # MySQL
             elif self.db_system == 'MySQL':
@@ -695,21 +729,24 @@ class Database:
     def create_multi(self, table:str, data:list):
         # Check required params
         if not table or not data:
-            # Check debug mode
+            # Developer mode
             if self.debug:
                 # Raise error
-                raise Exception("You must provide the required parameters: ['table', 'list']")
+                raise Exception("You must provide the required parameters: ['table', 'data']")
 
-            # Return the result
+            # Production mode
             else:
+                print("You must provide the required parameters: ['table', 'data']")
                 return False
 
         # Loop data
         i = 1
         for x in data:
+            # Excecute the create query and return last inserted id
             if i == len(data):
                 return self.create(table=table, data=x)
 
+            # Excecute the create query
             else:
                 self.create(table=table, data=x)
 
@@ -719,7 +756,7 @@ class Database:
     ##
     # CAUTION! Use this methods only in developement.
     #
-    # @desc Adds a foreign key to an existing column (MySQL and PostgreSQL)
+    # @desc Adds a foreign key to an existing column (MySQL and Postgres)
     #
     # @param table: str -- *Required table name
     # @param column: str -- *Required column name
@@ -733,60 +770,65 @@ class Database:
     #
     # @return bool
     ##
-    def _create_fk(self, table:str, column:str, r_table:str, r_column:str, on_update:str=None, on_delete:str=None):
+    def _create_fk(self, table:str, column:str, r_table:str, r_column:str, on_update:str='CASCADE', on_delete:str='CASCADE'):
         # Check the database system
-        if not self.db_system == 'PostgreSQL' or not self.db_system == 'MySQL':
-            # Check debug mode
+        if not self.db_system == 'Postgres' and not self.db_system == 'MySQL':
+            # Developer mode
             if self.debug:
                 # Raise error
-                raise Exception('The "_create_fk" method only works with PostgreSQL and MySQL!')
+                raise Exception('The "create_fk" method only works with MySQL and Postgres!')
 
-            # Return the result
+            # Production mode
             else:
+                print('The "create_fk" method only works with MySQL and Postgres!')
                 return False
 
         # Check required params
         if not table or not column or not r_table or not r_column:
-            # Check debug mode
+            # Developer mode
             if self.debug:
                 # Raise error
                 raise Exception("You must provide the required parameters: ['table', 'column', 'r_table', 'r_column']")
 
-            # Return the result
+            # Production mode
             else:
+                print("You must provide the required parameters: ['table', 'column', 'r_table', 'r_column']")
                 return False
 
         # Tables not exist
-        if not self._exist_table(table) or self._exist_table(r_table):
-            # Check debug mode
+        if not self._exist_table(table) and self._exist_table(r_table):
+            # Developer mode
             if self.debug:
                 # Raise error
-                raise Exception(f'Table "{table}" or "{r_table}" doesn\'t exist!')
+                raise Exception(f'Tables "{table}" and/or "{r_table}" do not exist!')
 
-            # Return the result
+            # Production mode
             else:
+                print(f'Tables "{table}" and/or "{r_table}" do not exist!')
                 return False
 
         # Columns not exists
         if not self._exist_column(table, column) or not self._exist_column(r_table, r_column):
-            # Check debug mode
+            # Developer mode
             if self.debug:
                 # Raise error
-                raise Exception(f'Column "{column}" or "{r_column}" doesn\'t exist!')
+                raise Exception(f'Columns "{column}" and/or "{r_column}" do not exist!')
 
-            # Return the result
+            # Production mode
             else:
+                print(f'Columns "{column}" and/or "{r_column}" do not exist!')
                 return False
 
         # Foreign key already exists
         if self._exist_fk(table, column):
-            # Check debug mode
+            # Developer mode
             if self.debug:
                 # Raise error
-                raise Exception(f'The foreign key already exists!')
+                raise Exception('The foreign key already exists!')
 
-            # Return the result
+            # Production mode
             else:
+                print('The foreign key already exists!')
                 return False
 
         # Everything is OK
@@ -805,13 +847,25 @@ class Database:
         else:
             on_delete = ''
 
-        sql = f"""
-            ALTER TABLE {table}
-            ADD CONSTRAINT {fk_symbol}
-            FOREIGN KEY ({column})
-            REFERENCES {r_table}({r_column})
-            {on_update + on_delete};
-        """
+        # MySQL
+        if self.db_system == 'MySQL':
+            sql = f'''
+                ALTER TABLE `{table}`
+                ADD CONSTRAINT `{fk_symbol}`
+                FOREIGN KEY (`{column}`)
+                REFERENCES `{r_table}`(`{r_column}`)
+                {on_update + on_delete};
+            '''
+
+        # Postgres
+        elif self.db_system == 'Postgres':
+            sql = f'''
+                ALTER TABLE "{table}"
+                ADD CONSTRAINT "{fk_symbol}"
+                FOREIGN KEY ("{column}")
+                REFERENCES "{r_table}"("{r_column}")
+                {on_update + on_delete};
+            '''
 
         # Attempt to add the foreign key
         try:
@@ -823,13 +877,14 @@ class Database:
 
         # Handle errors
         except NameError as err:
-            # Check debug mode
+            # Developer mode
             if self.debug:
                 # Raise error
                 raise Exception(err)
 
-            # Return the result
+            # Production mode
             else:
+                print(err)
                 return False
 
 
@@ -850,13 +905,14 @@ class Database:
 
         # Check required params
         if not table or not column or not datatype:
-            # Check debug mode
+            # Developer mode
             if self.debug:
                 # Raise error
                 raise Exception("You must provide the required parameters: ['table', 'column', 'datatype']")
 
-            # Return the result
+            # Production mode
             else:
+                print("You must provide the required parameters: ['table', 'column', 'datatype']")
                 return False
 
         # Check constraints
@@ -866,8 +922,24 @@ class Database:
             constraints = ''
 
         # Prepare sql statements
-        sql = f'ALTER TABLE {table}\n'
-        sql += f'ADD {column} {datatype + constraints};'
+        # SQLite
+        if self.db_system == 'SQLite':
+            sql = f'''
+                ALTER TABLE '{table}'
+                ADD '{column}' {datatype + constraints};
+            '''
+        # MySQL
+        elif self.db_system == 'MySQL':
+            sql = f'''
+                ALTER TABLE `{table}`
+                ADD `{column}` {datatype + constraints};
+            '''
+        # Postgres
+        elif self.db_system == 'Postgres':
+            sql = f'''
+                ALTER TABLE "{table}"
+                ADD "{column}" {datatype + constraints};
+            '''
 
         # Table exists
         if self._exist_table(table):
@@ -882,24 +954,26 @@ class Database:
 
             # Table exists
             else:
-                # Check debug mode
+                # Developer mode
                 if self.debug:
                     # Raise error
                     raise Exception(f'Column "{column}" already exists!')
 
-                # Return the result
+                # Production mode
                 else:
+                    print(f'Column "{column}" already exists!')
                     return False
 
         # Table not exists
         else:
-            # Check debug mode
+            # Developer mode
             if self.debug:
                 # Raise error
                 raise Exception(f'Table "{table}" doesn\'t exist!')
 
-            # Return the result
+            # Production mode
             else:
+                print(f'Table "{table}" doesn\'t exist!')
                 return False
 
 
@@ -938,28 +1012,29 @@ class Database:
     # @var auto_increment: str -- The AUTO_INCREMENT sql statement for MySQL
     # @var r_table: str -- The reference table name for the foreign key
     # @var r_column: str -- The reference column name for the foreign key
-    # @var fk_symbol: str -- The foreign key symbol for PostgreSQL and MySQL
+    # @var fk_symbol: str -- The foreign key symbol for Postgres and MySQL
     # @var on_update: str -- ON UPDATE statement for the foreign key
     # @var on_delete: str -- ON DELETE statement for the foreign key
     #
     # @return bool
     ##
-    def _create_table(self, table:str, col_type:str, primary_key:str=None, unique:list=[], not_null:list=[], 
+    def _create_table(self, table:str, col_type:dict, primary_key:str=None, unique:list=[], not_null:list=[], 
         default:dict={}, check:dict={}, foreign_key:dict={}):
 
-        # Default variables
+        # Placeholders
         data_list = []
         data_sql = ''
         
         # Check required params
         if not table or not col_type:
-            # Check debug mode
+            # Developer mode
             if self.debug:
                 # Raise error
                 raise Exception("You must provide the required parameters: ['table', 'col_type']")
 
-            # Return the result
+            # Production mode
             else:
+                print("You must provide the required parameters: ['table', 'col_type']")
                 return False
 
         # Columns and datatypes
@@ -974,13 +1049,23 @@ class Database:
             if self.db_system == 'MySQL' and pk_col:
                 pk_col += ' AUTO_INCREMENT'
 
-            # PostgreSQL AUTO_INCREMENT
-            if self.db_system == 'PostgreSQL' and pk_col:
+            # Postgres AUTO_INCREMENT
+            if self.db_system == 'Postgres' and pk_col:
                 # data_list.append(f'{key} SERIAL')
                 if not value.upper() == 'SMALLSERIAL' or not value.upper() == 'SERIAL' or not value.upper() == 'BIGSERIAL':
                     value = 'SERIAL'
 
-            data_list.append(f'{key} {value.upper() + pk_col + unique_col + null_col + default_col + check_col}')
+            # SQLite
+            if self.db_system == 'SQLite':
+                data_list.append(f''''{key}' {value.upper() + pk_col + unique_col + null_col + default_col + check_col}''')
+
+            # MySQL
+            elif self.db_system == 'MySQL':
+                data_list.append(f'''`{key}` {value.upper() + pk_col + unique_col + null_col + default_col + check_col}''')
+
+            # Postgres
+            elif self.db_system == 'Postgres':
+                data_list.append(f'''"{key}" {value.upper() + pk_col + unique_col + null_col + default_col + check_col}''')
 
         # FOREIGN KEY
         if foreign_key:
@@ -1001,31 +1086,42 @@ class Database:
                     on_update = None
                     on_delete = None
 
-                if on_update:
-                    on_update = f' ON UPDATE {on_update}'
-                else:
-                    on_update = ''
-
-                if on_delete:
-                    on_delete = f' ON DELETE {on_delete}'
-                else:
-                    on_delete = ''
+                on_update = f' ON UPDATE {on_update}' if on_update else ''
+                on_delete = f' ON DELETE {on_delete}' if on_delete else ''
                 
                 # SQLite
                 if self.db_system == 'SQLite':
-                    data_list.append(f'FOREIGN KEY ({key}) REFERENCES {r_table}({r_column}){on_update + on_delete}')
+                    data_list.append(f'''FOREIGN KEY ('{key}') REFERENCES '{r_table}'('{r_column}'){on_update + on_delete}''')
 
-                # PostgreSQL or MySQL
-                elif self.db_system == 'PostgreSQL' or self.db_system == 'MySQL':
-                    data_list.append(f'CONSTRAINT {fk_symbol} FOREIGN KEY ({key}) REFERENCES {r_table}({r_column}){on_update + on_delete}')
+                # MySQL
+                elif self.db_system == 'MySQL':
+                    data_list.append(f'''CONSTRAINT {fk_symbol} FOREIGN KEY (`{key}`) REFERENCES `{r_table}`(`{r_column}`){on_update + on_delete}''')
+
+                # Postgres
+                elif self.db_system == 'Postgres':
+                    data_list.append(f'''CONSTRAINT {fk_symbol} FOREIGN KEY ("{key}") REFERENCES "{r_table}"("{r_column}"){on_update + on_delete}''')
 
         # Prepare sql data
         data_sql = ',\n    '.join(data_list)
 
         # Prepare final sql statements
-        sql = f'''CREATE TABLE {table} (\n    '''
-        sql += data_sql
-        sql += '''\n);'''
+        # SQLite
+        if self.db_system == 'SQLite':
+            sql = f'''CREATE TABLE '{table}' (\n    '''
+            sql += data_sql
+            sql += '''\n);'''
+
+        # MySQL
+        elif self.db_system == 'MySQL':
+            sql = f'''CREATE TABLE `{table}` (\n    '''
+            sql += data_sql
+            sql += '''\n);'''
+
+        # Postgres
+        elif self.db_system == 'Postgres':
+            sql = f'''CREATE TABLE "{table}" (\n    '''
+            sql += data_sql
+            sql += '''\n);'''
 
         # Table not exists
         if not self._exist_table(table):
@@ -1035,15 +1131,16 @@ class Database:
             # Return the result
             return True
             
-        # Table exists
+        # Table already exists
         else:
-            # Check debug mode
+            # Developer mode
             if self.debug:
                 # Raise error
                 raise Exception(f'Table "{table}" already exists!')
 
-            # Return the result
+            # Production mode
             else:
+                print(f'Table "{table}" already exists!')
                 return False
 
 
@@ -1056,8 +1153,8 @@ class Database:
     # 
     # @var sql: str -- The sql statement
     # @var err: str -- The error message for SQLite
-    # @var conn: object -- The custom database connection for PostgreSQL and MySQL
-    # @var cur: object -- The custom connection cursor for PostgreSQL and MySQL
+    # @var conn: object -- The custom database connection for Postgres and MySQL
+    # @var cur: object -- The custom connection cursor for Postgres and MySQL
     #
     # @return bool
     ##
@@ -1065,24 +1162,26 @@ class Database:
 
         # Check the required params
         if not database:
-            # Check debug mode
+            # Developer mode
             if self.debug:
                 # Raise error
                 raise Exception("You must provide the required parameters: ['database']")
 
-            # Return the result
+            # Production mode
             else:
+                print("You must provide the required parameters: ['database']")
                 return False
 
         # Database already exists
         if self._exist_database(database=database):
-            # Check debug mode
+            # Developer mode
             if self.debug:
                 # Raise error
                 raise Exception(f'Database "{database}" already exists!')
 
-            # Return the result
+            # Production mode
             else:
+                print(f'Database "{database}" already exists!')
                 return False
 
         # Database not exists
@@ -1119,17 +1218,56 @@ class Database:
 
                     # Handle the errors
                     except NameError:
-                        # Check debug mode
+                        # Developer mode
                         if self.debug:
                             # Raise error
                             raise Exception('Cannot create the database!')
 
-                        # Return the result
+                        # Production mode
                         else:
+                            print('Cannot create the database!')
                             return False
 
-            # PostgreSQL
-            elif self.db_system == 'PostgreSQL':
+            # MySQL
+            elif self.db_system == 'MySQL':
+                # Create a database connection
+                conn = DatabaseAPI.connect(
+                    host=self.host,
+                    user=self.user,
+                    password=self.password,
+                )
+
+                # Attempt the process
+                try:
+                    # Prepare sql
+                    sql = f'''CREATE DATABASE `{database}`;'''
+                    
+                    # Create the connection cursor
+                    cur = conn.cursor()
+
+                    # Excecute the sql
+                    cur.execute(sql)
+
+                    # Close the current connection
+                    conn.close()
+
+                    # Return the result
+                    return True
+
+                # Handle the errors
+                except NameError as err:
+                    # Developer mode
+                    if self.debug:
+                        # Raise error
+                        raise Exception(err)
+
+                    # Production mode
+                    else:
+                        print(err)
+                        return False
+
+            # Postgres
+            elif self.db_system == 'Postgres':
                 # Close the global connection
                 self.conn.close()
 
@@ -1144,7 +1282,7 @@ class Database:
                 # Attempt the process
                 try:
                     # Prepare sql
-                    sql = f'CREATE DATABASE {database};'
+                    sql = f'''CREATE DATABASE "{database}";'''
 
                     # Set the transaction to autocommit
                     conn.autocommit = True
@@ -1163,51 +1301,14 @@ class Database:
 
                 # Handle the errors
                 except NameError as err:
-                    # Check debug mode
+                    # Developer mode
                     if self.debug:
                         # Raise error
                         raise Exception(err)
 
-                    # Return the result
+                    # Production mode
                     else:
-                        return False
-
-
-            # MySQL
-            elif self.db_system == 'MySQL':
-                # Create a database connection
-                conn = DatabaseAPI.connect(
-                    host=self.host,
-                    user=self.user,
-                    password=self.password,
-                )
-
-                # Attempt the process
-                try:
-                    # Prepare sql
-                    sql = f'CREATE DATABASE {database};'
-                    
-                    # Create the connection cursor
-                    cur = conn.cursor()
-
-                    # Excecute the sql
-                    cur.execute(sql)
-
-                    # Close the current connection
-                    conn.close()
-
-                    # Return the result
-                    return True
-
-                # Handle the errors
-                except NameError as err:
-                    # Check debug mode
-                    if self.debug:
-                        # Raise error
-                        raise Exception(err)
-
-                    # Return the result
-                    else:
+                        print(err)
                         return False
 
 
@@ -1238,25 +1339,47 @@ class Database:
 
         # Check required params
         if not table:
-            # Check debug mode
+            # Developer mode
             if self.debug:
                 # Raise error
                 raise Exception("You must provide the required parameters: ['table']")
 
-            # Return the result
+            # Production mode
             else:
+                print("You must provide the required parameters: ['table']")
                 return False
 
         # The default variables
+        data_col = []
         data_bind = []
         where_sql = []
         order_by_sql = []
 
         # Check cols
-        if cols:
-            cols = ', '.join(cols)
-        else:
+        if not cols or cols == ['*'] or cols == ["*"]:
             cols = '*'
+        else:
+            # SQLite
+            if self.db_system == 'SQLite':
+                for col in cols:
+                    data_col.append(f'"{col}"')
+                    # data_col.append(f"'{col}'")
+
+                cols = ', '.join(data_col)
+
+            # MySQL
+            elif self.db_system == 'MySQL':
+                for col in cols:
+                    data_col.append(f'`{col}`')
+
+                cols = ', '.join(data_col)
+                
+            # Postgres
+            elif self.db_system == 'Postgres':
+                for col in cols:
+                    data_col.append(f'"{col}"')
+
+                cols = ', '.join(data_col)
 
         # Check where
         if where:
@@ -1271,63 +1394,135 @@ class Database:
                 if re.search('--equal$', key) or re.search('--e$', key):
                     key = key.replace('--equal', '')
                     key = key.replace('--e', '')
-                    where_sql.append(key + '=' + self.sp_char)
+
+                    # SQLite and Postgres
+                    if self.db_system == 'SQLite' or self.db_system == 'Postgres':
+                        where_sql.append(f'"{key}"={self.sp_char}')
+
+                    # MySQL
+                    elif self.db_system == 'MySQL':
+                        where_sql.append(f'`{key}`={self.sp_char}')
+
                     data_bind.append(value)
 
                 # Not equal to
                 elif re.search('--not-equal$', key) or re.search('--ne$', key):
                     key = key.replace('--not-equal', '')
                     key = key.replace('--ne', '')
-                    where_sql.append(key + '<>' + self.sp_char)
+
+                    # SQLite and Postgres
+                    if self.db_system == 'SQLite' or self.db_system == 'Postgres':
+                        where_sql.append(f'"{key}"<>{self.sp_char}')
+
+                    # MySQL
+                    elif self.db_system == 'MySQL':
+                        where_sql.append(f'`{key}`<>{self.sp_char}')
+
                     data_bind.append(value)
 
                 # Greater than
                 elif re.search('--greater-than$', key) or re.search('--gt$', key):
                     key = key.replace('--greater-than', '')
                     key = key.replace('--gt', '')
-                    where_sql.append(key + '>' + self.sp_char)
+
+                    # SQLite and Postgres
+                    if self.db_system == 'SQLite' or self.db_system == 'Postgres':
+                        where_sql.append(f'"{key}">{self.sp_char}')
+
+                    # MySQL
+                    elif self.db_system == 'MySQL':
+                        where_sql.append(f'`{key}`>{self.sp_char}')
+                    
                     data_bind.append(value)
 
                 # Greater than or equal to
                 elif re.search('--greater-equal$', key) or re.search('--ge$', key):
                     key = key.replace('--greater-equal', '')
                     key = key.replace('--ge', '')
-                    where_sql.append(key + '>=' + self.sp_char)
+
+                    # SQLite and Postgres
+                    if self.db_system == 'SQLite' or self.db_system == 'Postgres':
+                        where_sql.append(f'"{key}">={self.sp_char}')
+
+                    # MySQL
+                    elif self.db_system == 'MySQL':
+                        where_sql.append(f'`{key}`>={self.sp_char}')
+
                     data_bind.append(value)
 
                 # Less than
                 elif re.search('--less-than$', key) or re.search('--lt$', key):
                     key = key.replace('--less-than', '')
                     key = key.replace('--lt', '')
-                    where_sql.append(key + '<' + self.sp_char)
+
+                    # SQLite and Postgres
+                    if self.db_system == 'SQLite' or self.db_system == 'Postgres':
+                        where_sql.append(f'"{key}"<{self.sp_char}')
+
+                    # MySQL
+                    elif self.db_system == 'MySQL':
+                        where_sql.append(f'`{key}`<{self.sp_char}')
+
                     data_bind.append(value)
 
                 # Less than or equal to
                 elif re.search('--less-equal$', key) or re.search('--le$', key):
                     key = key.replace('--less-equal', '')
                     key = key.replace('--le', '')
-                    where_sql.append(key + '<=' + self.sp_char)
+
+                    # SQLite and Postgres
+                    if self.db_system == 'SQLite' or self.db_system == 'Postgres':
+                        where_sql.append(f'"{key}"<={self.sp_char}')
+
+                    # MySQL
+                    elif self.db_system == 'MySQL':
+                        where_sql.append(f'`{key}`<={self.sp_char}')
+                        
                     data_bind.append(value)
 
                 # LIKE
                 elif re.search('--like$', key) or re.search('--l$', key):
                     key = key.replace('--like', '')
                     key = key.replace('--l', '')
-                    where_sql.append(key + ' LIKE ' + self.sp_char)
+
+                    # SQLite and Postgres
+                    if self.db_system == 'SQLite' or self.db_system == 'Postgres':
+                        where_sql.append(f'"{key}" LIKE {self.sp_char}')
+
+                    # MySQL
+                    elif self.db_system == 'MySQL':
+                        where_sql.append(f'`{key}` LIKE {self.sp_char}')
+
                     data_bind.append(value)
                     
                 # NOT LIKE
                 elif re.search('--not-like$', key) or re.search('--nl$', key):
                     key = key.replace('--not-like', '')
                     key = key.replace('--nl', '')
-                    where_sql.append(key + ' NOT LIKE ' + self.sp_char)
+
+                    # SQLite and Postgres
+                    if self.db_system == 'SQLite' or self.db_system == 'Postgres':
+                        where_sql.append(f'"{key}" NOT LIKE {self.sp_char}')
+
+                    # MySQL
+                    elif self.db_system == 'MySQL':
+                        where_sql.append(f'`{key}`  NOT LIKE {self.sp_char}')
+
                     data_bind.append(value)
                 
                 # BETWEEN
                 elif re.search('--between$', key) or re.search('--b$', key):
                     key = key.replace('--between', '')
                     key = key.replace('--b', '')
-                    where_sql.append(key + ' BETWEEN ' + self.sp_char + ' AND ' + self.sp_char)
+
+                    # SQLite and Postgres
+                    if self.db_system == 'SQLite' or self.db_system == 'Postgres':
+                        where_sql.append(f'"{key}" BETWEEN {self.sp_char} AND {self.sp_char}')
+
+                    # MySQL
+                    elif self.db_system == 'MySQL':
+                        where_sql.append(f'`{key}` BETWEEN {self.sp_char} AND {self.sp_char}')
+
                     data_bind.append(value[0])
                     data_bind.append(value[1])
                 
@@ -1335,7 +1530,15 @@ class Database:
                 elif re.search('--not-between$', key) or re.search('--nb$', key):
                     key = key.replace('--not-between', '')
                     key = key.replace('--nb', '')
-                    where_sql.append(key + ' NOT BETWEEN ' + self.sp_char + ' AND ' + self.sp_char)
+
+                    # SQLite and Postgres
+                    if self.db_system == 'SQLite' or self.db_system == 'Postgres':
+                        where_sql.append(f'"{key}" NOT BETWEEN {self.sp_char} AND {self.sp_char}')
+
+                    # MySQL
+                    elif self.db_system == 'MySQL':
+                        where_sql.append(f'`{key}` NOT BETWEEN {self.sp_char} AND {self.sp_char}')
+                        
                     data_bind.append(value[0])
                     data_bind.append(value[1])
                 
@@ -1349,8 +1552,14 @@ class Database:
 
                     in_sql =','.join(in_bind)
 
-                    where_sql.append(f'{key} IN ({in_sql})')
-                
+                    # SQLite and Postgres
+                    if self.db_system == 'SQLite' or self.db_system == 'Postgres':
+                        where_sql.append(f'"{key}" IN ({in_sql})')
+
+                    # MySQL
+                    elif self.db_system == 'MySQL':
+                        where_sql.append(f'`{key}` IN ({in_sql})')
+
                 # NOT IN
                 elif re.search('--not-in$', key) or re.search('--ni$', key):
                     key = key.replace('--not-in', '')
@@ -1361,16 +1570,30 @@ class Database:
 
                     in_sql =','.join(in_bind)
 
-                    where_sql.append(f'{key} NOT IN ({in_sql})')
+                    # SQLite and Postgres
+                    if self.db_system == 'SQLite' or self.db_system == 'Postgres':
+                        where_sql.append(f'"{key}" NOT IN ({in_sql})')
+
+                    # MySQL
+                    elif self.db_system == 'MySQL':
+                        where_sql.append(f'`{key}` NOT IN ({in_sql})')
 
                 # Equal to (default)
                 else:
-                    where_sql.append(key + '=' + self.sp_char)
+                    # SQLite and Postgres
+                    if self.db_system == 'SQLite' or self.db_system == 'Postgres':
+                        where_sql.append(f'"{key}"={self.sp_char}')
+
+                    # MySQL
+                    elif self.db_system == 'MySQL':
+                        where_sql.append(f'`{key}`={self.sp_char}')
+
                     data_bind.append(value)
 
             # Prepare the where SQL
             where = ' WHERE '
 
+            # Check column prefixes (and/or)
             i = 0
             for x in where_sql:
                 ch = ''
@@ -1407,7 +1630,13 @@ class Database:
         # Check order_by
         if order_by:
             for key, value in order_by.items():
-                order_by_sql.append(key + ' ' + value.upper())
+                # SQLite and Postgres
+                if self.db_system == 'SQLite' or self.db_system == 'Postgres':
+                    order_by_sql.append(f'"{key}" {value.upper()}')
+
+                # MySQL
+                elif self.db_system == 'MySQL':
+                    order_by_sql.append(f'`{key}` {value.upper()}')
 
             order_by = ' ORDER BY ' + ', '.join(order_by_sql)
 
@@ -1416,7 +1645,14 @@ class Database:
 
         # Check group_by
         if group_by:
-            group_by = f' GROUP BY {group_by}'
+            # SQLite and Postgres
+            if self.db_system == 'SQLite' or self.db_system == 'Postgres':
+                group_by = f' GROUP BY "{group_by}"'
+
+            # MySQL
+            elif self.db_system == 'MySQL':
+                group_by = f' GROUP BY `{group_by}`'
+
         else:
             group_by = ''
 
@@ -1433,7 +1669,17 @@ class Database:
             offset = ''
 
         # Prepare the sql statement
-        sql = f'SELECT {cols} FROM {table + where + order_by + group_by + limit + offset}'
+        # SQLite
+        if self.db_system == 'SQLite':
+            sql = f'''SELECT {cols} FROM '{table}'{where + order_by + group_by + limit + offset};'''
+            
+        # MySQL
+        elif self.db_system == 'MySQL':
+            sql = f'''SELECT {cols} FROM `{table}`{where + order_by + group_by + limit + offset};'''
+            
+        # Postgres
+        elif self.db_system == 'Postgres':
+            sql = f'''SELECT {cols} FROM "{table}"{where + order_by + group_by + limit + offset};'''
 
         # Return result
         return Read(self, sql, data_bind)
@@ -1465,13 +1711,14 @@ class Database:
 
         # Check the confirm if the where clase not set
         if not where and not confirm:
-            # Check debug mode
+            # Developer mode
             if self.debug:
                 # Raise error
                 raise Exception('For update without the where clause you must confirm the command.')
 
-            # Return the result
+            # Production mode
             else:
+                print('For update without the where clause you must confirm the command.')
                 return False
 
         # The default variables
@@ -1481,21 +1728,32 @@ class Database:
 
         # Check required params
         if not table or not data:
-            # Check debug mode
+            # Developer mode
             if self.debug:
                 # Raise error
                 raise Exception("You must provide the required parameters: ['']")
 
-            # Return the result
+            # Production mode
             else:
+                print("You must provide the required parameters: ['']")
                 return False
 
         # Prepare data
-        for key, value in data.items():
-            data_sql.append(key + '=' + self.sp_char)
-            data_bind.append(value)
+        # SQLite and Postgres
+        if self.db_system == 'SQLite' or self.db_system == 'Postgres':
+            for key, value in data.items():
+                data_sql.append(f'"{key}"={self.sp_char}')
+                data_bind.append(value)
 
-        data = ', '.join(data_sql)
+            data = ', '.join(data_sql)
+        
+        # MySQL
+        elif self.db_system == 'MySQL':
+            for key, value in data.items():
+                data_sql.append(f'`{key}`={self.sp_char}')
+                data_bind.append(value)
+
+            data = ', '.join(data_sql)
 
         # Check where
         if where:
@@ -1510,63 +1768,135 @@ class Database:
                 if re.search('--equal$', key) or re.search('--e$', key):
                     key = key.replace('--equal', '')
                     key = key.replace('--e', '')
-                    where_sql.append(key + '=' + self.sp_char)
+
+                    # SQLite and Postgres
+                    if self.db_system == 'SQLite' or self.db_system == 'Postgres':
+                        where_sql.append(f'"{key}"={self.sp_char}')
+
+                    # MySQL
+                    elif self.db_system == 'MySQL':
+                        where_sql.append(f'`{key}`={self.sp_char}')
+
                     data_bind.append(value)
 
                 # Not equal to
                 elif re.search('--not-equal$', key) or re.search('--ne$', key):
                     key = key.replace('--not-equal', '')
                     key = key.replace('--ne', '')
-                    where_sql.append(key + '<>' + self.sp_char)
+
+                    # SQLite and Postgres
+                    if self.db_system == 'SQLite' or self.db_system == 'Postgres':
+                        where_sql.append(f'"{key}"<>{self.sp_char}')
+
+                    # MySQL
+                    elif self.db_system == 'MySQL':
+                        where_sql.append(f'`{key}`<>{self.sp_char}')
+
                     data_bind.append(value)
 
                 # Greater than
                 elif re.search('--greater-than$', key) or re.search('--gt$', key):
                     key = key.replace('--greater-than', '')
                     key = key.replace('--gt', '')
-                    where_sql.append(key + '>' + self.sp_char)
+
+                    # SQLite and Postgres
+                    if self.db_system == 'SQLite' or self.db_system == 'Postgres':
+                        where_sql.append(f'"{key}">{self.sp_char}')
+
+                    # MySQL
+                    elif self.db_system == 'MySQL':
+                        where_sql.append(f'`{key}`>{self.sp_char}')
+                    
                     data_bind.append(value)
 
                 # Greater than or equal to
                 elif re.search('--greater-equal$', key) or re.search('--ge$', key):
                     key = key.replace('--greater-equal', '')
                     key = key.replace('--ge', '')
-                    where_sql.append(key + '>=' + self.sp_char)
+
+                    # SQLite and Postgres
+                    if self.db_system == 'SQLite' or self.db_system == 'Postgres':
+                        where_sql.append(f'"{key}">={self.sp_char}')
+
+                    # MySQL
+                    elif self.db_system == 'MySQL':
+                        where_sql.append(f'`{key}`>={self.sp_char}')
+
                     data_bind.append(value)
 
                 # Less than
                 elif re.search('--less-than$', key) or re.search('--lt$', key):
                     key = key.replace('--less-than', '')
                     key = key.replace('--lt', '')
-                    where_sql.append(key + '<' + self.sp_char)
+
+                    # SQLite and Postgres
+                    if self.db_system == 'SQLite' or self.db_system == 'Postgres':
+                        where_sql.append(f'"{key}"<{self.sp_char}')
+
+                    # MySQL
+                    elif self.db_system == 'MySQL':
+                        where_sql.append(f'`{key}`<{self.sp_char}')
+
                     data_bind.append(value)
 
                 # Less than or equal to
                 elif re.search('--less-equal$', key) or re.search('--le$', key):
                     key = key.replace('--less-equal', '')
                     key = key.replace('--le', '')
-                    where_sql.append(key + '<=' + self.sp_char)
+
+                    # SQLite and Postgres
+                    if self.db_system == 'SQLite' or self.db_system == 'Postgres':
+                        where_sql.append(f'"{key}"<={self.sp_char}')
+
+                    # MySQL
+                    elif self.db_system == 'MySQL':
+                        where_sql.append(f'`{key}`<={self.sp_char}')
+                        
                     data_bind.append(value)
 
                 # LIKE
                 elif re.search('--like$', key) or re.search('--l$', key):
                     key = key.replace('--like', '')
                     key = key.replace('--l', '')
-                    where_sql.append(key + ' LIKE ' + self.sp_char)
+
+                    # SQLite and Postgres
+                    if self.db_system == 'SQLite' or self.db_system == 'Postgres':
+                        where_sql.append(f'"{key}" LIKE {self.sp_char}')
+
+                    # MySQL
+                    elif self.db_system == 'MySQL':
+                        where_sql.append(f'`{key}` LIKE {self.sp_char}')
+
                     data_bind.append(value)
                     
                 # NOT LIKE
                 elif re.search('--not-like$', key) or re.search('--nl$', key):
                     key = key.replace('--not-like', '')
                     key = key.replace('--nl', '')
-                    where_sql.append(key + ' NOT LIKE ' + self.sp_char)
+
+                    # SQLite and Postgres
+                    if self.db_system == 'SQLite' or self.db_system == 'Postgres':
+                        where_sql.append(f'"{key}" NOT LIKE {self.sp_char}')
+
+                    # MySQL
+                    elif self.db_system == 'MySQL':
+                        where_sql.append(f'`{key}`  NOT LIKE {self.sp_char}')
+
                     data_bind.append(value)
                 
                 # BETWEEN
                 elif re.search('--between$', key) or re.search('--b$', key):
                     key = key.replace('--between', '')
                     key = key.replace('--b', '')
-                    where_sql.append(key + ' BETWEEN ' + self.sp_char + ' AND ' + self.sp_char)
+
+                    # SQLite and Postgres
+                    if self.db_system == 'SQLite' or self.db_system == 'Postgres':
+                        where_sql.append(f'"{key}" BETWEEN {self.sp_char} AND {self.sp_char}')
+
+                    # MySQL
+                    elif self.db_system == 'MySQL':
+                        where_sql.append(f'`{key}` BETWEEN {self.sp_char} AND {self.sp_char}')
+
                     data_bind.append(value[0])
                     data_bind.append(value[1])
                 
@@ -1574,7 +1904,15 @@ class Database:
                 elif re.search('--not-between$', key) or re.search('--nb$', key):
                     key = key.replace('--not-between', '')
                     key = key.replace('--nb', '')
-                    where_sql.append(key + ' NOT BETWEEN ' + self.sp_char + ' AND ' + self.sp_char)
+
+                    # SQLite and Postgres
+                    if self.db_system == 'SQLite' or self.db_system == 'Postgres':
+                        where_sql.append(f'"{key}" NOT BETWEEN {self.sp_char} AND {self.sp_char}')
+
+                    # MySQL
+                    elif self.db_system == 'MySQL':
+                        where_sql.append(f'`{key}` NOT BETWEEN {self.sp_char} AND {self.sp_char}')
+                        
                     data_bind.append(value[0])
                     data_bind.append(value[1])
                 
@@ -1588,8 +1926,14 @@ class Database:
 
                     in_sql =','.join(in_bind)
 
-                    where_sql.append(f'{key} IN ({in_sql})')
-                
+                    # SQLite and Postgres
+                    if self.db_system == 'SQLite' or self.db_system == 'Postgres':
+                        where_sql.append(f'"{key}" IN ({in_sql})')
+
+                    # MySQL
+                    elif self.db_system == 'MySQL':
+                        where_sql.append(f'`{key}` IN ({in_sql})')
+
                 # NOT IN
                 elif re.search('--not-in$', key) or re.search('--ni$', key):
                     key = key.replace('--not-in', '')
@@ -1600,11 +1944,24 @@ class Database:
 
                     in_sql =','.join(in_bind)
 
-                    where_sql.append(f'{key} NOT IN ({in_sql})')
+                    # SQLite and Postgres
+                    if self.db_system == 'SQLite' or self.db_system == 'Postgres':
+                        where_sql.append(f'"{key}" NOT IN ({in_sql})')
+
+                    # MySQL
+                    elif self.db_system == 'MySQL':
+                        where_sql.append(f'`{key}` NOT IN ({in_sql})')
 
                 # Equal to (default)
                 else:
-                    where_sql.append(key + '=' + self.sp_char)
+                    # SQLite and Postgres
+                    if self.db_system == 'SQLite' or self.db_system == 'Postgres':
+                        where_sql.append(f'"{key}"={self.sp_char}')
+
+                    # MySQL
+                    elif self.db_system == 'MySQL':
+                        where_sql.append(f'`{key}`={self.sp_char}')
+
                     data_bind.append(value)
 
             # Prepare the where SQL
@@ -1644,7 +2001,17 @@ class Database:
             where = ''
 
         # Prepare the sql statement
-        sql = f'UPDATE {table} SET {data + where}'
+        # SQLite
+        if self.db_system == 'SQLite':
+            sql = f'''UPDATE "{table}" SET {data + where};'''
+            
+        # MySQL
+        elif self.db_system == 'MySQL':
+            sql = f'''UPDATE `{table}` SET {data + where};'''
+            
+        # Postgres
+        elif self.db_system == 'Postgres':
+            sql = f'''UPDATE "{table}" SET {data + where};'''
 
         # Update was successfull
         if self.query(sql, data_bind):
@@ -1678,24 +2045,26 @@ class Database:
 
         # Check required params
         if not table  or not old_col or not new_col or not datatype:
-            # Check debug mode
+            # Developer mode
             if self.debug:
                 # Raise error
                 raise Exception("You must provide the required parameters: ['table', 'old_col', 'new_col', 'datatype']")
 
-            # Return the result
+            # Production mode
             else:
+                print("You must provide the required parameters: ['table', 'old_col', 'new_col', 'datatype']")
                 return False
 
         # Check the FOREIGN KEY
         if self._exist_fk(table=table, column=old_col):
-            # Check debug mode
+            # Developer mode
             if self.debug:
                 # Raise error
                 raise Exception('You cannot change a foreign key with "_update_column" method!')
 
-            # Return the result
+            # Production mode
             else:
+                print('You cannot change a foreign key with "_update_column" method!')
                 return False
 
         # Check the column names
@@ -1721,25 +2090,26 @@ class Database:
             self.conn.commit()
 
             # Drop the old column
-            self._delete_column(table=table, col=old_col, confirm=True)
+            self._delete_column(table=table, column=old_col, confirm=True)
 
             # Check the column names
             if recursion:
                 # Recursion
-                return self._update_column(table, old_col=new_col, new_col=old_col, datatype=datatype)
+                return self._update_column(table, old_col=new_col, new_col=old_col, datatype=datatype, constraints=constraints)
 
             # Return the result
             return True
 
         # Table not exists
         else:
-            # Check debug mode
+            # Developer mode
             if self.debug:
                 # Raise error
                 raise Exception(f'Table "{table}" doesn\'t exist')
 
-            # Return the result
+            # Production mode
             else:
+                print(f'Table "{table}" doesn\'t exist')
                 return False
 
 
@@ -1760,20 +2130,39 @@ class Database:
 
         # Check required params
         if not old_table or not new_table:
-            # Check debug mode
+            # Developer mode
             if self.debug:
                 # Raise error
                 raise Exception("You must provide the required parameters: ['old_table', 'new_table']")
 
-            # Return the result
+            # Production mode
             else:
+                print("You must provide the required parameters: ['old_table', 'new_table']")
                 return False
 
         # Table exists
         if self._exist_table(old_table):
             # Prepare sql statements
-            sql = f'ALTER TABLE {old_table}\n'
-            sql += f'RENAME TO {new_table};'
+            # SQLite
+            if self.db_system == 'SQLite':
+                sql = f'''
+                    ALTER TABLE '{old_table}'
+                    RENAME TO '{new_table}';
+                '''
+
+            # MySQL
+            elif self.db_system == 'MySQL':
+                sql = f'''
+                    ALTER TABLE `{old_table}`
+                    RENAME TO `{new_table}`;
+                '''
+                
+            # Postgres
+            elif self.db_system == 'Postgres':
+                sql = f'''
+                    ALTER TABLE "{old_table}"
+                    RENAME TO "{new_table}";
+                '''
 
             # Alter the table
             self.query(sql)
@@ -1783,13 +2172,14 @@ class Database:
 
         # Table not exists
         else:
-            # Check debug mode
+            # Developer mode
             if self.debug:
                 # Raise error
                 raise Exception(f'Table "{old_table}" doesn\'t exist')
 
-            # Return the result
+            # Production mode
             else:
+                print(f'Table "{old_table}" doesn\'t exist')
                 return False
 
 
@@ -1817,13 +2207,14 @@ class Database:
         
         # Check the confirm if the where clase not set
         if not where and not confirm:
-            # Check debug mode
+            # Developer mode
             if self.debug:
                 # Raise error
                 raise Exception('For delete without the where clause you must confirm the command.')
 
-            # Return the result
+            # Production mode
             else:
+                print('For delete without the where clause you must confirm the command.')
                 return False
 
         # The default variables
@@ -1832,13 +2223,14 @@ class Database:
 
         # Check required params
         if not table:
-            # Check debug mode
+            # Developer mode
             if self.debug:
                 # Raise error
-                raise Exception("You must provide the required parameters: ['']")
+                raise Exception("You must provide the required parameters: ['table']")
 
-            # Return the result
+            # Production mode
             else:
+                print("You must provide the required parameters: ['table']")
                 return False
         
         # Check where
@@ -1854,63 +2246,135 @@ class Database:
                 if re.search('--equal$', key) or re.search('--e$', key):
                     key = key.replace('--equal', '')
                     key = key.replace('--e', '')
-                    where_sql.append(key + '=' + self.sp_char)
+
+                    # SQLite and Postgres
+                    if self.db_system == 'SQLite' or self.db_system == 'Postgres':
+                        where_sql.append(f'"{key}"={self.sp_char}')
+
+                    # MySQL
+                    elif self.db_system == 'MySQL':
+                        where_sql.append(f'`{key}`={self.sp_char}')
+
                     data_bind.append(value)
 
                 # Not equal to
                 elif re.search('--not-equal$', key) or re.search('--ne$', key):
                     key = key.replace('--not-equal', '')
                     key = key.replace('--ne', '')
-                    where_sql.append(key + '<>' + self.sp_char)
+
+                    # SQLite and Postgres
+                    if self.db_system == 'SQLite' or self.db_system == 'Postgres':
+                        where_sql.append(f'"{key}"<>{self.sp_char}')
+
+                    # MySQL
+                    elif self.db_system == 'MySQL':
+                        where_sql.append(f'`{key}`<>{self.sp_char}')
+
                     data_bind.append(value)
 
                 # Greater than
                 elif re.search('--greater-than$', key) or re.search('--gt$', key):
                     key = key.replace('--greater-than', '')
                     key = key.replace('--gt', '')
-                    where_sql.append(key + '>' + self.sp_char)
+
+                    # SQLite and Postgres
+                    if self.db_system == 'SQLite' or self.db_system == 'Postgres':
+                        where_sql.append(f'"{key}">{self.sp_char}')
+
+                    # MySQL
+                    elif self.db_system == 'MySQL':
+                        where_sql.append(f'`{key}`>{self.sp_char}')
+                    
                     data_bind.append(value)
 
                 # Greater than or equal to
                 elif re.search('--greater-equal$', key) or re.search('--ge$', key):
                     key = key.replace('--greater-equal', '')
                     key = key.replace('--ge', '')
-                    where_sql.append(key + '>=' + self.sp_char)
+
+                    # SQLite and Postgres
+                    if self.db_system == 'SQLite' or self.db_system == 'Postgres':
+                        where_sql.append(f'"{key}">={self.sp_char}')
+
+                    # MySQL
+                    elif self.db_system == 'MySQL':
+                        where_sql.append(f'`{key}`>={self.sp_char}')
+
                     data_bind.append(value)
 
                 # Less than
                 elif re.search('--less-than$', key) or re.search('--lt$', key):
                     key = key.replace('--less-than', '')
                     key = key.replace('--lt', '')
-                    where_sql.append(key + '<' + self.sp_char)
+
+                    # SQLite and Postgres
+                    if self.db_system == 'SQLite' or self.db_system == 'Postgres':
+                        where_sql.append(f'"{key}"<{self.sp_char}')
+
+                    # MySQL
+                    elif self.db_system == 'MySQL':
+                        where_sql.append(f'`{key}`<{self.sp_char}')
+
                     data_bind.append(value)
 
                 # Less than or equal to
                 elif re.search('--less-equal$', key) or re.search('--le$', key):
                     key = key.replace('--less-equal', '')
                     key = key.replace('--le', '')
-                    where_sql.append(key + '<=' + self.sp_char)
+
+                    # SQLite and Postgres
+                    if self.db_system == 'SQLite' or self.db_system == 'Postgres':
+                        where_sql.append(f'"{key}"<={self.sp_char}')
+
+                    # MySQL
+                    elif self.db_system == 'MySQL':
+                        where_sql.append(f'`{key}`<={self.sp_char}')
+                        
                     data_bind.append(value)
 
                 # LIKE
                 elif re.search('--like$', key) or re.search('--l$', key):
                     key = key.replace('--like', '')
                     key = key.replace('--l', '')
-                    where_sql.append(key + ' LIKE ' + self.sp_char)
+
+                    # SQLite and Postgres
+                    if self.db_system == 'SQLite' or self.db_system == 'Postgres':
+                        where_sql.append(f'"{key}" LIKE {self.sp_char}')
+
+                    # MySQL
+                    elif self.db_system == 'MySQL':
+                        where_sql.append(f'`{key}` LIKE {self.sp_char}')
+
                     data_bind.append(value)
                     
                 # NOT LIKE
                 elif re.search('--not-like$', key) or re.search('--nl$', key):
                     key = key.replace('--not-like', '')
                     key = key.replace('--nl', '')
-                    where_sql.append(key + ' NOT LIKE ' + self.sp_char)
+
+                    # SQLite and Postgres
+                    if self.db_system == 'SQLite' or self.db_system == 'Postgres':
+                        where_sql.append(f'"{key}" NOT LIKE {self.sp_char}')
+
+                    # MySQL
+                    elif self.db_system == 'MySQL':
+                        where_sql.append(f'`{key}`  NOT LIKE {self.sp_char}')
+
                     data_bind.append(value)
                 
                 # BETWEEN
                 elif re.search('--between$', key) or re.search('--b$', key):
                     key = key.replace('--between', '')
                     key = key.replace('--b', '')
-                    where_sql.append(key + ' BETWEEN ' + self.sp_char + ' AND ' + self.sp_char)
+
+                    # SQLite and Postgres
+                    if self.db_system == 'SQLite' or self.db_system == 'Postgres':
+                        where_sql.append(f'"{key}" BETWEEN {self.sp_char} AND {self.sp_char}')
+
+                    # MySQL
+                    elif self.db_system == 'MySQL':
+                        where_sql.append(f'`{key}` BETWEEN {self.sp_char} AND {self.sp_char}')
+
                     data_bind.append(value[0])
                     data_bind.append(value[1])
                 
@@ -1918,7 +2382,15 @@ class Database:
                 elif re.search('--not-between$', key) or re.search('--nb$', key):
                     key = key.replace('--not-between', '')
                     key = key.replace('--nb', '')
-                    where_sql.append(key + ' NOT BETWEEN ' + self.sp_char + ' AND ' + self.sp_char)
+
+                    # SQLite and Postgres
+                    if self.db_system == 'SQLite' or self.db_system == 'Postgres':
+                        where_sql.append(f'"{key}" NOT BETWEEN {self.sp_char} AND {self.sp_char}')
+
+                    # MySQL
+                    elif self.db_system == 'MySQL':
+                        where_sql.append(f'`{key}` NOT BETWEEN {self.sp_char} AND {self.sp_char}')
+                        
                     data_bind.append(value[0])
                     data_bind.append(value[1])
                 
@@ -1932,8 +2404,14 @@ class Database:
 
                     in_sql =','.join(in_bind)
 
-                    where_sql.append(f'{key} IN ({in_sql})')
-                
+                    # SQLite and Postgres
+                    if self.db_system == 'SQLite' or self.db_system == 'Postgres':
+                        where_sql.append(f'"{key}" IN ({in_sql})')
+
+                    # MySQL
+                    elif self.db_system == 'MySQL':
+                        where_sql.append(f'`{key}` IN ({in_sql})')
+
                 # NOT IN
                 elif re.search('--not-in$', key) or re.search('--ni$', key):
                     key = key.replace('--not-in', '')
@@ -1944,11 +2422,24 @@ class Database:
 
                     in_sql =','.join(in_bind)
 
-                    where_sql.append(f'{key} NOT IN ({in_sql})')
+                    # SQLite and Postgres
+                    if self.db_system == 'SQLite' or self.db_system == 'Postgres':
+                        where_sql.append(f'"{key}" NOT IN ({in_sql})')
+
+                    # MySQL
+                    elif self.db_system == 'MySQL':
+                        where_sql.append(f'`{key}` NOT IN ({in_sql})')
 
                 # Equal to (default)
                 else:
-                    where_sql.append(key + '=' + self.sp_char)
+                    # SQLite and Postgres
+                    if self.db_system == 'SQLite' or self.db_system == 'Postgres':
+                        where_sql.append(f'"{key}"={self.sp_char}')
+
+                    # MySQL
+                    elif self.db_system == 'MySQL':
+                        where_sql.append(f'`{key}`={self.sp_char}')
+
                     data_bind.append(value)
 
             # Prepare the where SQL
@@ -1988,7 +2479,17 @@ class Database:
             where = ''
 
         # Prepare the sql statement
-        sql = f'DELETE FROM {table + where}'
+        # SQLite
+        if self.db_system == 'SQLite':
+            sql = f'''DELETE FROM '{table}'{where};'''
+            
+        # MySQL
+        elif self.db_system == 'MySQL':
+            sql = f'''DELETE FROM `{table}`{where};'''
+            
+        # Postgres
+        elif self.db_system == 'Postgres':
+            sql = f'''DELETE FROM "{table}"{where};'''
 
         # Deletion was successfull
         if self.query(sql, data_bind):
@@ -2004,7 +2505,7 @@ class Database:
     ##
     # CAUTION! Use this methods only in developement.
     #
-    # @desc Drops a foreign key from an existing table (MySQL and PostgreSQL)
+    # @desc Drops a foreign key from an existing table (MySQL and Postgres)
     #
     # @param table: str -- *Required table name
     # @param table: str -- *Required column name
@@ -2016,62 +2517,67 @@ class Database:
     ##
     def _delete_fk(self, table:str, column:str, fk_symbol:str, confirm:bool=False):
         # Check the database system
-        if not self.db_system == 'PostgreSQL' or not self.db_system == 'MySQL':
-            # Check debug mode
+        if not self.db_system == 'Postgres' and not self.db_system == 'MySQL':
+            # Developer mode
             if self.debug:
                 # Raise error
-                raise Exception('The "_delete_fk" method only works with PostgreSQL and MySQL!')
+                raise Exception('The "delete_fk" method only works with MySQL and Postgres!')
 
-            # Return the result
+            # Production mode
             else:
+                print('The "delete_fk" method only works with MySQL and Postgres!')
                 return False
 
         # Check required params
         if not table or not column or not fk_symbol or not confirm:
-            # Check debug mode
+            # Developer mode
             if self.debug:
                 # Raise error
                 raise Exception("You must provide the required parameters: ['table', 'column', 'fk_symbol', 'confirm']")
 
-            # Return the result
+            # Production mode
             else:
+                print("You must provide the required parameters: ['table', 'column', 'fk_symbol', 'confirm']")
                 return False
 
         # Tables not exist
         if not self._exist_table(table):
-            # Check debug mode
+            # Developer mode
             if self.debug:
                 # Raise error
                 raise Exception(f'Table "{table}" doesn\'t exist!')
 
-            # Return the result
+            # Production mode
             else:
+                print(f'Table "{table}" doesn\'t exist!')
                 return False
 
         # Foreign key not exists
         if not self._exist_fk(table, column):
-            # Check debug mode
+            # Developer mode
             if self.debug:
                 # Raise error
                 raise Exception(f'The foreign key not exists!')
 
-            # Return the result
+            # Production mode
             else:
+                print(f'The foreign key not exists!')
                 return False
 
         # Everything is OK
-        # PostgreSQL
-        if self.db_system == 'PostgreSQL':
-            sql = f"""
-                ALTER TABLE {table}
-                DROP CONSTRAINT {fk_symbol};
-            """
-        
-        elif self.db_system == 'MySQL':
-            sql = f"""
-                ALTER TABLE {table}
-                DROP FOREIGN KEY {fk_symbol};
-            """
+        # MySQL
+        if self.db_system == 'MySQL':
+            sql = f'''
+                ALTER TABLE `{table}`
+                DROP FOREIGN KEY `{fk_symbol}`;
+            '''
+
+        # Postgres
+        elif self.db_system == 'Postgres':
+            sql = f'''
+                ALTER TABLE "{table}"
+                DROP CONSTRAINT "{fk_symbol}";
+            '''
 
         # Attempt to drop the foreign key
         try:
@@ -2083,13 +2589,14 @@ class Database:
 
         # Handle errors
         except NameError as err:
-            # Check debug mode
+            # Developer mode
             if self.debug:
                 # Raise error
                 raise Exception(err)
 
-            # Return the result
+            # Production mode
             else:
+                print(err)
                 return False
 
 
@@ -2113,30 +2620,50 @@ class Database:
 
         # Check required params
         if not table or not column or not confirm:
-            # Check debug mode
+            # Developer mode
             if self.debug:
                 # Raise error
                 raise Exception("You must provide the required parameters: ['table', 'column', 'confirm']")
 
-            # Return the result
+            # Production mode
             else:
+                print("You must provide the required parameters: ['table', 'column', 'confirm']")
                 return False
 
 
         # Check the FOREIGN KEY
         if self._exist_fk(table=table, column=column):
-            # Check debug mode
+            # Developer mode
             if self.debug:
                 # Raise error
                 raise Exception('You cannot drop a foreign key with "_delete_column" method!')
 
-            # Return the result
+            # Production mode
             else:
+                print('You cannot drop a foreign key with "_delete_column" method!')
                 return False
 
         # Prepare sql statements
-        sql = f'ALTER TABLE {table}\n'
-        sql += f'DROP COLUMN {column};'
+        # SQLite
+        if self.db_system == 'SQLite':
+            sql = f'''
+                ALTER TABLE '{table}'
+                DROP COLUMN '{column}';
+            '''
+            
+        # MySQL
+        elif self.db_system == 'MySQL':
+            sql = f'''
+                ALTER TABLE `{table}`
+                DROP COLUMN `{column}`;
+            '''
+            
+        # Postgres
+        elif self.db_system == 'Postgres':
+            sql = f'''
+                ALTER TABLE "{table}"
+                DROP COLUMN "{column}";
+            '''
 
         # Table exists
         if self._exist_table(table):
@@ -2151,24 +2678,26 @@ class Database:
 
             # Column not exists
             else:
-                # Check debug mode
+                # Developer mode
                 if self.debug:
                     # Raise error
                     raise Exception(f'Column "{column}" does\'nt exists!')
 
-                # Return the result
+                # Production mode
                 else:
+                    print(f'Column "{column}" does\'nt exists!')
                     return False
 
         # Table not exists
         else:
-            # Check debug mode
+            # Developer mode
             if self.debug:
                 # Raise error
                 raise Exception(f'Table "{table}" doesn\'t exist')
 
-            # Return the result
+            # Production mode
             else:
+                print(f'Table "{table}" doesn\'t exist')
                 return False
 
 
@@ -2191,17 +2720,28 @@ class Database:
 
         # Check required params
         if not table or not confirm:
-            # Check debug mode
+            # Developer mode
             if self.debug:
                 # Raise error
                 raise Exception("You must provide the required parameters: ['table', 'confirm']")
 
-            # Return the result
+            # Production mode
             else:
+                print("You must provide the required parameters: ['table', 'confirm']")
                 return False
 
         # Prepare sql statements
-        sql = f'DROP TABLE {table};'
+        # SQLite
+        if self.db_system == 'SQLite':
+            sql = f'''DROP TABLE '{table}';'''
+            
+        # MySQL
+        elif self.db_system == 'MySQL':
+            sql = f'''DROP TABLE `{table}`;'''
+            
+        # Postgres
+        elif self.db_system == 'Postgres':
+            sql = f'''DROP TABLE "{table}";'''
 
         # Table exists
         if self._exist_table(table):
@@ -2212,13 +2752,14 @@ class Database:
             return True
             
         else:
-            # Check debug mode
+            # Developer mode
             if self.debug:
                 # Raise error
                 raise Exception(f'Table "{table}" doesn\'t exist')
 
-            # Return the result
+            # Production mode
             else:
+                print(f'Table "{table}" doesn\'t exist')
                 return False
 
 
@@ -2233,8 +2774,8 @@ class Database:
     # @param confirm: bool -- *Required confirmation
     # 
     # @var sql: str -- The sql statement
-    # @var conn: object -- The custom database connection form PostgreSQL and MySQL
-    # @var cur: object -- The custom connection cursor form PostgreSQL and MySQL
+    # @var conn: object -- The custom database connection form Postgres and MySQL
+    # @var cur: object -- The custom connection cursor form Postgres and MySQL
     #
     # @return bool
     ##
@@ -2242,29 +2783,31 @@ class Database:
 
         # Check the required params
         if not database or not confirm:
-            # Check debug mode
+            # Developer mode
             if self.debug:
                 # Raise error
                 raise Exception("You must provide the required parameters: ['database', 'confirm']")
 
-            # Return the result
+            # Production mode
             else:
+                print("You must provide the required parameters: ['database', 'confirm']")
                 return False
 
         # Database not exists
         if not self._exist_database(database=database):
-            # Check debug mode
+            # Developer mode
             if self.debug:
                 # Raise error
                 raise Exception(f'Database "{database}" not exists!')
 
-            # Return the result
+            # Production mode
             else:
+                print(f'Database "{database}" not exists!')
                 return False
 
         # Database exists
         else:
-            # Close the global connection
+            # Close the database connection
             self.conn.close()
 
             # SQLite
@@ -2279,17 +2822,56 @@ class Database:
 
                 # Handle the errors
                 except NameError as err:
-                    # Check debug mode
+                    # Developer mode
                     if self.debug:
                         # Raise error
                         raise Exception(err)
 
-                    # Return the result
+                    # Production mode
                     else:
+                        print(err)
                         return False
 
-            # PostgreSQL
-            elif self.db_system == 'PostgreSQL':
+            # MySQL
+            elif self.db_system == 'MySQL':
+                # Create a database connection
+                conn = DatabaseAPI.connect(
+                    host=self.host,
+                    user=self.user,
+                    password=self.password,
+                )
+
+                # Attempt the process
+                try:
+                    # Prepare sql
+                    sql = f'''DROP DATABASE `{database}`;'''
+                    
+                    # Create the connection cursor
+                    cur = conn.cursor()
+
+                    # Excecute the sql
+                    cur.execute(sql)
+
+                    # Close the current connection
+                    conn.close()
+
+                    # Return the result
+                    return True
+
+                # Handle the errors
+                except NameError as err:
+                    # Developer mode
+                    if self.debug:
+                        # Raise error
+                        raise Exception(err)
+
+                    # Production mode
+                    else:
+                        print(err)
+                        return False
+
+            # Postgres
+            elif self.db_system == 'Postgres':
                 # Create a database connection
                 conn = DatabaseAPI.connect(
                     host=self.host,
@@ -2301,7 +2883,7 @@ class Database:
                 # Attempt the process
                 try:
                     # Prepare sql
-                    sql = f'DROP DATABASE {database};'
+                    sql = f'''DROP DATABASE "{database}";'''
 
                     # Set the transaction to autocommit
                     conn.autocommit = True
@@ -2320,51 +2902,14 @@ class Database:
 
                 # Handle the errors
                 except NameError as err:
-                    # Check debug mode
+                    # Developer mode
                     if self.debug:
                         # Raise error
                         raise Exception(err)
 
-                    # Return the result
+                    # Production mode
                     else:
-                        return False
-
-
-            # MySQL
-            elif self.db_system == 'MySQL':
-                # Create a database connection
-                conn = DatabaseAPI.connect(
-                    host=self.host,
-                    user=self.user,
-                    password=self.password,
-                )
-
-                # Attempt the process
-                try:
-                    # Prepare sql
-                    sql = f'DROP DATABASE {database};'
-                    
-                    # Create the connection cursor
-                    cur = conn.cursor()
-
-                    # Excecute the sql
-                    cur.execute(sql)
-
-                    # Close the current connection
-                    conn.close()
-
-                    # Return the result
-                    return True
-
-                # Handle the errors
-                except NameError as err:
-                    # Check debug mode
-                    if self.debug:
-                        # Raise error
-                        raise Exception(err)
-
-                    # Return the result
-                    else:
+                        print(err)
                         return False
 
 
@@ -2394,7 +2939,7 @@ class Read:
     ##
     def __init__(self, parent, sql, data_bind):
         # Regular expression
-        regex = 'SELECT.*?FROM'
+        regex = f'''SELECT.*?FROM'''
         
         # Find the match
         match = re.search(regex, sql).group()
@@ -2424,6 +2969,7 @@ class Read:
         else:
             return False
 
+
     ##
     # @desc Fetches the last row
     #
@@ -2442,8 +2988,8 @@ class Read:
     # @return list
     ##
     def all(self):
-        # PostgreSQL
-        if self.db_system == 'PostgreSQL':
+        # Postgres
+        if self.db_system == 'Postgres':
             return real_dict(self.query(self.sql, self.data_bind).fetchall())
 
         # SQLite or MySQL
@@ -2469,12 +3015,12 @@ class Read:
     ##
     def min(self, option=0):
         # Prepare the sql query
-        sql = re.sub(self.regex, f'SELECT min({self.col}) as {self.col} FROM', self.sql)
+        sql = re.sub(self.regex, f'''SELECT min({self.col}) as {self.col} FROM''', self.sql)
 
         # Return the first match as a dictionary
         if option == 1:
-            # PostgreSQL
-            if self.db_system == 'PostgreSQL':
+            # Postgres
+            if self.db_system == 'Postgres':
                 return real_dict(self.query(sql, self.data_bind).fetchall())[0]
 
             # SQLite or MySQL
@@ -2483,8 +3029,8 @@ class Read:
 
         # Return the matches as a list
         elif option == 2:
-            # PostgreSQL
-            if self.db_system == 'PostgreSQL':
+            # Postgres
+            if self.db_system == 'Postgres':
                 return real_dict(self.query(sql, self.data_bind).fetchall())
 
             # SQLite or MySQL
@@ -2493,7 +3039,12 @@ class Read:
 
         # Return the first match result as the number (default)
         else:
-            return self.query(sql, self.data_bind).fetchone()[self.col]
+            # Produce final column
+            col = delete_chars(self.col, "'")
+            col = delete_chars(col, "`")
+            col = delete_chars(col, '"')
+
+            return self.query(sql, self.data_bind).fetchone()[col]
 
 
     ##
@@ -2505,12 +3056,12 @@ class Read:
     ##
     def max(self, option=0):
         # Prepare the sql query
-        sql = re.sub(self.regex, f'SELECT max({self.col}) as {self.col} FROM', self.sql)
+        sql = re.sub(self.regex, f'''SELECT max({self.col}) as {self.col} FROM''', self.sql)
 
         # Return the first match as a dictionary
         if option == 1:
-            # PostgreSQL
-            if self.db_system == 'PostgreSQL':
+            # Postgres
+            if self.db_system == 'Postgres':
                 return real_dict(self.query(sql, self.data_bind).fetchall())[0]
 
             # SQLite or MySQL
@@ -2519,8 +3070,8 @@ class Read:
 
         # Return the matches as a list
         elif option == 2:
-            # PostgreSQL
-            if self.db_system == 'PostgreSQL':
+            # Postgres
+            if self.db_system == 'Postgres':
                 return real_dict(self.query(sql, self.data_bind).fetchall())
 
             # SQLite or MySQL
@@ -2529,7 +3080,12 @@ class Read:
 
         # Return the first match result as the number (default)
         else:
-            return self.query(sql, self.data_bind).fetchone()[self.col]
+            # Produce final column
+            col = delete_chars(self.col, "'")
+            col = delete_chars(col, "`")
+            col = delete_chars(col, '"')
+
+            return self.query(sql, self.data_bind).fetchone()[col]
 
 
     ##
@@ -2541,12 +3097,12 @@ class Read:
     ##
     def avg(self, option=0):
         # Prepare the sql query
-        sql = re.sub(self.regex, f'SELECT avg({self.col}) as {self.col} FROM', self.sql)
+        sql = re.sub(self.regex, f'''SELECT avg({self.col}) as {self.col} FROM''', self.sql)
 
         # Return the first match as a dictionary
         if option == 1:
-            # PostgreSQL
-            if self.db_system == 'PostgreSQL':
+            # Postgres
+            if self.db_system == 'Postgres':
                 return real_dict(self.query(sql, self.data_bind).fetchall())[0]
 
             # SQLite or MySQL
@@ -2555,7 +3111,12 @@ class Read:
 
         # Return the first match result as the number (default)
         else:
-            return self.query(sql, self.data_bind).fetchone()[self.col]
+            # Produce final column
+            col = delete_chars(self.col, "'")
+            col = delete_chars(col, "`")
+            col = delete_chars(col, '"')
+
+            return self.query(sql, self.data_bind).fetchone()[col]
 
 
     ##
@@ -2567,12 +3128,12 @@ class Read:
     ##
     def sum(self, option=0):
         # Prepare the sql query
-        sql = re.sub(self.regex, f'SELECT sum({self.col}) as {self.col} FROM', self.sql)
+        sql = re.sub(self.regex, f'''SELECT sum({self.col}) as {self.col} FROM''', self.sql)
 
         # Return the first match as a dictionary
         if option == 1:
-            # PostgreSQL
-            if self.db_system == 'PostgreSQL':
+            # Postgres
+            if self.db_system == 'Postgres':
                 return real_dict(self.query(sql, self.data_bind).fetchall())[0]
 
             # SQLite or MySQL
@@ -2581,5 +3142,10 @@ class Read:
 
         # Return the first match result as the number (default)
         else:
-            return self.query(sql, self.data_bind).fetchone()[self.col]
+            # Produce final column
+            col = delete_chars(self.col, "'")
+            col = delete_chars(col, "`")
+            col = delete_chars(col, '"')
+
+            return self.query(sql, self.data_bind).fetchone()[col]
 

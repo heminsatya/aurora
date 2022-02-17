@@ -33,7 +33,56 @@ def random_string(size:int=8, chars:str=string.ascii_uppercase + string.digits):
 # @retun str
 ##
 def snake_case(name:str):
-    return re.sub(r'(?<!^)(?=[A-Z])', '_', name).lower()
+    result = ""
+
+    result = re.sub(r'(?<!^)(?=[A-Z])', '_', name).lower()
+
+    return result
+
+
+##
+# @desc Converts string to snake_case
+#
+# @param name: str
+#
+# @retun str
+##
+def to_snake_case(name:str):
+    result = ''
+    underscore = False
+
+    # Remove the spaces
+    name = delete_chars(name, ' ')
+
+    # Loop the name characters
+    for i in range(len(name)):
+        
+        # Check if the next character is underscore
+        if i < len(name) - 1:
+            underscore = name[i + 1] == "_" or name[i + 1].isupper()
+
+        # Ignore duplicated underscores
+        if name[i] == "_" and underscore:
+            continue
+
+        # Accept single underscores
+        elif name[i] == "_":
+            result += "_"
+
+        # Convert uppercase characters
+        elif name[i].isupper():
+            result += "_" + name[i].lower()
+
+        # Accept other characters
+        else:
+            result += name[i]
+
+    # Remove first character underscore
+    if result[0] == "_":
+        result = result[1:]
+
+    # Return converted result
+    return result
 
 
 ##
@@ -71,7 +120,7 @@ def dict_factory(cur:object, row:object):
 
 
 ##
-# @desc Convert named list into dictionary list, for PostgreSQL Database
+# @desc Convert named list into dictionary list, for Postgres Database
 #
 # @param cur: list - a named list
 #
@@ -88,9 +137,56 @@ def real_dict(cur:list):
     return translate
 
 
+##
+# @desc Checks if there are duplicates in a list
+#
+# @param ls: list
+#
+# @retun bool
+##
+def list_dup(ls:list):
+    return len(ls) != len(set(ls))
+
+
+##
+# @desc Checks if there are duplicate values in a dictionary
+#
+# @param dt: dict
+#
+# @retun bool
+##
+def dict_dup_val(dt:dict):
+    new_dt = {}
+
+    for key, value in dt.items():
+        new_dt.setdefault(value, set()).add(key)
+
+    if [key for key, values in new_dt.items() if len(values) > 1]:
+        return True
+    else:
+        return False
+
+
 #################
 # File Handling #
 #################
+##
+# @desc Checks if a file exists
+#
+# @param file: str - The absolute file path
+#
+# @retun bool
+##
+def file_exist(file:str):
+    # File exists
+    if os.path.exists(file):
+        return True
+
+    # File not exists
+    else:
+        return False
+
+
 ##
 # @desc Validates file name
 #
@@ -322,20 +418,28 @@ def unzip_file(file_path:str, dest_dir:str):
 # @param file_path: str - The absolute file path
 # @param old_str: str - The old string
 # @param new_str: str - The new string
+# @param regex: bool - For replacing a regular expression
 #
 # @retun bool -- True (on success), False (on error)
 ##
-def replace_file_string(file_path:str, old_str:str, new_str:str):
+def replace_file_string(file_path:str, old_str:str, new_str:str, regex:bool=False):
     # Read the file
     with open(file_path, 'r') as file :
         f = file.read()
 
-    # Replace the string
-    f = f.replace(old_str, new_str)
+    # Replace regular expression
+    if regex:
+        f = re.sub(old_str, new_str, f, flags = re.M)
+    
+    # Replace string
+    else:
+        f = f.replace(old_str, new_str)
 
     # Write the file out again
     with open(file_path, 'w') as file:
         file.write(f)
+
+    return file.close()
 
 
 ##
@@ -344,10 +448,11 @@ def replace_file_string(file_path:str, old_str:str, new_str:str):
 # @param file_path: str - The absolute file path
 # @param old_line: str - The character to match in the line
 # @param new_str: str - The new line data
+# @param regex: bool - For replacing a regular expression
 #
 # @retun bool -- True (on success), False (on error)
 ##
-def replace_file_line(file_path:str, old_line:str, new_line:str):
+def replace_file_line(file_path:str, old_line:str, new_line:str, regex:bool=False):
     # Open file
     with open(file_path, 'r+') as f:
         
@@ -357,18 +462,34 @@ def replace_file_line(file_path:str, old_line:str, new_line:str):
         # Set the position to the beginning of the file 
         f.seek(0)
 
-        # Loop the lines
-        for line in lines:
-            # Replace old lines
-            if old_line in line:
-                f.write(new_line)
+        # Replace regular expression
+        if regex:
+            # Loop the lines
+            for line in lines:
+                # Replace old lines
+                if re.match(old_line, line):
+                    f.write(new_line)
 
-            # Write other lines
-            else:
-                f.write(line)
+                # Write other lines
+                else:
+                    f.write(line)
+        
+        # Replace string
+        else:
+            # Loop the lines
+            for line in lines:
+                # Replace old lines
+                if old_line in line:
+                    f.write(new_line)
+
+                # Write other lines
+                else:
+                    f.write(line)
 
         # Resize the file to the current file stream position
         f.truncate()
+
+    return f.close()
 
 
 ######################
@@ -717,3 +838,68 @@ def form_name(name:str):
             'message': 'The form name must be in "CamelCase" form with at least two "a-z" and "A-Z" characters.'
         }
 
+
+##
+# @desc Validates database table names
+#
+# @param name: str - The app name
+#
+# @retun dict
+##
+def table_name(name:str):
+    # Check required table name
+    if not name:
+        return {
+            'result': False, 
+            'message': 'The table name is required!'
+        }
+
+    # Regular expression
+    regex = '^[a-z_]+$'
+
+    # Valid name
+    if re.match(regex, name) and name == to_snake_case(name) and len(name) >= 2:
+        return {
+            'result': True, 
+            'message': ''
+        }
+
+    # Invalid name
+    else:
+        return {
+            'result': False, 
+            'message': 'Database table names must be in "snake_case" form with at least two a-z, _ characters.'
+        }
+
+
+##
+# @desc Validates database column names
+#
+# @param name: str - The app name
+#
+# @retun dict
+##
+def column_name(name:str):
+    # Check required column name
+    if not name:
+        return {
+            'result': False, 
+            'message': 'The column name is required!'
+        }
+
+    # Regular expression
+    regex = '^[a-z_]+$'
+
+    # Valid name
+    if re.match(regex, name) and name == to_snake_case(name) and len(name) >= 2:
+        return {
+            'result': True, 
+            'message': ''
+        }
+
+    # Invalid name
+    else:
+        return {
+            'result': False, 
+            'message': 'Database column names must be in "snake_case" form with at least two a-z, _ characters.'
+        }

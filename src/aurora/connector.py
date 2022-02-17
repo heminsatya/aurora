@@ -33,7 +33,7 @@ if not db_engine in db_engines:
 # Database API #
 ################
 db_system = getattr(config, 'DB_SYSTEM')
-db_systems = ['SQLite', 'PostgreSQL', 'MySQL']
+db_systems = ['SQLite', 'Postgres', 'MySQL']
 
 # Check Database System
 if db_system in db_systems:
@@ -47,21 +47,21 @@ if db_system in db_systems:
         except:
             pass
     
-    # PostgreSQL Database
-    elif db_system == 'PostgreSQL':
-        try:
-            import psycopg2 as DatabaseAPI
-            import psycopg2.extras as DatabaseDict
-            from psycopg2 import DatabaseError
-
-        except:
-            pass
-    
     # MySQL Database
     elif db_system == 'MySQL':
         try:
             from mysql import connector as DatabaseAPI
             from mysql.connector import Error as DatabaseError
+
+        except:
+            pass
+    
+    # Postgres Database
+    elif db_system == 'Postgres':
+        try:
+            import psycopg2 as DatabaseAPI
+            import psycopg2.extras as DatabaseDict
+            from psycopg2 import DatabaseError
 
         except:
             pass

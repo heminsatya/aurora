@@ -4,7 +4,7 @@ Aurora is an MVC web framework for creating CRUD applications quickly and simply
 
 It based on REST architecture. In another word it is a RESTFUL web framework.
 
-Aurora is written in [Python](https://www.python.org/), and built on [Flask](https://flask.palletsprojects.com/).
+Aurora is mostly written in [Python](https://www.python.org/), and partially have used [Flask](https://flask.palletsprojects.com/).
 
 
 # Installation
@@ -94,11 +94,11 @@ PyPI: [Aurora PyPI Page](https://pypi.org/project/aurora-mvc/)
  
 - [Flask](https://pypi.org/project/Flask/)
 - [Click](https://pypi.org/project/click/) -- *Will be installed by flask*.
-- [WTForms](https://pypi.org/project/WTForms/) -- If you are using WTForms.
+- [WTForms](https://pypi.org/project/WTForms/) -- For WTForms & CSRF tokens.
 
 ## Database APIs:
 - [sqlite3](https://docs.python.org/3/library/sqlite3.html) -- If you are using SQLite Database. *Included in the standard python library*
-- [psycopg2](https://pypi.org/project/psycopg2/) -- If you are using PostgreSQL Database.
+- [psycopg2](https://pypi.org/project/psycopg2/) -- If you are using Postgres Database.
 - [mysql.connector](https://pypi.org/project/mysql-connector-python/) -- If you are using MySQL Database.
 
 

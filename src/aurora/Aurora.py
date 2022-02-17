@@ -232,7 +232,7 @@ class Aurora():
 
             # Root app index controller
             if app == default_app and controller[1] == '':
-                rule='/'
+                self.app.add_url_rule(rule='/', endpoint='default-app', view_func=view_func, methods=methods)
 
             # All apps controllers
             self.app.add_url_rule(rule=rule, endpoint=endpoint, view_func=view_func, methods=methods)
