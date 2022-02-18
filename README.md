@@ -4,7 +4,7 @@ Aurora is an MVC web framework for creating CRUD applications quickly and simply
 
 It based on REST architecture. In another word it is a RESTFUL web framework.
 
-Aurora is mostly written in [Python](https://www.python.org/), and partially have used [Flask](https://flask.palletsprojects.com/).
+Aurora mostly is written in [Python](https://www.python.org/), and partially have used [Flask](https://flask.palletsprojects.com/).
 
 
 # Installation

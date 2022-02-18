@@ -2,6 +2,7 @@
 # Dependencies #
 ################
 import os
+import time
 import platform
 import importlib
 from .helpers import dir_empty, copy_file, delete_file, unzip_file
@@ -33,6 +34,7 @@ def start():
 
     # So far so good
     print('Initializing the root app...')
+    time.sleep(0.5)
 
     # try the process
     try:
@@ -49,7 +51,7 @@ def start():
         delete_file(init_file)
 
         # Check the safe type
-        config = importlib.import_module(f'{app_path + url_div}config')
+        config = importlib.import_module('config')
         safe_type = getattr(config, 'SAFE_TYPE')
 
         if safe_type:
@@ -63,14 +65,17 @@ def start():
         copy_file(users_model_bluprint, users_model_file)
 
         # Unzip the file
-        unzip_file(users_model_file, app_path)
+        unzip_file(users_model_file, f'{app_path + url_div}models')
 
         # Remove the zip file
         delete_file(users_model_file)
 
-        # Produce the message
-        message = 'The root app initialized successfully!\n'
-        message += 'To run the application please use the following command:\n'
+        # Success
+        print('The root app initialized successfully!')
+        time.sleep(0.5)
+
+        # Produce final the message
+        message = 'To run the application use the following command:\n'
         message += 'python app.py'
 
         # Print the message
