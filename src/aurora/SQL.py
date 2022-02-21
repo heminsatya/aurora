@@ -1053,7 +1053,7 @@ class Database:
             # Postgres AUTO_INCREMENT
             if self.db_system == 'Postgres' and pk_col:
                 # data_list.append(f'{key} SERIAL')
-                if not value.upper() == 'SMALLSERIAL' or not value.upper() == 'SERIAL' or not value.upper() == 'BIGSERIAL':
+                if not value.upper() in ['SMALLSERIAL', 'SERIAL', 'BIGSERIAL']:
                     value = 'SERIAL'
 
             # SQLite
@@ -2076,7 +2076,7 @@ class Database:
             recursion = False
 
         # Fetch the old column data
-        old_data = self.read(table=table, cols=['id', old_col]).all()
+        old_data = self.read(table=table, cols=[old_col]).all()
 
         # Table exists
         if self._exist_table(table):
@@ -2085,7 +2085,7 @@ class Database:
 
             # Update new column data
             for x in old_data:
-                self.update(table=table, data={new_col:x[old_col]}, where={'id':x['id']})
+                self.update(table=table, data={new_col:x[old_col]}, where={old_col:x[old_col]})
 
             # Commit the changes so far
             self.conn.commit()

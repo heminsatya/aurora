@@ -274,9 +274,12 @@ class CLI:
 
             # Other patterns
             else:
-                alert = '''Database connection not found!\n'''
+                alert = '''----------------------------------------------------------\n'''
+                alert += '''CAUTION!\n'''
+                alert += '''Database connection not found!\n'''
                 alert += '''To create a connection and initialize the database run the following command:\n'''
-                alert += '''python manage.py init-db'''
+                alert += '''python manage.py init-db\n'''
+                alert += '''----------------------------------------------------------'''
 
                 # Alert the user
                 print(alert)
@@ -289,10 +292,13 @@ class CLI:
         else:
             # "init" pattern
             if pattern == "init":
-                alert = '''Database connection established successfully!\n'''
+                alert = '''----------------------------------------------------------\n'''
+                alert += '''INFO!\n'''
+                alert += '''Database connection established successfully!\n'''
                 alert += '''Database already initialized!\n'''
                 alert += '''To check the database run the following command:\n'''
-                alert += '''python manage.py check-db'''
+                alert += '''python manage.py check-db\n'''
+                alert += '''----------------------------------------------------------'''
                     
                 # Alert the user
                 print(alert)
@@ -317,9 +323,12 @@ class CLI:
 
                     # Remain patterns
                     else:
-                        alert = '''Database is corrupted!\n'''
+                        alert = '''----------------------------------------------------------\n'''
+                        alert += '''WARNING!\n'''
+                        alert += '''Database is corrupted!\n'''
                         alert += '''To reset the database run the following command:\n'''
-                        alert += '''python manage.py reset-db'''
+                        alert += '''python manage.py reset-db\n'''
+                        alert += '''----------------------------------------------------------'''
                         
                         # Alert the user
                         print(alert)
@@ -353,9 +362,12 @@ class CLI:
 
                         # Remain patterns
                         else:
-                            alert = '''Database system has been changed, and the migrations cannot be used!\n'''
+                            alert = '''----------------------------------------------------------\n'''
+                            alert += '''WARNING!\n'''
+                            alert += '''Database system has been changed, and the migrations cannot be used!\n'''
                             alert += '''You need to go back to the previous database system or reset the database using the following command:\n'''
-                            alert += '''python manage.py reset-db'''
+                            alert += '''python manage.py reset-db\n'''
+                            alert += '''----------------------------------------------------------'''
                             
                             # Alert the user
                             print(alert)
@@ -408,8 +420,11 @@ class CLI:
             # Check the table names
             if not table_name(table)["result"]:
                 # Prepare the alert message
-                alert = f'''The "{table}" table name is invalid!\n'''
+                alert = '''----------------------------------------------------------\n'''
+                alert += '''WARNING!\n'''
+                alert += f'''The "{table}" table name is invalid!\n'''
                 alert += table_name(table)["message"]
+                alert += '''\n----------------------------------------------------------'''
                 
                 # Alert the user
                 print(alert)
@@ -420,8 +435,11 @@ class CLI:
             # Check duplicated table names
             if list_dup(tables):
                 # Prepare the alert message
-                alert = f'Duplicated "{table}" table name is detected!\n'
-                alert += 'Please select unique names for your tables!'
+                alert = '''----------------------------------------------------------\n'''
+                alert += '''WARNING!\n'''
+                alert += f'Duplicated "{table}" table name is detected!\n'
+                alert += 'Please select unique names for your tables!\n'
+                alert += '''----------------------------------------------------------'''
                 
                 # Alert the user
                 print(alert)
@@ -440,8 +458,11 @@ class CLI:
                 # Check the column names
                 if not column_name(x)["result"]:
                     # Prepare the alert message
-                    alert = f'''The "{x}" column name of "{model}" model is invalid!\n'''
+                    alert = '''----------------------------------------------------------\n'''
+                    alert += '''WARNING!\n'''
+                    alert += f'''The "{x}" column name of "{model}" model is invalid!\n'''
                     alert += column_name(x)["message"]
+                    alert += '''\n----------------------------------------------------------'''
                     
                     # Alert the user
                     print(alert)
@@ -456,8 +477,11 @@ class CLI:
                     # Foreign key not exists
                     if not attrs[x]['related_to'] in models:
                         # Prepare the alert message
-                        alert = f'''The "{attrs[x]['related_to']}" foreign key of "{model}" model is invalid!\n'''
-                        alert += 'Please select a valid model name as the foreign key.'
+                        alert = '''----------------------------------------------------------\n'''
+                        alert += '''WARNING!\n'''
+                        alert += f'''The "{attrs[x]['related_to']}" foreign key of "{model}" model is invalid!\n'''
+                        alert += 'Please select a valid model name as the foreign key.\n'
+                        alert += '''----------------------------------------------------------'''
                         
                         # Alert the user
                         print(alert)
@@ -468,8 +492,11 @@ class CLI:
                     # Same foreign key as the model name
                     if attrs[x]['related_to'] == model:
                         # Prepare the alert message
-                        alert = f'''The "{attrs[x]['related_to']}" foreign key of "{model}" model is invalid!\n'''
-                        alert += 'You cannot make relationship for a model with itself!'
+                        alert = '''----------------------------------------------------------\n'''
+                        alert += '''WARNING!\n'''
+                        alert += f'''The "{attrs[x]['related_to']}" foreign key of "{model}" model is invalid!\n'''
+                        alert += 'You cannot make relationship for a model with itself!\n'
+                        alert += '''----------------------------------------------------------'''
                         
                         # Alert the user
                         print(alert)
@@ -478,17 +505,20 @@ class CLI:
                         exit()
 
                 # Not "init" pattern & not database changed and not database corrupted
-                if not pattern == "init" and not db_changed and not db_corrupted:
-                    # Check added columns with not null & no default to models with data
+                if not pattern == "init" and not db_changed and not db_corrupted and not x == primary_key:
+                    # Check added columns with not null & no default
                     if m_attrs and not x in m_attrs['col_type']:
                         # Check model for data
                         if len(db.read(m_attrs['table']).all()) > 0:
                             # Check not null with no default
                             if attrs[x]['not_null'] and attrs[x]['default'] == None:
                                 # Prepare the alert message
-                                alert = f'''The added "{x}" column of "{model}" model has a NOT NULL constraint set to True without a DEFAULT constraint!\n'''
+                                alert = '''----------------------------------------------------------\n'''
+                                alert += '''WARNING!\n'''
+                                alert += f'''The added "{x}" column of "{model}" model has a NOT NULL constraint set to True without a DEFAULT constraint!\n'''
                                 alert += 'You cannot set NOT NULL to True without a DEFAULT constraint for tables with already inserted data!\n'
-                                alert += 'You may set the NOT NULL constraint to False or provide a valid DEFAULT constraint!'
+                                alert += 'You may set the NOT NULL constraint to False or provide a valid DEFAULT constraint!\n'
+                                alert += '''----------------------------------------------------------'''
                                 
                                 # Alert the user
                                 print(alert)
@@ -499,8 +529,11 @@ class CLI:
             # Check the primary key
             if not primary_key in cols:
                 # Prepare the alert message
-                alert = f'The "{primary_key}" primary key for "{table}" table does\'t exist!\n'
-                alert += 'Please provide a valid primary key'
+                alert = '''----------------------------------------------------------\n'''
+                alert += '''WARNING!\n'''
+                alert += f'The "{primary_key}" primary key for "{table}" table does\'t exist!\n'
+                alert += 'Please provide a valid primary key\n'
+                alert += '''----------------------------------------------------------'''
                 
                 # Alert the user
                 print(alert)
@@ -515,7 +548,10 @@ class CLI:
                     # Check the new column for duplicate values
                     if dict_dup_val(repair):
                         # Prepare the alert message
-                        alert = f'''Duplicated values for repairing "{model}" model requested!'''
+                        alert = '''----------------------------------------------------------\n'''
+                        alert += '''CAUTION!\n'''
+                        alert += f'''Duplicated values for repairing "{model}" model requested!\n'''
+                        alert += '''----------------------------------------------------------'''
                         
                         # Alert the user
                         print(alert)
@@ -528,7 +564,10 @@ class CLI:
                         #  Check column for availability
                         if not x in attrs:
                             # Prepare the alert message
-                            alert = f'''The repairing "{x}" column of the "{model}" model not exists!'''
+                            alert = '''----------------------------------------------------------\n'''
+                            alert += '''WARNING!\n'''
+                            alert += f'''The repairing "{x}" column of the "{model}" model not exists!\n'''
+                            alert += '''----------------------------------------------------------'''
                             
                             # Alert the user
                             print(alert)
@@ -537,9 +576,12 @@ class CLI:
                             exit()
 
                         # Check new column values
-                        if repair[x] in attrs:
+                        elif repair[x] in attrs:
                             # Prepare the alert message
-                            alert = f'''The repairing "{x}" column new name ("{repair[x]}") of the "{model}" model already exists!'''
+                            alert = '''----------------------------------------------------------\n'''
+                            alert += '''WARNING!\n'''
+                            alert += f'''The repairing "{x}" column new name ("{repair[x]}") of the "{model}" model already exists!\n'''
+                            alert += '''----------------------------------------------------------'''
                             
                             # Alert the user
                             print(alert)
@@ -548,10 +590,13 @@ class CLI:
                             exit()
 
                         # Check the new column names
-                        if not column_name(repair[x])["result"]:
+                        elif not column_name(repair[x])["result"]:
                             # Prepare the alert message
-                            alert = f'''The repairing "{repair[x]}" column name of the "{model}" model is invalid!\n'''
+                            alert = '''----------------------------------------------------------\n'''
+                            alert += '''WARNING!\n'''
+                            alert += f'''The repairing "{repair[x]}" column name of the "{model}" model is invalid!\n'''
                             alert += column_name(repair[x])["message"]
+                            alert += '''\n----------------------------------------------------------'''
                             
                             # Alert the user
                             print(alert)
@@ -560,15 +605,14 @@ class CLI:
                             exit()
 
                         # Column is the primary key
-                        if x == primary_key:
+                        elif x == primary_key:
                             # Prepare the alert message
-                            alert = f'''You cannot use the repair-db command for the primary key.\n'''
+                            alert = '''----------------------------------------------------------\n'''
+                            alert += '''CAUTION!\n'''
+                            alert += f'''You cannot use the repair-db command for the primary key.\n'''
                             alert += f'''For renaming the primary key:\n'''
-                            alert += f'''----------------------------------------------------------\n'''
                             alert += f'''1. Rename its attribute in it's model.\n'''
-                            alert += f'''----------------------------------------------------------\n'''
                             alert += f'''2. Set the "self.primary_key" value to the new name.\n'''
-                            alert += f'''----------------------------------------------------------\n'''
                             alert += f'''3. Run the following command:\n'''
                             alert += f'''python manage.py migrate-db\n'''
                             alert += f'''----------------------------------------------------------'''
@@ -580,17 +624,16 @@ class CLI:
                             exit()
 
                         # Column is a foreign key
-                        if attrs[x]['related_to']:
+                        elif attrs[x]['related_to']:
                             # Prepare the alert message
-                            alert = f'''You cannot use the repair-db command for a foreign key.\n'''
+                            alert = '''----------------------------------------------------------\n'''
+                            alert += '''CAUTION!\n'''
+                            alert += f'''You cannot use the repair-db command for a foreign key.\n'''
                             alert += f'''For renaming a foreign key:\n'''
-                            alert += f'''----------------------------------------------------------\n'''
                             alert += f'''1. Remove its "related_to" parameter, and run:\n'''
                             alert += f'''python manage.py migrate-db\n'''
-                            alert += f'''----------------------------------------------------------\n'''
                             alert += f'''2. Repair it using the following command:\n'''
                             alert += f'''python manage.py repair-db\n'''
-                            alert += f'''----------------------------------------------------------\n'''
                             alert += f'''3. Set the "related_to" parameter again, and rerun:\n'''
                             alert += f'''python manage.py migrate-db\n'''
                             alert += f'''----------------------------------------------------------'''
@@ -600,7 +643,7 @@ class CLI:
 
                             # Exit the program
                             exit()
-
+                    
         # Models are OK
         print('Models are fine.')
         time.sleep(0.1)
@@ -829,19 +872,19 @@ class CLI:
         m_module = importlib.import_module(f'_migrations.{m_version}')
         m_models = m_module._models
 
-        # Produce future migration info
+        # Create temporary migration file
         CLI.migration_data(models)
 
         # Find current models info
         c_module = importlib.import_module(f'_migrations._temp')
         c_models = c_module._models
 
-        # Loop the migration models
+        # Loop migration models (for removed models & renamed tables)
         for model in m_models:
             # Migration model attributes
             m_attrs = getattr(m_module, model)
 
-            # Check removed models
+            # Removed models
             if not model in c_models:
                 migration = True
 
@@ -851,10 +894,13 @@ class CLI:
                 # Check the pattern
                 if pattern == "migrate":
                     print('Removing model table from the database...')
-                    db._delete_table(m_attrs['table'], True)
                     time.sleep(0.1)
 
-            # Check common models
+                    # Delete the table if exists
+                    if db._exist_table(m_attrs['table']):
+                        db._delete_table(m_attrs['table'], True)
+
+            # Common models
             else:
                 # Current model attributes
                 c_attrs = getattr(c_module, model)
@@ -871,7 +917,9 @@ class CLI:
                         print('Renaming the table in the database...')
                         time.sleep(0.1)
 
-                        db._update_table(m_attrs['table'], c_attrs['table'])
+                        # Rename the table if exists
+                        if db._exist_table(m_attrs['table']):
+                            db._update_table(m_attrs['table'], c_attrs['table'])
 
                 # Table temporary columns
                 t_cols = CLI.list_cols(c_attrs['table'])
@@ -887,11 +935,283 @@ class CLI:
 
                 c_cols = ', '.join(c_cols)
 
-                # Check migration model columns
+                # Check migration models (for removed & modified columns)
                 for col in m_attrs['col_type']:
 
-                    # Check for modified primary key
-                    if not col in c_attrs['col_type'] and col == m_attrs['primary_key']:
+                    # Removed columns (not primary key)
+                    if not col in c_attrs['col_type'] and not col == m_attrs['primary_key'] and not col == c_attrs['primary_key']:
+                        migration = True
+
+                        print(f'''Removed column "{col}" for "{model}" model detected!''')
+                        time.sleep(0.1)
+
+                        # Check the pattern
+                        if pattern == "migrate":
+                            print('Removing the column from the table...')
+                            time.sleep(0.1)
+
+                            # Column is a foreign key
+                            if db._exist_fk(c_attrs['table'], col):
+                                # Postgres & MySQL
+                                if db_system == 'Postgres' or db_system == 'MySQL':
+                                    # Foreign key symbol
+                                    fk_symbol = f"fk_{c_attrs['table']}_{m_attrs['foreign_key'][col]['r_table']}"
+
+                                    # Delete foreign key if exists
+                                    if db._exist_fk(c_attrs['table'], col):
+                                        db._delete_fk(c_attrs['table'], col, fk_symbol, True)
+
+                                # Delete the column if exists
+                                if db._exist_column(c_attrs['table'], col):
+                                    db._delete_column(c_attrs['table'], col, True)
+                                    
+                                # SQLite
+                                elif db_system == 'SQLite':
+                                    # Delete the column
+                                    try:
+                                        # Rename table to a temporary table
+                                        db._update_table(c_attrs['table'], f"{c_attrs['table']}__temp")
+
+                                        # Create a new table with latest constraints & fk
+                                        db._create_table(c_attrs['table'], c_attrs['col_type'], c_attrs['primary_key'], c_attrs['unique'], 
+                                            c_attrs['not_null'], c_attrs['default'], c_attrs['check'], c_attrs['foreign_key'])
+
+                                        # Insert the temp table data into the new table
+                                        db.query(f"INSERT INTO {c_attrs['table']}({c_cols}) SELECT {c_cols} FROM {c_attrs['table']}__temp;")
+
+                                        # Remove the temp table
+                                        db._delete_table(f"{c_attrs['table']}__temp", True)
+
+                                    # Pass for any errors
+                                    except NameError as e:
+                                        # print(e)
+                                        pass
+
+                            # Column is not a foreign key
+                            else:
+                                # Delete the column if exists
+                                if db._exist_column(c_attrs['table'], col):
+                                    db._delete_column(c_attrs['table'], col, True)
+
+                    # Existed columns (not primary key)
+                    elif col in c_attrs['col_type'] and not col == m_attrs['primary_key'] and not col == c_attrs['primary_key']:
+
+                        # Produce migration model data
+                        m_datatype = m_attrs['col_type'][col]
+
+                        m_unique = " UNIQUE" if col in m_attrs['unique'] else ""
+                        m_not_null = " NOT NULL" if col in m_attrs['not_null'] else ""
+                        m_default = f" DEFAULT {m_attrs['default'][col]}" if col in m_attrs['default'] else ""
+                        m_check = f" CHECK ({m_attrs['check'][col]})" if col in m_attrs['check'] else ""
+
+                        m_constraints = m_unique + m_not_null + m_default + m_check
+
+                        m_fk = ""
+
+                        if col in m_attrs['foreign_key']:
+                            m_r_table = m_attrs['foreign_key'][col]['r_table']
+                            m_r_column = m_attrs['foreign_key'][col]['r_column']
+                            m_on_update = m_attrs['foreign_key'][col]['on_update']
+                            m_on_delete = m_attrs['foreign_key'][col]['on_delete']
+
+                            m_fk = f" FOREIGN KEY ({col}) REFERENCES {m_r_table}({m_r_column}) ON UPDATE {m_on_update} ON DELETE {m_on_delete}"
+                        
+                        m_data = m_datatype + m_constraints + m_fk
+
+                        # Produce current model data
+                        c_datatype = c_attrs['col_type'][col]
+                        
+                        c_unique = " UNIQUE" if col in c_attrs['unique'] else ""
+                        c_not_null = " NOT NULL" if col in c_attrs['not_null'] else ""
+                        c_default = f" DEFAULT {c_attrs['default'][col]}" if col in c_attrs['default'] else ""
+                        c_check = f" CHECK ({c_attrs['check'][col]})" if col in c_attrs['check'] else ""
+
+                        c_constraints = c_unique + c_not_null + c_default + c_check
+
+                        c_fk = ""
+
+                        if col in c_attrs['foreign_key']:
+                            c_r_table = c_attrs['foreign_key'][col]['r_table']
+                            c_r_column = c_attrs['foreign_key'][col]['r_column']
+                            c_on_update = c_attrs['foreign_key'][col]['on_update']
+                            c_on_delete = c_attrs['foreign_key'][col]['on_delete']
+
+                            c_fk = f" FOREIGN KEY ({col}) REFERENCES {c_r_table}({c_r_column}) ON UPDATE {c_on_update} ON DELETE {c_on_delete}"
+                        
+                        c_data = c_datatype + c_constraints + c_fk
+
+                        # Column is modified
+                        if not m_data == c_data:
+                            migration = True
+
+                            print(f'''Modified column "{col}" for "{model}" model detected!''')
+                            time.sleep(0.1)
+
+                            # Check modified columns with not null & no default
+                            if len(db.read(c_attrs['table']).all()) > 0:
+                                if col in c_attrs['not_null'] and not col in c_attrs['default']:
+                                    # Prepare the alert message
+                                    alert = '''----------------------------------------------------------\n'''
+                                    alert += '''WARNING!\n'''
+                                    alert += f'''The modified "{col}" column of "{model}" model has a NOT NULL constraint set to True without a DEFAULT constraint!\n'''
+                                    alert += 'You cannot set NOT NULL to True without a DEFAULT constraint for tables with already inserted data!\n'
+                                    alert += 'You may set the NOT NULL constraint to False or provide a valid DEFAULT constraint!\n'
+                                    alert += '''----------------------------------------------------------'''
+                                    
+                                    # Alert the user
+                                    print(alert)
+
+                                    # Exit the program
+                                    exit()
+
+                            # Check the pattern
+                            if pattern == "migrate":
+                                print('Updating column in the database...')
+                                time.sleep(0.1)
+
+                                # Column is a foreign key
+                                if m_fk or c_fk:
+                                    # Postgres & MySQL
+                                    if db_system == 'Postgres' or db_system == 'MySQL':
+
+                                        # Already a foreign key
+                                        if m_fk:
+                                            # Foreign key symbol
+                                            fk_symbol = f"fk_{m_attrs['table']}_{m_r_table}"
+
+                                            # Delete foreign key if exists
+                                            if db._exist_fk(m_attrs['table'], col):
+                                                db._delete_fk(m_attrs['table'], col, fk_symbol, True)
+
+                                        # Update the column if exists
+                                        if db._exist_column(c_attrs['table'], col):
+                                            db._update_column(c_attrs['table'], col, col, c_datatype, c_constraints)
+                                        
+                                        # Currently a foreign key
+                                        if c_fk:
+                                            # Add foreign key if not exists
+                                            if not db._exist_fk(m_attrs['table'], col):
+                                                db._create_fk(c_attrs['table'], col, c_r_table, c_r_column, c_on_update, c_on_delete)
+
+                                    # SQLite
+                                    elif db_system == 'SQLite':
+                                        # Update the column
+                                        try:
+                                            # Rename table to a temporary table
+                                            db._update_table(c_attrs['table'], f"{c_attrs['table']}__temp")
+
+                                            # Create a new table with latest constraints
+                                            db._create_table(c_attrs['table'], c_attrs['col_type'], c_attrs['primary_key'], c_attrs['unique'], 
+                                                c_attrs['not_null'], c_attrs['default'], c_attrs['check'])
+
+                                            # Insert the temp table data into the new table
+                                            db.query(f"INSERT INTO {c_attrs['table']}({c_cols}) SELECT {c_cols} FROM {c_attrs['table']}__temp;")
+                                            
+                                            # Update the column
+                                            db._update_column(c_attrs['table'], col, col, c_datatype, c_constraints)
+
+                                            # Remove the temp table
+                                            db._delete_table(f"{c_attrs['table']}__temp", True)
+                                                
+                                            # Rename table to a temporary table again
+                                            db._update_table(c_attrs['table'], f"{c_attrs['table']}__temp")
+
+                                            # Create a new table with latest constraints & fk
+                                            db._create_table(c_attrs['table'], c_attrs['col_type'], c_attrs['primary_key'], c_attrs['unique'], 
+                                                c_attrs['not_null'], c_attrs['default'], c_attrs['check'], c_attrs['foreign_key'])
+
+                                            # Insert the temp table data into the new table
+                                            db.query(f"INSERT INTO {c_attrs['table']}({c_cols}) SELECT {c_cols} FROM {c_attrs['table']}__temp;")
+
+                                            # Remove the temp table
+                                            db._delete_table(f"{c_attrs['table']}__temp", True)
+
+                                        # Pass for any errors
+                                        except NameError as e:
+                                            # print(e)
+                                            pass
+
+                                # Column is not a foreign key
+                                else:
+                                    # Update the column if exists
+                                    if db._exist_column(c_attrs['table'], col):
+                                        db._update_column(c_attrs['table'], col, col, c_datatype, c_constraints)
+
+                # Check current models (for added columns)
+                for col in c_attrs['col_type']:
+
+                    # Check for added columns (not primary key)
+                    if not col in m_attrs['col_type'] and not col == c_attrs['primary_key']:
+                        migration = True
+
+                        print(f'Added column "{col}" for "{model}" model detected!')
+                        time.sleep(0.1)
+
+                        # Check the pattern
+                        if pattern == "migrate":
+                            print('Adding the column to the table...')
+                            time.sleep(0.1)
+
+                            # Produce current model data
+                            c_datatype = c_attrs['col_type'][col]
+                            
+                            c_unique = " UNIQUE" if col in c_attrs['unique'] else ""
+                            c_not_null = " NOT NULL" if col in c_attrs['not_null'] else ""
+                            c_default = f" DEFAULT {c_attrs['default'][col]}" if col in c_attrs['default'] else ""
+                            c_check = f" CHECK ({c_attrs['check'][col]})" if col in c_attrs['check'] else ""
+
+                            c_constraints = c_unique + c_not_null + c_default + c_check
+
+                            if col in c_attrs['foreign_key']:
+                                c_r_table = c_attrs['foreign_key'][col]['r_table']
+                                c_r_column = c_attrs['foreign_key'][col]['r_column']
+                                c_on_update = c_attrs['foreign_key'][col]['on_update']
+                                c_on_delete = c_attrs['foreign_key'][col]['on_delete']
+
+                            # Column is a foreign key
+                            if col in c_attrs['foreign_key']:
+                                # Postgres & MySQL
+                                if db_system == 'Postgres' or db_system == 'MySQL':
+
+                                    # Create the column if not exists
+                                    if not db._exist_column(c_attrs['table'], col):
+                                        # Add column to the table
+                                        db._create_column(c_attrs['table'], col, c_datatype, c_constraints)
+
+                                    # Add the foreign key if not exists
+                                    if not db._exist_fk(c_attrs['table'], col):
+                                        db._create_fk(c_attrs['table'], col, c_r_table, c_r_column, c_on_update, c_on_delete)
+
+                                # SQLite
+                                elif db_system == 'SQLite':
+                                    # Create the column
+                                    try:
+                                        # Rename table to a temporary table
+                                        db._update_table(c_attrs['table'], f"{c_attrs['table']}__temp")
+
+                                        # Create a new table with latest constraints & fk
+                                        db._create_table(c_attrs['table'], c_attrs['col_type'], c_attrs['primary_key'], c_attrs['unique'], 
+                                            c_attrs['not_null'], c_attrs['default'], c_attrs['check'], c_attrs['foreign_key'])
+
+                                        # Insert the temp table data into the new table
+                                        db.query(f"INSERT INTO {c_attrs['table']}({c_cols}) SELECT {c_cols} FROM {c_attrs['table']}__temp;")
+
+                                        # Remove the temp table
+                                        db._delete_table(f"{c_attrs['table']}__temp", True)
+
+                                    # Pass if any error happened
+                                    except NameError as e:
+                                        # print(e)
+                                        pass
+
+                            # Column is not a foreign key
+                            else:
+                                # Create the column if not exists
+                                if not db._exist_column(c_attrs['table'], col):
+                                    db._create_column(c_attrs['table'], col, c_datatype, c_constraints)
+
+                    # Added primary key
+                    elif not col in m_attrs['col_type'] and col == c_attrs['primary_key']:
                         migration = True
 
                         print(f'''Modified primary key "{col}" for "{model}" model detected!''')
@@ -913,7 +1233,7 @@ class CLI:
                             try:
                                 db.query(f"INSERT INTO {c_attrs['table']}({c_cols}) SELECT {c_cols} FROM {c_attrs['table']}__temp;")
                             
-                            # Pass for a single column
+                            # Pass for any errors
                             except NameError as e:
                                 # print(e)
                                 pass
@@ -932,7 +1252,7 @@ class CLI:
                             try:
                                 db.query(f"INSERT INTO {c_attrs['table']}({c_cols}) SELECT {c_cols} FROM {c_attrs['table']}__temp;")
                             
-                            # Pass for a single column
+                            # Pass for any errors
                             except NameError as e:
                                 # print(e)
                                 pass
@@ -940,275 +1260,12 @@ class CLI:
                             # Remove the temp table
                             db._delete_table(f"{c_attrs['table']}__temp", True)
 
-                    # Check for removed columns (not primary key)
-                    elif not col in c_attrs['col_type'] and not col == m_attrs['primary_key']:
-                        migration = True
-
-                        print(f'''Removed column "{col}" for "{model}" model detected!''')
-                        time.sleep(0.1)
-
-                        # Check the pattern
-                        if pattern == "migrate":
-                            print('Removing the column from the table...')
-                            time.sleep(0.1)
-
-                            # Column is a foreign key
-                            if db._exist_fk(c_attrs['table'], col):
-                                # Postgres & MySQL
-                                if db_system == 'Postgres' or db_system == 'MySQL':
-                                    # Foreign key symbol
-                                    fk_symbol = f"fk_{c_attrs['table']}_{m_attrs['foreign_key'][col]['r_table']}"
-
-                                    # Delete foreign key
-                                    db._delete_fk(c_attrs['table'], col, fk_symbol, True)
-
-                                    # Remove the column
-                                    db._delete_column(c_attrs['table'], col, True)
-                                    
-                                # SQLite
-                                elif db_system == 'SQLite':
-                                    # Rename table to a temporary table
-                                    db._update_table(c_attrs['table'], f"{c_attrs['table']}__temp")
-
-                                    # Create a new table with latest constraints & fk
-                                    db._create_table(c_attrs['table'], c_attrs['col_type'], c_attrs['primary_key'], c_attrs['unique'], 
-                                        c_attrs['not_null'], c_attrs['default'], c_attrs['check'], c_attrs['foreign_key'])
-
-                                    # Insert the temp table data into the new table
-                                    db.query(f"INSERT INTO {c_attrs['table']}({c_cols}) SELECT {c_cols} FROM {c_attrs['table']}__temp;")
-
-                                    # Remove the temp table
-                                    db._delete_table(f"{c_attrs['table']}__temp", True)
-
-                            # Column is not a foreign key
-                            else:
-                                # Delete the column if not deleted by SQLite fk
-                                try:
-                                    db._delete_column(c_attrs['table'], col, True)
-
-                                # Pass if already deleted
-                                except NameError as e:
-                                    # print(e)
-                                    pass
-                            
-                    # Check for modified columns (not primary key)
-                    elif not col == m_attrs['primary_key']:
-
-                        # Produce migration model data
-                        m_datatype = m_attrs['col_type'][col]
-                        
-                        m_pk = " PRIMARY KEY" if col == m_attrs['primary_key'] else ""
-                        m_unique = " UNIQUE" if col in m_attrs['unique'] else ""
-                        m_not_null = " NOT NULL" if col in m_attrs['not_null'] else ""
-                        m_default = f" DEFAULT {m_attrs['default'][col]}" if col in m_attrs['default'] else ""
-                        m_check = f" CHECK ({m_attrs['check'][col]})" if col in m_attrs['check'] else ""
-
-                        m_constraints = m_pk + m_unique + m_not_null + m_default + m_check
-
-                        m_fk = ""
-
-                        if col in m_attrs['foreign_key']:
-                            m_r_table = m_attrs['foreign_key'][col]['r_table']
-                            m_r_column = m_attrs['foreign_key'][col]['r_column']
-                            m_on_update = m_attrs['foreign_key'][col]['on_update']
-                            m_on_delete = m_attrs['foreign_key'][col]['on_delete']
-
-                            m_fk = f" FOREIGN KEY ({col}) REFERENCES {m_r_table}({m_r_column}) ON UPDATE {m_on_update} ON DELETE {m_on_delete}"
-                        
-                        m_data = m_datatype + m_constraints + m_fk
-
-                        # Produce current model data
-                        c_datatype = c_attrs['col_type'][col]
-                        
-                        c_pk = " PRIMARY KEY" if col == c_attrs['primary_key'] else ""
-                        c_unique = " UNIQUE" if col in c_attrs['unique'] else ""
-                        c_not_null = " NOT NULL" if col in c_attrs['not_null'] else ""
-                        c_default = f" DEFAULT {c_attrs['default'][col]}" if col in c_attrs['default'] else ""
-                        c_check = f" CHECK ({c_attrs['check'][col]})" if col in c_attrs['check'] else ""
-
-                        c_constraints = c_pk + c_unique + c_not_null + c_default + c_check
-
-                        c_fk = ""
-
-                        if col in c_attrs['foreign_key']:
-                            c_r_table = c_attrs['foreign_key'][col]['r_table']
-                            c_r_column = c_attrs['foreign_key'][col]['r_column']
-                            c_on_update = c_attrs['foreign_key'][col]['on_update']
-                            c_on_delete = c_attrs['foreign_key'][col]['on_delete']
-
-                            c_fk = f" FOREIGN KEY ({col}) REFERENCES {c_r_table}({c_r_column}) ON UPDATE {c_on_update} ON DELETE {c_on_delete}"
-                        
-                        c_data = c_datatype + c_constraints + c_fk
-
-                        # Column is modified
-                        if not m_data == c_data:
-                            migration = True
-
-                            print(f'''Modified column "{col}" for "{model}" model detected!''')
-                            time.sleep(0.1)
-
-                            # Check the pattern
-                            if pattern == "migrate":
-                                print('Updating column in the database...')
-                                time.sleep(0.1)
-
-                                # Column is a foreign key
-                                if m_fk or c_fk:
-                                    # Postgres & MySQL
-                                    if db_system == 'Postgres' or db_system == 'MySQL':
-
-                                        # Already a foreign key
-                                        if m_fk:
-                                            # Foreign key symbol
-                                            fk_symbol = f"fk_{m_attrs['table']}_{m_r_table}"
-
-                                            # Delete foreign key
-                                            db._delete_fk(m_attrs['table'], col, fk_symbol, True)
-
-                                        # Update the column
-                                        db._update_column(c_attrs['table'], col, col, c_datatype, c_constraints)
-                                        
-                                        # Currently a foreign key
-                                        if c_fk:
-                                            # Add foreign key
-                                            db._create_fk(c_attrs['table'], col, c_r_table, c_r_column, c_on_update, c_on_delete)
-                                        
-                                    # SQLite
-                                    elif db_system == 'SQLite':
-                                        # Rename table to a temporary table
-                                        db._update_table(c_attrs['table'], f"{c_attrs['table']}__temp")
-
-                                        # Create a new table with latest constraints
-                                        db._create_table(c_attrs['table'], c_attrs['col_type'], c_attrs['primary_key'], c_attrs['unique'], 
-                                            c_attrs['not_null'], c_attrs['default'], c_attrs['check'])
-
-                                        # Insert the temp table data into the new table
-                                        db.query(f"INSERT INTO {c_attrs['table']}({c_cols}) SELECT {c_cols} FROM {c_attrs['table']}__temp;")
-                                        
-                                        # Update the column
-                                        db._update_column(c_attrs['table'], col, col, c_datatype, c_constraints)
-
-                                        # Remove the temp table
-                                        db._delete_table(f"{c_attrs['table']}__temp", True)
-                                            
-                                        # Rename table to a temporary table again
-                                        db._update_table(c_attrs['table'], f"{c_attrs['table']}__temp")
-
-                                        # Create a new table with latest constraints & fk
-                                        db._create_table(c_attrs['table'], c_attrs['col_type'], c_attrs['primary_key'], c_attrs['unique'], 
-                                            c_attrs['not_null'], c_attrs['default'], c_attrs['check'], c_attrs['foreign_key'])
-
-                                        # Insert the temp table data into the new table
-                                        db.query(f"INSERT INTO {c_attrs['table']}({c_cols}) SELECT {c_cols} FROM {c_attrs['table']}__temp;")
-
-                                        # Remove the temp table
-                                        db._delete_table(f"{c_attrs['table']}__temp", True)
-
-                                # Column is not a foreign key
-                                else:
-                                    # Update the column if not updated by SQLite fk
-                                    try:
-                                        db._update_column(c_attrs['table'], col, col, c_datatype, c_constraints)
-
-                                    # Pass if already updated
-                                    except NameError as e:
-                                        # print(e)
-                                        pass
-
-                # Check current model columns
-                for col in c_attrs['col_type']:
-                    # Check for added columns (not primary key)
-                    if not col in m_attrs['col_type'] and not col == c_attrs['primary_key']:
-                        migration = True
-
-                        print(f'Added column "{col}" for "{model}" model detected!')
-                        time.sleep(0.1)
-
-                        # Check the pattern
-                        if pattern == "migrate":
-                            print('Adding the column to the table...')
-                            time.sleep(0.1)
-
-                            # Produce current model data
-                            c_datatype = c_attrs['col_type'][col]
-                            
-                            c_pk = " PRIMARY KEY" if col == c_attrs['primary_key'] else ""
-                            c_unique = " UNIQUE" if col in c_attrs['unique'] else ""
-                            c_not_null = " NOT NULL" if col in c_attrs['not_null'] else ""
-                            c_default = f" DEFAULT {c_attrs['default'][col]}" if col in c_attrs['default'] else ""
-                            c_check = f" CHECK ({c_attrs['check'][col]})" if col in c_attrs['check'] else ""
-
-                            c_constraints = c_pk + c_unique + c_not_null + c_default + c_check
-
-                            if col in c_attrs['foreign_key']:
-                                c_r_table = c_attrs['foreign_key'][col]['r_table']
-                                c_r_column = c_attrs['foreign_key'][col]['r_column']
-                                c_on_update = c_attrs['foreign_key'][col]['on_update']
-                                c_on_delete = c_attrs['foreign_key'][col]['on_delete']
-
-                            # Column is a foreign key
-                            if col in c_attrs['foreign_key']:
-                                # Postgres & MySQL
-                                if db_system == 'Postgres' or db_system == 'MySQL':
-                                    # Add column to the table
-                                    db._create_column(c_attrs['table'], col, c_datatype, c_constraints)
-
-                                    # Add foreign key
-                                    db._create_fk(c_attrs['table'], col, c_r_table, c_r_column, c_on_update, c_on_delete)
-
-                                # SQLite
-                                elif db_system == 'SQLite':
-                                    # Rename table to a temporary table
-                                    db._update_table(c_attrs['table'], f"{c_attrs['table']}__temp")
-
-                                    # Create a new table with latest constraints & fk
-                                    db._create_table(c_attrs['table'], c_attrs['col_type'], c_attrs['primary_key'], c_attrs['unique'], 
-                                        c_attrs['not_null'], c_attrs['default'], c_attrs['check'], c_attrs['foreign_key'])
-
-                                    # Insert the temp table data into the new table
-                                    db.query(f"INSERT INTO {c_attrs['table']}({c_cols}) SELECT {c_cols} FROM {c_attrs['table']}__temp;")
-
-                                    # Remove the temp table
-                                    db._delete_table(f"{c_attrs['table']}__temp", True)
-
-                            # Column is a primary key
-                            elif col == m_attrs['primary_key']:
-                                # Rename table to a temporary table
-                                db._update_table(c_attrs['table'], f"{c_attrs['table']}__temp")
-
-                                # Create a new table with latest constraints & fk
-                                db._create_table(c_attrs['table'], c_attrs['col_type'], c_attrs['primary_key'], c_attrs['unique'], 
-                                    c_attrs['not_null'], c_attrs['default'], c_attrs['check'], c_attrs['foreign_key'])
-
-                                # Insert the temp table data into the new table
-                                try:
-                                    db.query(f"INSERT INTO {c_attrs['table']}({c_cols}) SELECT {c_cols} FROM {c_attrs['table']}__temp;")
-                                
-                                # Pass for a single column
-                                except NameError as e:
-                                    # print(e)
-                                    pass
-
-                                # Remove the temp table
-                                db._delete_table(f"{c_attrs['table']}__temp", True)
-
-                            # Column is not a foreign key nor a primary key
-                            else:
-                                # Create the column if not created by SQLite fk
-                                try:
-                                    db._create_column(c_attrs['table'], col, c_datatype, c_constraints)
-
-                                # Pass if already created
-                                except NameError as e:
-                                    # print(e)
-                                    pass
-
-        # Loop current models
+        # Loop current models (for added models)
         for model in c_models:
             # Current model attributes
             c_attrs = getattr(c_module, model)
 
-            # Check added models
+            # Added models
             if not model in m_models:
                 migration = True
 
@@ -1220,7 +1277,9 @@ class CLI:
                     print('Creating the new model table...')
                     time.sleep(0.1)
 
-                    db._create_table(c_attrs['table'], c_attrs['col_type'], c_attrs['primary_key'], c_attrs['unique'], 
+                    # Create the table if not exists
+                    if not db._exist_table(c_attrs['table']):
+                        db._create_table(c_attrs['table'], c_attrs['col_type'], c_attrs['primary_key'], c_attrs['unique'], 
                         c_attrs['not_null'], c_attrs['default'], c_attrs['check'], c_attrs['foreign_key'])
 
         # New migration found
@@ -1268,8 +1327,12 @@ class CLI:
                 delete_file(temp_file)
 
                 # Alert the user
-                alert = "To migrate new changes to the database run the following command:\n"
-                alert += "python manage.py migrate-db"
+                alert = '''----------------------------------------------------------\n'''
+                alert += '''INFO!\n'''
+                alert += "To migrate new changes to the database run the following command:\n"
+                alert += "python manage.py migrate-db\n"
+                alert += '''----------------------------------------------------------'''
+
                 print(alert)
                 time.sleep(0.1)
 
@@ -1279,9 +1342,13 @@ class CLI:
                 delete_file(temp_file)
 
                 # Alert the user
-                alert = "Before repairing the database you must migrate the new changes.\n"
+                alert = '''----------------------------------------------------------\n'''
+                alert += '''CAUTION!\n'''
+                alert += "Before repairing the database you must migrate the new changes.\n"
                 alert += "To migrate new changes to the database run the following command:\n"
-                alert += "python manage.py migrate-db"
+                alert += "python manage.py migrate-db\n"
+                alert += '''----------------------------------------------------------'''
+
                 print(alert)
                 time.sleep(0.1)
 
@@ -1484,7 +1551,7 @@ class CLI:
         
         # Alert the user for data loss
         alert = '''WARNING! You will loose the following data perminantly:\n'''
-        alert += f'''----------------------------------------------------------\n'''
+        alert += '''----------------------------------------------------------\n'''
         alert += f'''{app_path + url_div}controllers{url_div + app + url_div}*\n'''
         alert += f'''{app_path + url_div}forms{url_div + app + url_div}*\n'''
         alert += f'''{app_path + url_div + statics + url_div + app + url_div}*\n'''
@@ -1755,7 +1822,7 @@ class CLI:
         
         # Alert the user for data loss
         alert = '''WARNING! You will loose the following data perminantly:\n'''
-        alert += f'''----------------------------------------------------------\n'''
+        alert += '''----------------------------------------------------------\n'''
         alert += f'''{app_path + url_div}controllers{url_div + app + url_div + controller}.py\n'''
         alert += f'''----------------------------------------------------------'''
         
@@ -1927,7 +1994,7 @@ class CLI:
         
         # Alert the user for data loss
         alert = '''WARNING! You will loose the following data perminantly:\n'''
-        alert += f'''----------------------------------------------------------\n'''
+        alert += '''----------------------------------------------------------\n'''
         alert += f'''{app_path + url_div}views{url_div + app + url_div + view}.html\n'''
         alert += f'''----------------------------------------------------------'''
         
@@ -2071,7 +2138,7 @@ class CLI:
         
         # Alert the user for data loss
         alert = '''WARNING! You will loose the following data perminantly:\n'''
-        alert += f'''----------------------------------------------------------\n'''
+        alert += '''----------------------------------------------------------\n'''
         alert += f'''{app_path + url_div}models{url_div + model}.py\n'''
         alert += f'''----------------------------------------------------------'''
         
@@ -2145,7 +2212,7 @@ class CLI:
                 time.sleep(0.1)
 
         # Fetch registered forms for the app
-        forms_module = importlib.import_module(f'forms.{name}._forms')
+        forms_module = importlib.import_module(f'forms.{app}._forms')
         forms = getattr(forms_module, "forms")
         
         # Prompt for form name
@@ -2248,7 +2315,7 @@ class CLI:
                 time.sleep(0.1)
 
         # Fetch registered forms for the app
-        forms_module = importlib.import_module(f'forms.{name}._forms')
+        forms_module = importlib.import_module(f'forms.{app}._forms')
         forms = getattr(forms_module, "forms")
         
         # Prompt for form name
@@ -2271,7 +2338,7 @@ class CLI:
         
         # Alert the user for data loss
         alert = '''WARNING! You will loose the following data perminantly:\n'''
-        alert += f'''----------------------------------------------------------\n'''
+        alert += '''----------------------------------------------------------\n'''
         alert += f'''{app_path + url_div}forms{url_div + app + url_div + form}.py\n'''
         alert += f'''----------------------------------------------------------'''
         
@@ -2406,12 +2473,14 @@ class CLI:
                         # Produce migration model data
                         m_datatype = m_attrs['col_type'][col]
                         
+                        m_pk = " PRIMARY KEY" if col == m_attrs['primary_key'] else ""
+                        
                         m_unique = " UNIQUE" if col in m_attrs['unique'] else ""
                         m_not_null = " NOT NULL" if col in m_attrs['not_null'] else ""
                         m_default = f" DEFAULT {m_attrs['default'][col]}" if col in m_attrs['default'] else ""
                         m_check = f" CHECK ({m_attrs['check'][col]})" if col in m_attrs['check'] else ""
 
-                        m_constraints = m_unique + m_not_null + m_default + m_check
+                        m_constraints = m_pk + m_unique + m_not_null + m_default + m_check
 
                         # Repair the column
                         db._update_column(m_attrs['table'], col, repair[col], m_datatype, m_constraints)
@@ -2483,7 +2552,12 @@ class CLI:
         
         # Reset the database
         # Alert the user for data loss
-        print("DANGER! By reseting the database, you will loose all migrations and the data inserted into the database perminantly.")
+        alert = '''----------------------------------------------------------\n'''
+        alert += '''DANGER!:\n'''
+        alert += '''By reseting the database, you will loose all migrations and the data inserted into the database perminantly.\n'''
+        alert += '''----------------------------------------------------------'''
+        
+        print(alert)
         time.sleep(0.1)
 
         # Prompt the user for confirmation
