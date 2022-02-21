@@ -1685,7 +1685,7 @@ class CLI:
             # Update _controllers.py
             controllers_file = f'{app_path + url_div}controllers{url_div + app + url_div}_controllers.py'
 
-            new_line = f'''    router(controller='{controller}', url='{url}', methods={methods}),\n'''
+            new_line = f'''    controller(name='{controller}', url='{url}', methods={methods}),\n'''
             new_line += """]#do-not-change-me"""
 
             replace_file_line(controllers_file, ']#do-not-change-me', new_line)
@@ -1778,8 +1778,8 @@ class CLI:
                 # Update _controllers.py
                 controllers_file = f'{app_path + url_div}controllers{url_div + app + url_div}_controllers.py'
                 
-                old_line_1 = rf"""^[ ]*router+[(]+.*controller='{controller}'."""
-                old_line_2 = rf"""^[ ]*router+[(]+.*controller="{controller}"."""
+                old_line_1 = rf"""^[ ]*controller+[(]+.*name='{controller}'."""
+                old_line_2 = rf"""^[ ]*controller+[(]+.*name="{controller}"."""
 
                 replace_file_line(controllers_file, old_line_1, new_line='', regex=True)
                 replace_file_line(controllers_file, old_line_2, new_line='', regex=True)

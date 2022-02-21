@@ -23,16 +23,16 @@ from pathlib import Path
 # 
 # @return tuple
 ##
-def router(controller:str, url:str='', methods:list=['GET']):
+def controller(name:str, url:str='', methods:list=['GET']):
     # Check required params
-    if not controller:
+    if not name:
         # Raise error
-        raise Exception("You must provide the required parameters: ['controller']")
+        raise Exception("You must provide the required parameters: ['name']")
 
     # Check controller name
-    if not controller_name(controller)['result']:
+    if not controller_name(name)['result']:
         # Raise error
-        raise Exception(controller_name(controller)['message'])
+        raise Exception(controller_name(name)['message'])
 
     # Check controller url
     if url and not controller_url(url)['result']:
@@ -44,7 +44,7 @@ def router(controller:str, url:str='', methods:list=['GET']):
         # Raise error
         raise Exception(controller_methods(methods)['message'])
 
-    return (controller, url, methods)
+    return (name, url, methods)
 
 
 ##
