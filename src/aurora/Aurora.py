@@ -39,11 +39,17 @@ class Aurora():
             self.serve()
         
         # Except errors
-        except NameError as err:
-            # Check debug mode
+        except NameError as e:
+            # Developer mode
             if self.debug:
                 # Raise error
-                raise Exception(err)
+                raise Exception(e)
+
+            # Production mode
+            else:
+                # Print error
+                print(e)
+                return False
 
 
     ##
@@ -77,7 +83,6 @@ class Aurora():
         # Set the app secret key
         self.app.config['SECRET_KEY'] = secret_key
 
-
         ##
         # @desc The local global_variables method -- Sets the global variables usable in views
         #
@@ -98,14 +103,20 @@ class Aurora():
             globals = getattr(self.config, 'GLOBALS')
             
             # Auto globals
-            auto_globals = {
-                'error_app': apps[error_app],
-                'default_app': apps[default_app],
-                'statics': statics,
-            }
+            auto_globals['statics'] = statics
 
             # Add apps
-            auto_globals.update(apps)
+            for app in apps:
+                # Error app
+                if app[0] == error_app:
+                    auto_globals['error_app'] = app[1]
+
+                # Default app
+                if app[0] == default_app:
+                    auto_globals['default_app'] = app[1]
+
+                # All apps
+                auto_globals[app[0]] = app[1]
 
             # Add global variables
             auto_globals.update(globals)
@@ -126,21 +137,23 @@ class Aurora():
             return self.app
         
         # Handle errors
-        except NameError as err:
-            # Check debug mode
+        except NameError as e:
+            # Developer mode
             if self.debug:
                 # Raise error
-                raise Exception(err)
+                raise Exception(e)
 
-            # Return the result
+            # Production mode
             else:
+                # Print error
+                print(e)
                 return False
 
 
     ##
     # @desc The bootstrap method -- Bootsraps the child apps modules and packages
     #
-    # @param apps: dict -- The child apps to serve
+    # @param apps: list -- The child apps to serve
     # @param default_app: string -- The default app to serve the '/' url
     #
     # @var module: module -- The _controllers module
@@ -148,34 +161,49 @@ class Aurora():
     #
     # @return bool
     ##
-    def bootstrap(self, apps:dict):
+    def bootstrap(self, apps:list):
         # Check the child apps
         if apps:
             # Import app modules and packages
             for app in apps:
                 # Import the _controllers module
-                module = importlib.import_module(f"controllers.{app}._controllers")
+                module = importlib.import_module(f"controllers.{app[0]}._controllers")
 
                 # Fetch the controllers attribute
                 controllers = getattr(module, "controllers")
                 
                 # Try to call the router method
                 try:
-                    self.router(app, controllers, apps)
+                    self.router(app, controllers)
 
                 # Something went wrong
-                except NameError as err:
-                    # Check debug mode
+                except NameError as e:
+                    # Developer mode
                     if self.debug:
                         # Raise error
-                        raise Exception(err)
+                        raise Exception(e)
 
-                    # Return the result
+                    # Production mode
                     else:
+                        # Print error
+                        print(e)
                         return False
             
             # Everything is OK
             return True
+
+        # No apps found
+        else:
+            # Developer mode
+            if self.debug:
+                # Raise error
+                raise Exception('No app found!')
+
+            # Production mode
+            else:
+                # Print error
+                print('No app found!')
+                return False
 
 
     ##
@@ -196,45 +224,45 @@ class Aurora():
     # 
     # @return None
     ##
-    def router(self, app:str, controllers:list, apps:dict) -> None:
+    def router(self, app:str, controllers:list) -> None:
         error_app = getattr(self.config, 'ERROR_APP')
         default_app = getattr(self.config, 'DEFAULT_APP')
 
         for controller in controllers:
 
             # Recognize the controller
-            Module = importlib.import_module(f"controllers.{app}.{controller[0]}")
+            Module = importlib.import_module(f"controllers.{app[0]}.{controller[0]}")
             Controller = getattr(Module, controller[0])
 
-            # Check for the mothods
-            if len(controller) == 3:
-                methods=controller[2]
-            else:
-                methods=['GET']
+            # Find mothods
+            methods = controller[2]
 
             # Check the URL rule
             if controller[1] == '':
-                rule = f'/{apps[app]}/'
-                endpoint = app
+                rule = f'/{app[1]}/'
+                endpoint = app[0]
             else:
                 url = controller[1].replace('<str:', '<string:')
-                rule = f'/{apps[app]}/{url}/'
-                endpoint = f'{app}-{url}'
+                clean_url = controller[1].replace('<', '')
+                clean_url = clean_url.replace('>', '')
+                clean_url = clean_url.replace(':', '-')
+                clean_url = clean_url.replace('/', '--')
+                
+                rule = f'/{app[1]}/{url}/'
+                endpoint = f'{app[0]}-{clean_url}'
 
             # Generate the view function
             view_func = Controller.as_view(endpoint)
 
-            # Check the apps
-            # Error pages app
-            if app == error_app:
-                # Errors on abort
+            # Route errors app (on abort)
+            if app[0] == error_app:
                 self.app.register_error_handler(int(controller[1]), Controller.get)
 
-            # Root app index controller
-            if app == default_app and controller[1] == '':
+            # Route root app ('/')
+            if app[0] == default_app and controller[1] == '':
                 self.app.add_url_rule(rule='/', endpoint='default-app', view_func=view_func, methods=methods)
 
-            # All apps controllers
+            # Route all apps
             self.app.add_url_rule(rule=rule, endpoint=endpoint, view_func=view_func, methods=methods)
 
 
@@ -255,13 +283,15 @@ class Aurora():
         try:
             return self.app.run(host=host, port=port, debug=self.debug)
 
-        except NameError as err:
-            # Check debug mode
+        except NameError as e:
+            # Developer mode
             if self.debug:
                 # Raise error
-                raise Exception(err)
+                raise Exception(e)
 
-            # Return the result
+            # Production mode
             else:
+                # Print error
+                print(e)
                 return False
 

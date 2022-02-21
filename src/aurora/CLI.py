@@ -74,8 +74,8 @@ class CLI:
             self.cli()
 
         # Handle errorr
-        except NameError as err:
-            raise Exception(err)
+        except NameError as e:
+            raise Exception(e)
 
 
     ##
@@ -564,14 +564,14 @@ class CLI:
                             # Prepare the alert message
                             alert = f'''You cannot use the repair-db command for the primary key.\n'''
                             alert += f'''For renaming the primary key:\n'''
-                            alert += f'''-------------------------------------------\n'''
+                            alert += f'''----------------------------------------------------------\n'''
                             alert += f'''1. Rename its attribute in it's model.\n'''
-                            alert += f'''-------------------------------------------\n'''
+                            alert += f'''----------------------------------------------------------\n'''
                             alert += f'''2. Set the "self.primary_key" value to the new name.\n'''
-                            alert += f'''-------------------------------------------\n'''
+                            alert += f'''----------------------------------------------------------\n'''
                             alert += f'''3. Run the following command:\n'''
                             alert += f'''python manage.py migrate-db\n'''
-                            alert += f'''-------------------------------------------'''
+                            alert += f'''----------------------------------------------------------'''
                             
                             # Alert the user
                             print(alert)
@@ -584,16 +584,16 @@ class CLI:
                             # Prepare the alert message
                             alert = f'''You cannot use the repair-db command for a foreign key.\n'''
                             alert += f'''For renaming a foreign key:\n'''
-                            alert += f'''-------------------------------------------\n'''
+                            alert += f'''----------------------------------------------------------\n'''
                             alert += f'''1. Remove its "related_to" parameter, and run:\n'''
                             alert += f'''python manage.py migrate-db\n'''
-                            alert += f'''-------------------------------------------\n'''
+                            alert += f'''----------------------------------------------------------\n'''
                             alert += f'''2. Repair it using the following command:\n'''
                             alert += f'''python manage.py repair-db\n'''
-                            alert += f'''-------------------------------------------\n'''
+                            alert += f'''----------------------------------------------------------\n'''
                             alert += f'''3. Set the "related_to" parameter again, and rerun:\n'''
                             alert += f'''python manage.py migrate-db\n'''
-                            alert += f'''-------------------------------------------'''
+                            alert += f'''----------------------------------------------------------'''
                             
                             # Alert the user
                             print(alert)
@@ -1358,15 +1358,16 @@ class CLI:
     ##
     @click.command()
     def create_app():
+
         # Prompt for app name
         while True:
-            name = input("App Name: ")
+            app = input("App Name: ")
 
             # Check app name
-            if app_name(name)['result']:
+            if app_name(app)['result']:
                 # App name is taken
-                if name in apps:
-                    print(f'The "{name}" is already registered. Try another name.')
+                if app_exists(app)['result']:
+                    print(f'The "{app}" is already registered. Try another name.')
                     time.sleep(0.1)
 
                 # App name is OK
@@ -1375,26 +1376,25 @@ class CLI:
 
             # Print the error
             else:
-                print(app_name(name)['message'])
+                print(app_name(app)['message'])
 
-        # Prompt for base URL
+        # Prompt for app URL
         while True:
-            url = input("Base URL: ")
+            url = input("App URL: ")
 
-            # Check base URL
-            if base_url(url)['result']:
-                # Base URL is taken
-                if url in apps.values():
+            # Check app URL
+            if app_url(url)['result']:
+                # App URL is taken
+                if app_url_exists(url):
                     print(f'The "{url}" is already registered. Try another URL.')
                     time.sleep(0.1)
 
-                # Base URL is OK
-                else:
-                    break
+                # App URL is free
+                break
 
             # Print the error
             else:
-                print(base_url(url)['message'])
+                print(app_url(url)['message'])
         
         # Begin the process
         try:
@@ -1402,58 +1402,58 @@ class CLI:
             time.sleep(0.1)
 
             # Create folders: (controllers, forms, statics, views)
-            make_dir(f'{app_path + url_div}controllers{url_div + name}')
-            make_dir(f'{app_path + url_div}forms{url_div + name}')
-            make_dir(f'{app_path + url_div + statics + url_div + name}')
-            make_dir(f'{app_path + url_div}views{url_div + name}')
+            make_dir(f'{app_path + url_div}controllers{url_div + app}')
+            make_dir(f'{app_path + url_div}forms{url_div + app}')
+            make_dir(f'{app_path + url_div + statics + url_div + app}')
+            make_dir(f'{app_path + url_div}views{url_div + app}')
 
             # Handle controllers blueprint (copy, unzip, delete)
             controllers_blueprint= f'{aurora_path + url_div}blueprints{url_div}controllers.zip'
-            controllers_file = f'{app_path + url_div}controllers{url_div + name + url_div}controllers.zip'
-            controllers_dir = f'{app_path + url_div}controllers{url_div + name + url_div}'
+            controllers_file = f'{app_path + url_div}controllers{url_div + app + url_div}controllers.zip'
+            controllers_dir = f'{app_path + url_div}controllers{url_div + app + url_div}'
             copy_file(controllers_blueprint, controllers_file)
             unzip_file(controllers_file, controllers_dir)
             delete_file(controllers_file)
 
             # Handle forms blueprint (copy, unzip, delete)
             forms_blueprint= f'{aurora_path + url_div}blueprints{url_div}forms.zip'
-            forms_file = f'{app_path + url_div}forms{url_div + name + url_div}forms.zip'
-            forms_dir = f'{app_path + url_div}forms{url_div + name + url_div}'
+            forms_file = f'{app_path + url_div}forms{url_div + app + url_div}forms.zip'
+            forms_dir = f'{app_path + url_div}forms{url_div + app + url_div}'
             copy_file(forms_blueprint, forms_file)
             unzip_file(forms_file, forms_dir)
             delete_file(forms_file)
 
             # Handle statics blueprint (copy, unzip, delete)
             statics_blueprint= f'{aurora_path + url_div}blueprints{url_div}statics.zip'
-            statics_file = f'{app_path + url_div + statics + url_div + name + url_div}statics.zip'
-            statics_dir = f'{app_path + url_div + statics + url_div + name + url_div}'
+            statics_file = f'{app_path + url_div + statics + url_div + app + url_div}statics.zip'
+            statics_dir = f'{app_path + url_div + statics + url_div + app + url_div}'
             copy_file(statics_blueprint, statics_file)
             unzip_file(statics_file, statics_dir)
             delete_file(statics_file)
 
             # Handle views blueprint (copy, unzip, delete)
             views_blueprint= f'{aurora_path + url_div}blueprints{url_div}views.zip'
-            views_file = f'{app_path + url_div}views{url_div + name + url_div}views.zip'
-            views_dir = f'{app_path + url_div}views{url_div + name + url_div}'
+            views_file = f'{app_path + url_div}views{url_div + app + url_div}views.zip'
+            views_dir = f'{app_path + url_div}views{url_div + app + url_div}'
             copy_file(views_blueprint, views_file)
             unzip_file(views_file, views_dir)
             delete_file(views_file)
 
             # Update layout.html
-            replace_file_string(f'{app_path + url_div}views{url_div + name + url_div}layout.html', 'app_name', name)
+            replace_file_string(f'{app_path + url_div}views{url_div + app + url_div}layout.html', 'app_name', app)
 
             # Update _apps.py
-            new_line = f'''    '{name}': '{url}',\n'''
-            new_line += '''}#do-not-change-me'''
-            replace_file_line(file_path=f'{app_path + url_div}_apps.py', old_line='}#do-not-change-me', new_line=new_line)
+            new_line = f'''    app(name='{app}', url='{url}'),\n'''
+            new_line += ''']#do-not-change-me'''
+            replace_file_line(file_path=f'{app_path + url_div}_apps.py', old_line=']#do-not-change-me', new_line=new_line)
 
             # print the message
             print('The new app created successfully!')
             time.sleep(0.1)
 
         # Handle errors
-        except NameError as err:
-            print(err)
+        except NameError as e:
+            print(e)
 
 
     ##
@@ -1461,15 +1461,17 @@ class CLI:
     ##
     @click.command()
     def delete_app():
+
         # Prompt for app name
         while True:
-            name = input("App Name: ")
+            app = input("App Name: ")
 
             # Check app name
-            if app_name(name)['result']:
+            if app_name(app)['result']:
                 # App not exists
-                if not name.lower() in apps:
-                    print(f'The "{name}" doesn\'t exist!')
+                if not app_exists(app)['result']:
+                    print(f'The "{app}" doesn\'t exist!')
+                    time.sleep(0.1)
 
                 # App exists
                 else:
@@ -1477,17 +1479,21 @@ class CLI:
 
             # Print the error
             else:
-                print(app_name(name)['message'])
+                print(app_name(app)['message'])
+                time.sleep(0.1)
         
         # Alert the user for data loss
         alert = '''WARNING! You will loose the following data perminantly:\n'''
-        alert += f'''  {app_path + url_div}controllers{url_div + name + url_div}*\n'''
-        alert += f'''  {app_path + url_div}forms{url_div + name + url_div}*\n'''
-        alert += f'''  {app_path + url_div + statics + url_div + name + url_div}*\n'''
-        alert += f'''  {app_path + url_div}views{url_div + name + url_div}*\n'''
+        alert += f'''----------------------------------------------------------\n'''
+        alert += f'''{app_path + url_div}controllers{url_div + app + url_div}*\n'''
+        alert += f'''{app_path + url_div}forms{url_div + app + url_div}*\n'''
+        alert += f'''{app_path + url_div + statics + url_div + app + url_div}*\n'''
+        alert += f'''{app_path + url_div}views{url_div + app + url_div}*\n'''
+        alert += f'''----------------------------------------------------------'''
         
         # Print the alert
         print(alert)
+        time.sleep(0.1)
 
         # Prompt the user for confirmation
         confirm = input("Do you want to continue? (yes/no) ")
@@ -1500,22 +1506,23 @@ class CLI:
             # Begin the process
             try:
                 # Delete the app folders
-                delete_dir(f'{app_path + url_div}controllers{url_div + name + url_div}')
-                delete_dir(f'{app_path + url_div}forms{url_div + name + url_div}')
-                delete_dir(f'{app_path + url_div + statics + url_div + name + url_div}')
-                delete_dir(f'{app_path + url_div}views{url_div + name + url_div}')
+                delete_dir(f'{app_path + url_div}controllers{url_div + app + url_div}')
+                delete_dir(f'{app_path + url_div}forms{url_div + app + url_div}')
+                delete_dir(f'{app_path + url_div + statics + url_div + app + url_div}')
+                delete_dir(f'{app_path + url_div}views{url_div + app + url_div}')
 
                 # Update the _apps.py
-                url = apps[name]
-                old_line = f"""'{name}': '{url}',"""
-                replace_file_line(file_path=f'{app_path + url_div}_apps.py', old_line=old_line, new_line='')
+                old_line_1 = rf"""^[ ]*app+[(]+.*name='{app}'."""
+                old_line_2 = rf"""^[ ]*app+[(]+.*name="{app}"."""
+                replace_file_line(file_path=f'{app_path + url_div}_apps.py', old_line=old_line_1, new_line='', regex=True)
+                replace_file_line(file_path=f'{app_path + url_div}_apps.py', old_line=old_line_2, new_line='', regex=True)
                 
                 print('App deleted successfully')
                 time.sleep(0.1)
 
             # Handle errors
-            except NameError as err:
-                print(err)
+            except NameError as e:
+                print(e)
 
         # Rejected
         else:
@@ -1528,15 +1535,17 @@ class CLI:
     ##
     @click.command()
     def create_controller():
+
         # Prompt for app name
         while True:
-            name = input("App Name: ")
+            app = input("App Name: ")
 
             # Check app name
-            if app_name(name)['result']:
+            if app_name(app)['result']:
                 # App not exists
-                if not name.lower() in apps:
-                    print(f'The "{name}" doesn\'t exist!')
+                if not app_exists(app)['result']:
+                    print(f'The "{app}" doesn\'t exist!')
+                    time.sleep(0.1)
 
                 # App exists
                 else:
@@ -1544,70 +1553,48 @@ class CLI:
 
             # Print the error
             else:
-                print(app_name(name)['message'])
+                print(app_name(app)['message'])
+                time.sleep(0.1)
 
         # Controllers info
-        module = importlib.import_module(f'controllers.{name}._controllers')
+        module = importlib.import_module(f'controllers.{app}._controllers')
         controllers = getattr(module, 'controllers')
 
-        # Controller name
-        break_loop = False
+        # Prompt for controller name
         while True:
-            # Check break loop from for loop
-            if break_loop:
-                break
-            
-            # Prompt for controller name
-            ctrl = input("Controller Name: ")
+            controller = input("Controller Name: ")
 
             # Check controller name
-            if controller_name(ctrl)['result']:
-                if len(controllers) == 0:
-                    break
-
+            if controller_name(controller)['result']:
                 # Controller already exists
-                for controller in controllers:
-                    if ctrl in controller:
-                        print(f'The "{ctrl}" already exists!')
-                        break
+                if controller_exists(app, controller)['result']:
+                    print(f'The "{controller}" already exists!')
 
-                    # Controller not exists
-                    else:
-                        break_loop = True
-                        break
+                # Controller not exists
+                else:
+                    break
 
             # Print the error
             else:
-                print(controller_name(ctrl)['message'])
+                print(controller_name(controller)['message'])
 
         # Prompt for controller url
-        break_loop = False
         while True:
-            # Check break loop from for loop
-            if break_loop:
-                break
-            
-            # Prompt for controller url
-            if len(controllers) == 0:
-                url = input("Controller URL (optional): ")
-            else:
-                url = input("Controller URL: ")
+            url = input("Controller URL: ")
 
             # Check controller url
             if controller_url(url)['result']:
+                # First URL can be omitted
                 if len(controllers) == 0:
                     break
 
                 # Controller url already exists
-                for controller in controllers:
-                    if url in controller:
-                        print(f'The "{url}" already exists!')
-                        break
+                if controller_url_exists(app, url):
+                    print(f'The "{url}" already exists!')
 
-                    # Controller url not exists
-                    else:
-                        break_loop = True
-                        break
+                # Controller url not exists
+                else:
+                    break
 
             # Print the error
             else:
@@ -1667,6 +1654,8 @@ class CLI:
             ctrl_methods += """    # GET Method\n"""
             ctrl_methods += """    def get(self):\n"""
             ctrl_methods += """        return 'Page content...'\n\n"""
+            
+            methods = ['GET']
         
         # try the process
         try:
@@ -1676,8 +1665,8 @@ class CLI:
             
             # Controller blueprint
             controller_blueprint = f'{aurora_path + url_div}blueprints{url_div}controller.zip'
-            controller_file = f'{app_path + url_div}controllers{url_div + name + url_div}controller.zip'
-            controller_dir = f'{app_path + url_div}controllers{url_div + name + url_div}'
+            controller_file = f'{app_path + url_div}controllers{url_div + app + url_div}controller.zip'
+            controller_dir = f'{app_path + url_div}controllers{url_div + app + url_div}'
 
             # Copy, unzip, delete blueprint
             copy_file(controller_blueprint, controller_file)
@@ -1685,33 +1674,29 @@ class CLI:
             delete_file(controller_file)
 
             # Rename _controller.py
-            controller_old = f'{app_path + url_div}controllers{url_div + name + url_div}_controller.py'
-            controller_new = f'{app_path + url_div}controllers{url_div + name + url_div + ctrl}.py'
+            controller_old = f'{app_path + url_div}controllers{url_div + app + url_div}_controller.py'
+            controller_new = f'{app_path + url_div}controllers{url_div + app + url_div + controller}.py'
             rename_file(controller_old, controller_new)
 
             # Update new controller
-            replace_file_string(controller_new, 'ControllerName', ctrl)
+            replace_file_string(controller_new, 'ControllerName', controller)
             replace_file_line(controller_new, '...', ctrl_methods)
 
             # Update _controllers.py
-            controllers_file = f'{app_path + url_div}controllers{url_div + name + url_div}_controllers.py'
+            controllers_file = f'{app_path + url_div}controllers{url_div + app + url_div}_controllers.py'
 
-            if methods:
-                controller_data = f"""   ('{ctrl}', '{url}', {methods}),\n"""
-            else:
-                controller_data = f"""   ('{ctrl}', '{url}'),\n"""
+            new_line = f'''    router(controller='{controller}', url='{url}', methods={methods}),\n'''
+            new_line += """]#do-not-change-me"""
 
-            controller_data += """]#do-not-change-me"""
-
-            replace_file_line(controllers_file, ']#do-not-change-me', controller_data)
+            replace_file_line(controllers_file, ']#do-not-change-me', new_line)
 
             # Print result
             print('The new controller created successfuly!')
             time.sleep(0.1)
 
         # Handle errors
-        except NameError as err:
-            print(err)
+        except NameError as e:
+            print(e)
 
 
     ##
@@ -1719,15 +1704,17 @@ class CLI:
     ##
     @click.command()
     def delete_controller():
+
         # Prompt for app name
         while True:
-            name = input("App Name: ")
+            app = input("App Name: ")
 
             # Check app name
-            if app_name(name)['result']:
+            if app_name(app)['result']:
                 # App not exists
-                if not name.lower() in apps:
-                    print(f'The "{name}" doesn\'t exist!')
+                if not app_exists(app)['result']:
+                    print(f'The "{app}" doesn\'t exist!')
+                    time.sleep(0.1)
 
                 # App exists
                 else:
@@ -1735,50 +1722,42 @@ class CLI:
 
             # Print the error
             else:
-                print(app_name(name)['message'])
+                print(app_name(app)['message'])
+                time.sleep(0.1)
 
         # Controllers info
-        module = importlib.import_module(f'controllers.{name}._controllers')
+        module = importlib.import_module(f'controllers.{app}._controllers')
         controllers = getattr(module, 'controllers')
 
         # App controllers
         if len(controllers) == 0:
-            print(f'No controllers found for the {name}!')
+            print(f'No controllers found for "{app}" app!')
             exit()
 
         # Controller name
-        break_loop = False
         while True:
-            # Check break loop from for loop
-            if break_loop:
-                break
-            
             # Prompt for controller name
-            ctrl = input("Controller Name: ")
+            controller = input("Controller Name: ")
 
             # Check controller name
-            if controller_name(ctrl)['result']:
-                i = 1
-                for controller in controllers:
-                    # Controller exists
-                    if ctrl in controller:
-                        break_loop = True
-                        break
+            if controller_name(controller)['result']:
+                # Controller exists
+                if controller_exists(app, controller)['result']:
+                    break
 
-                    # Controller not exists
-                    else:
-                        if len(controllers) == i:
-                            print(f'The "{ctrl}" does\'nt exist!')
-
-                    i += 1
+                # Controller not exists
+                else:
+                    print(f'The "{controller}" does\'nt exist!')
 
             # Print the error
             else:
-                print(controller_name(ctrl)['message'])
+                print(controller_name(controller)['message'])
         
         # Alert the user for data loss
         alert = '''WARNING! You will loose the following data perminantly:\n'''
-        alert += f'''  {app_path + url_div}controllers{url_div + name + url_div + ctrl}.py\n'''
+        alert += f'''----------------------------------------------------------\n'''
+        alert += f'''{app_path + url_div}controllers{url_div + app + url_div + controller}.py\n'''
+        alert += f'''----------------------------------------------------------'''
         
         # Print the alert
         print(alert)
@@ -1794,18 +1773,23 @@ class CLI:
             # Begin the process
             try:
                 # Delete the controller module
-                delete_file(f'{app_path + url_div}controllers{url_div + name + url_div + ctrl}.py')
+                delete_file(f'{app_path + url_div}controllers{url_div + app + url_div + controller}.py')
 
                 # Update _controllers.py
-                controllers_file = f'{app_path + url_div}controllers{url_div + name + url_div}_controllers.py'
-                replace_file_line(controllers_file, f"('{ctrl}',", '')
+                controllers_file = f'{app_path + url_div}controllers{url_div + app + url_div}_controllers.py'
+                
+                old_line_1 = rf"""^[ ]*router+[(]+.*controller='{controller}'."""
+                old_line_2 = rf"""^[ ]*router+[(]+.*controller="{controller}"."""
+
+                replace_file_line(controllers_file, old_line_1, new_line='', regex=True)
+                replace_file_line(controllers_file, old_line_2, new_line='', regex=True)
                 
                 print('Controller deleted successfully')
                 time.sleep(0.1)
 
             # Handle errors
-            except NameError as err:
-                print(err)
+            except NameError as e:
+                print(e)
 
         # Rejected
         else:
@@ -1818,15 +1802,17 @@ class CLI:
     ##
     @click.command()
     def create_view():
+
         # Prompt for app name
         while True:
-            name = input("App Name: ")
+            app = input("App Name: ")
 
             # Check app name
-            if app_name(name)['result']:
+            if app_name(app)['result']:
                 # App not exists
-                if not name.lower() in apps:
-                    print(f'The "{name}" doesn\'t exist!')
+                if not app_exists(app)['result']:
+                    print(f'The "{app}" doesn\'t exist!')
+                    time.sleep(0.1)
 
                 # App exists
                 else:
@@ -1834,7 +1820,8 @@ class CLI:
 
             # Print the error
             else:
-                print(app_name(name)['message'])
+                print(app_name(app)['message'])
+                time.sleep(0.1)
 
         # Prompt for view name
         while True:
@@ -1842,7 +1829,7 @@ class CLI:
 
             # Check the view name
             if view_name(view)['result']:
-                view_file = f'{app_path + url_div}views{url_div + name + url_div + view}.html'
+                view_file = f'{app_path + url_div}views{url_div + app + url_div + view}.html'
 
                 # View exists
                 if os.path.exists(view_file):
@@ -1863,8 +1850,8 @@ class CLI:
             
             # View blueprint
             view_blueprint = f'{aurora_path + url_div}blueprints{url_div}view.zip'
-            view_file = f'{app_path + url_div}views{url_div + name + url_div}view.zip'
-            view_dir = f'{app_path + url_div}views{url_div + name + url_div}'
+            view_file = f'{app_path + url_div}views{url_div + app + url_div}view.zip'
+            view_dir = f'{app_path + url_div}views{url_div + app + url_div}'
             
             # Copy the view blueprint
             copy_file(view_blueprint, view_file)
@@ -1876,20 +1863,20 @@ class CLI:
             delete_file(view_file)
 
             # Rename the view blueprint
-            old_view = f'{app_path + url_div}views{url_div + name + url_div}_view.html'
-            new_view = f'{app_path + url_div}views{url_div + name + url_div + view}.html'
+            old_view = f'{app_path + url_div}views{url_div + app + url_div}_view.html'
+            new_view = f'{app_path + url_div}views{url_div + app + url_div + view}.html'
             rename_file(old_view, new_view)
 
             # update the view blue print
-            replace_file_string(new_view, 'app_name', name)
+            replace_file_string(new_view, 'app_name', app)
 
             # Print the result
             print('The new view created successfully!')
             time.sleep(0.1)
         
         # Handle errors
-        except NameError as err:
-            print(err)
+        except NameError as e:
+            print(e)
 
 
     ##
@@ -1897,15 +1884,17 @@ class CLI:
     ##
     @click.command()
     def delete_view():
+
         # Prompt for app name
         while True:
-            name = input("App Name: ")
+            app = input("App Name: ")
 
             # Check app name
-            if app_name(name)['result']:
+            if app_name(app)['result']:
                 # App not exists
-                if not name.lower() in apps:
-                    print(f'The "{name}" doesn\'t exist!')
+                if not app_exists(app)['result']:
+                    print(f'The "{app}" doesn\'t exist!')
+                    time.sleep(0.1)
 
                 # App exists
                 else:
@@ -1913,7 +1902,8 @@ class CLI:
 
             # Print the error
             else:
-                print(app_name(name)['message'])
+                print(app_name(app)['message'])
+                time.sleep(0.1)
 
         # Prompt for view name
         while True:
@@ -1921,7 +1911,7 @@ class CLI:
 
             # Check the view name
             if view_name(view)['result']:
-                view_file = f'{app_path + url_div}views{url_div + name + url_div + view}.html'
+                view_file = f'{app_path + url_div}views{url_div + app + url_div + view}.html'
 
                 # View not exists
                 if not os.path.exists(view_file):
@@ -1937,7 +1927,9 @@ class CLI:
         
         # Alert the user for data loss
         alert = '''WARNING! You will loose the following data perminantly:\n'''
-        alert += f'''  {app_path + url_div}views{url_div + name + url_div + view}.html\n'''
+        alert += f'''----------------------------------------------------------\n'''
+        alert += f'''{app_path + url_div}views{url_div + app + url_div + view}.html\n'''
+        alert += f'''----------------------------------------------------------'''
         
         # Print the alert
         print(alert)
@@ -1953,7 +1945,7 @@ class CLI:
                 time.sleep(0.1)
 
                 # Delete the view file
-                view_file = f'{app_path + url_div}views{url_div + name + url_div + view}.html'
+                view_file = f'{app_path + url_div}views{url_div + app + url_div + view}.html'
                 delete_file(view_file)
 
                 # Print the result
@@ -1961,8 +1953,8 @@ class CLI:
                 time.sleep(0.1)
 
             # Handle errors
-            except NameError as err:
-                print(err)
+            except NameError as e:
+                print(e)
 
         # Rejected
         else:
@@ -2050,8 +2042,8 @@ class CLI:
             time.sleep(0.1)
         
         # Handle errors
-        except NameError as err:
-            print(err)
+        except NameError as e:
+            print(e)
 
 
     ##
@@ -2079,7 +2071,9 @@ class CLI:
         
         # Alert the user for data loss
         alert = '''WARNING! You will loose the following data perminantly:\n'''
-        alert += f'''  {app_path + url_div}models{url_div + model}.py\n'''
+        alert += f'''----------------------------------------------------------\n'''
+        alert += f'''{app_path + url_div}models{url_div + model}.py\n'''
+        alert += f'''----------------------------------------------------------'''
         
         # Print the alert
         print(alert)
@@ -2115,8 +2109,8 @@ class CLI:
                 time.sleep(0.1)
 
             # Handle errors
-            except NameError as err:
-                print(err)
+            except NameError as e:
+                print(e)
 
         # Rejected
         else:
@@ -2129,15 +2123,17 @@ class CLI:
     ##
     @click.command()
     def create_form():
+
         # Prompt for app name
         while True:
-            name = input("App Name: ")
+            app = input("App Name: ")
 
             # Check app name
-            if app_name(name)['result']:
+            if app_name(app)['result']:
                 # App not exists
-                if not name.lower() in apps:
-                    print(f'The "{name}" doesn\'t exist!')
+                if not app_exists(app)['result']:
+                    print(f'The "{app}" doesn\'t exist!')
+                    time.sleep(0.1)
 
                 # App exists
                 else:
@@ -2145,7 +2141,8 @@ class CLI:
 
             # Print the error
             else:
-                print(app_name(name)['message'])
+                print(app_name(app)['message'])
+                time.sleep(0.1)
 
         # Fetch registered forms for the app
         forms_module = importlib.import_module(f'forms.{name}._forms')
@@ -2176,8 +2173,8 @@ class CLI:
 
             # Form blueprint
             form_blueprint = f'{aurora_path + url_div}blueprints{url_div}form.zip'
-            form_file = f'{app_path + url_div}forms{url_div + name + url_div}form.zip'
-            form_dir = f'{app_path + url_div}forms{url_div + name + url_div}'
+            form_file = f'{app_path + url_div}forms{url_div + app + url_div}form.zip'
+            form_dir = f'{app_path + url_div}forms{url_div + app + url_div}'
             
             # Copy the form blueprint
             copy_file(form_blueprint, form_file)
@@ -2189,15 +2186,15 @@ class CLI:
             delete_file(form_file)
 
             # Rename the _form.py
-            old_form = f'{app_path + url_div}forms{url_div + name + url_div}_form.py'
-            new_form = f'{app_path + url_div}forms{url_div + name + url_div + form}.py'
+            old_form = f'{app_path + url_div}forms{url_div + app + url_div}_form.py'
+            new_form = f'{app_path + url_div}forms{url_div + app + url_div + form}.py'
             rename_file(old_form, new_form)
 
             # Update the form blue print
             replace_file_string(new_form, 'FormName', form)
 
             # Update the _forms.py
-            forms_file = f'{app_path + url_div}forms{url_div + name + url_div}_forms.py'
+            forms_file = f'{app_path + url_div}forms{url_div + app + url_div}_forms.py'
 
             forms_data = f"""    '{form}',\n"""
             forms_data += """)#do-not-change-me"""
@@ -2205,7 +2202,7 @@ class CLI:
             replace_file_line(forms_file, ')#do-not-change-me', forms_data)
 
             # Update the __init__.py
-            init_file = f'{app_path + url_div}forms{url_div + name + url_div}__init__.py'
+            init_file = f'{app_path + url_div}forms{url_div + app + url_div}__init__.py'
 
             if len(forms) == 0:
                 replace_file_line(init_file, '...', '')
@@ -2220,8 +2217,8 @@ class CLI:
             time.sleep(0.1)
         
         # Handle errors
-        except NameError as err:
-            print(err)
+        except NameError as e:
+            print(e)
 
 
     ##
@@ -2229,15 +2226,17 @@ class CLI:
     ##
     @click.command()
     def delete_form():
+
         # Prompt for app name
         while True:
-            name = input("App Name: ")
+            app = input("App Name: ")
 
             # Check app name
-            if app_name(name)['result']:
+            if app_name(app)['result']:
                 # App not exists
-                if not name.lower() in apps:
-                    print(f'The "{name}" doesn\'t exist!')
+                if not app_exists(app)['result']:
+                    print(f'The "{app}" doesn\'t exist!')
+                    time.sleep(0.1)
 
                 # App exists
                 else:
@@ -2245,7 +2244,8 @@ class CLI:
 
             # Print the error
             else:
-                print(app_name(name)['message'])
+                print(app_name(app)['message'])
+                time.sleep(0.1)
 
         # Fetch registered forms for the app
         forms_module = importlib.import_module(f'forms.{name}._forms')
@@ -2271,7 +2271,9 @@ class CLI:
         
         # Alert the user for data loss
         alert = '''WARNING! You will loose the following data perminantly:\n'''
-        alert += f'''  {app_path + url_div}forms{url_div + name + url_div + form}.py\n'''
+        alert += f'''----------------------------------------------------------\n'''
+        alert += f'''{app_path + url_div}forms{url_div + app + url_div + form}.py\n'''
+        alert += f'''----------------------------------------------------------'''
         
         # Print the alert
         print(alert)
@@ -2287,15 +2289,15 @@ class CLI:
                 time.sleep(0.1)
 
                 # Delete the form module
-                form_file = f'{app_path + url_div}forms{url_div + name + url_div + form}.py'
+                form_file = f'{app_path + url_div}forms{url_div + app + url_div + form}.py'
                 delete_file(form_file)
 
                 # Update the _forms.py
-                forms_file = f'{app_path + url_div}forms{url_div + name + url_div}_forms.py'
+                forms_file = f'{app_path + url_div}forms{url_div + app + url_div}_forms.py'
                 replace_file_line(forms_file, f"'{form}',", '')
 
                 # Update the __init__.py
-                init_file = f'{app_path + url_div}forms{url_div + name + url_div}__init__.py'
+                init_file = f'{app_path + url_div}forms{url_div + app + url_div}__init__.py'
 
                 if len(forms) == 1:
                     replace_file_line(init_file, f'from .{form} import {form}', '    ...\n')
@@ -2307,8 +2309,8 @@ class CLI:
                 time.sleep(0.1)
 
             # Handle errors
-            except NameError as err:
-                print(err)
+            except NameError as e:
+                print(e)
 
         # Rejected
         else:
@@ -2510,8 +2512,8 @@ class CLI:
                 print('Database reseted successfully!')
 
             # Handle errors
-            except NameError as err:
-                print(err)
+            except NameError as e:
+                print(e)
 
         # Rejected
         else:

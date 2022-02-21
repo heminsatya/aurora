@@ -259,13 +259,14 @@ class Database:
 
         # Check required params
         if not sql:
-            # Check debug mode
+            # Developer mode
             if self.debug:
                 # Raise error
                 raise Exception("You must provide the required parameters: ['sql']")
 
-            # Return the result
+            # Production mode
             else:
+                print("You must provide the required parameters: ['sql']")
                 return False
 
         # Try to query to the database

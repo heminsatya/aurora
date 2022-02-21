@@ -4,6 +4,7 @@
 import importlib
 from os import replace
 from datetime import datetime, timedelta
+from .helpers import route_url
 from flask import session, request, make_response, jsonify, render_template
 from werkzeug.security import check_password_hash, generate_password_hash
 
@@ -55,60 +56,8 @@ def redirect(url:str, code:int=302):
 # @return object
 ##
 def redirect_to(app:str, controller:str=None, code:int=302):
-    # Check app name
-    if not app in apps:
-        # Produce error message
-        error = f'The "{app}" app doesn\'t exist!'
-
-        # Check debug mode
-        if debug:
-            # Raise error
-            raise Exception(error)
-
-        else:
-            # Print error
-            print(error)
-            exit()
-
-    # Controller inserted
-    if controller:
-        # Controllers info
-        module = importlib.import_module(f'controllers.{app}._controllers')
-        controllers = getattr(module, 'controllers')
-
-        # Check controller existence
-        controller_exists = False
-        while True:
-            i = 0
-            for ctrl in controllers:
-                # Controller exists
-                if controller in ctrl:
-                    controller_exists = True
-                    break
-
-                i += 1
-
-            break
-
-        if not controller_exists:
-            # Produce error message
-            error = f'The "{app}" app doesn\'t have the "{controller}" controller!'
-
-            # Check debug mode
-            if debug:
-                # Raise error
-                raise Exception(error)
-
-            else:
-                # Print error
-                print(error)
-                exit()
-
-        url = f'/{apps[app]}/{controllers[i][1]}/'
-
-    # Controller not inserted
-    else:
-        url = f'/{apps[app]}/'
+    # Fetch the route final url
+    url = route_url(app, controller)
     
     # Return result
     return redirect(url=url, code=code)
@@ -299,60 +248,9 @@ def unset_cookie(name:str, data:dict={}):
 # @return object
 ##
 def login_required(app:str, controller:str=None, validate:str='user'):
-    # Check app name
-    if not app in apps:
-        # Produce error message
-        error = f'The "{app}" app doesn\'t exist!'
 
-        # Check debug mode
-        if debug:
-            # Raise error
-            raise Exception(error)
-
-        else:
-            # Print error
-            print(error)
-            exit()
-    
-    # Controller inserted
-    if controller:
-        # Controllers info
-        module = importlib.import_module(f'controllers.{app}._controllers')
-        controllers = getattr(module, 'controllers')
-
-        # Check controller existence
-        controller_exists = False
-        while True:
-            i = 0
-            for ctrl in controllers:
-                # Controller exists
-                if controller in ctrl:
-                    controller_exists = True
-                    break
-
-                i += 1
-
-            break
-
-        if not controller_exists:
-            # Produce error message
-            error = f'The "{app}" app doesn\'t have the "{controller}" controller!'
-
-            # Check debug mode
-            if debug:
-                # Raise error
-                raise Exception(error)
-
-            else:
-                # Print error
-                print(error)
-                exit()
-
-        url = f'/{apps[app]}/{controllers[i][1]}/'
-
-    # Controller not inserted
-    else:
-        url = f'/{apps[app]}/'
+    # Fetch the route final url
+    url = route_url(app, controller)
 
     def wrapper(inner):
         def decorator(*args, **kwargs):
@@ -386,60 +284,9 @@ def login_required(app:str, controller:str=None, validate:str='user'):
 # @return object
 ##
 def login_abort(app:str, controller:str=None, validate:str='user'):
-    # Check app name
-    if not app in apps:
-        # Produce error message
-        error = f'The "{app}" app doesn\'t exist!'
 
-        # Check debug mode
-        if debug:
-            # Raise error
-            raise Exception(error)
-
-        else:
-            # Print error
-            print(error)
-            exit()
-
-    # Controller inserted
-    if controller:
-        # Controllers info
-        module = importlib.import_module(f'controllers.{app}._controllers')
-        controllers = getattr(module, 'controllers')
-
-        # Check controller existence
-        controller_exists = False
-        while True:
-            i = 0
-            for ctrl in controllers:
-                # Controller exists
-                if controller in ctrl:
-                    controller_exists = True
-                    break
-
-                i += 1
-
-            break
-
-        if not controller_exists:
-            # Produce error message
-            error = f'The "{app}" app doesn\'t have the "{controller}" controller!'
-
-            # Check debug mode
-            if debug:
-                # Raise error
-                raise Exception(error)
-
-            else:
-                # Print error
-                print(error)
-                exit()
-
-        url = f'/{apps[app]}/{controllers[i][1]}/'
-
-    # Controller not inserted
-    else:
-        url = f'/{apps[app]}/'
+    # Fetch the route final url
+    url = route_url(app, controller)
 
     def wrapper(inner):
         def decorator(*args, **kwargs):
@@ -486,4 +333,3 @@ def check_password(hashed_password, requested_password):
     # Invalid password
     else:
         return False
-

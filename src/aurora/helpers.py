@@ -6,8 +6,272 @@ import re
 import string
 import random
 import shutil
+import importlib
 from zipfile import ZipFile
 from pathlib import Path
+
+
+##########
+# Aurora #
+##########
+##
+# @desc Generates controller routes
+# 
+# @param controller: str -- The controller class name
+# @param url: str -- The controller url
+# @param methods: list -- The controller REST methods
+# 
+# @return tuple
+##
+def router(controller:str, url:str='', methods:list=['GET']):
+    # Check required params
+    if not controller:
+        # Raise error
+        raise Exception("You must provide the required parameters: ['controller']")
+
+    # Check controller name
+    if not controller_name(controller)['result']:
+        # Raise error
+        raise Exception(controller_name(controller)['message'])
+
+    # Check controller url
+    if url and not controller_url(url)['result']:
+        # Raise error
+        raise Exception(controller_url(url)['message'])
+
+    # Check controller methods
+    if  not controller_methods(methods)['result']:
+        # Raise error
+        raise Exception(controller_methods(methods)['message'])
+
+    return (controller, url, methods)
+
+
+##
+# @desc Generates app route
+# 
+# @param name: str -- The app name
+# @param url: str -- The app base url
+# 
+# @return tuple
+##
+def app(name:str, url:str):
+    # Check required params
+    if not name or not url:
+        # Raise error
+        raise Exception("You must provide the required parameters: ['name', 'url']")
+
+    # Check app name
+    if not app_name(name)['result']:
+        # Raise error
+        raise Exception(app_name(name)['message'])
+
+    # Check app url
+    if not app_url(url)['result']:
+        # Raise error
+        raise Exception(app_url(url)['message'])
+
+    return (name, url)
+
+
+##
+# @desc Check if an app exists
+# 
+# @param app: str -- The app name
+# @param apps: list -- The apps list
+# 
+# @return dict
+##
+def app_exists(app:str):
+    # Apps info
+    apps_module = importlib.import_module(f'_apps')
+    apps = getattr(apps_module, 'apps')
+
+    exists = False
+    url = ''
+    while True:
+        i = 0
+        for route in apps:
+            # App exists
+            if app == route[0]:
+                url = route[1]
+                exists = True
+                break
+
+            i += 1
+
+        break
+
+    # App exists
+    if exists:
+        return {
+            'result': True, 
+            'url': f'{url}'
+        }
+
+    # App not exists
+    else:
+        return {
+            'result': False, 
+            'message': f'The "{app}" app doesn\'t exist!'
+        }
+
+
+##
+# @desc Check if an app url exists
+# 
+# @param url: str -- The app url
+# 
+# @return bool
+##
+def app_url_exists(url:str):
+    # Apps info
+    apps_module = importlib.import_module(f'_apps')
+    apps = getattr(apps_module, 'apps')
+
+    exists = False
+    while True:
+        i = 0
+        for route in apps:
+            # App url exists
+            if url == route[1]:
+                exists = True
+                break
+
+            i += 1
+
+        break
+
+    # App url exists
+    if exists:
+        return True
+
+    # App url not exists
+    else:
+        return False
+
+
+##
+# @desc Check if an controller exists
+# 
+# @param app: str -- The app name
+# @param controller: str -- The controller name
+# @param controller: list -- The controllers list
+# 
+# @return dict
+##
+def controller_exists(app:str, controller:str):
+    # Controllers info
+    controllers_module = importlib.import_module(f'controllers.{app}._controllers')
+    controllers = getattr(controllers_module, 'controllers')
+
+    exists = False
+    url = ''
+    while True:
+        i = 0
+        for route in controllers:
+            # App exists
+            if controller == route[0]:
+                url = route[1]
+                exists = True
+                break
+
+            i += 1
+
+        break
+
+    # App exists
+    if exists:
+        return {
+            'result': True, 
+            'url': f'{url}'
+        }
+
+    # App not exists
+    else:
+        return {
+            'result': False, 
+            'message': f'The "{app}" app doesn\'t have the "{controller}" controller!'
+        }
+
+
+##
+# @desc Check if an app url exists
+# 
+# @param app: str -- The app name
+# @param url: str -- The app url
+# 
+# @return dict
+##
+def controller_url_exists(app:str, url:str=''):
+    # Controllers info
+    controllers_module = importlib.import_module(f'controllers.{app}._controllers')
+    controllers = getattr(controllers_module, 'controllers')
+
+    exists = False
+    while True:
+        i = 0
+        for route in controllers:
+            # Controller url exists
+            if url == route[1]:
+                exists = True
+                break
+
+            i += 1
+
+        break
+
+    # Controller url exists
+    if exists:
+        return True
+
+    # Controller url not exists
+    else:
+        return False
+
+
+##
+# @desc Produces the final url for a route (app url + controller url)
+# 
+# @param app: str - The app name
+# @param controller: str - The app controller name
+#
+# @return object
+##
+def route_url(app:str, controller:str=None):
+    # Apps info
+    apps_module = importlib.import_module(f'_apps')
+    apps = getattr(apps_module, 'apps')
+
+    app_url = ''
+
+    # App not exists
+    if not app_exists(app)['result']:
+        # Raise error
+        raise Exception(app_exists(app)['message'])
+
+    # App exists
+    else:
+        app_url = app_exists(app)['url']
+
+    # Controller inserted
+    if controller:
+        # Controller not exists
+        if not controller_exists(app, controller)['result']:
+            # Raise error
+            raise Exception(controller_exists(app, controller)['message'])
+
+        # Controller exists
+        else:
+            controller_url = controller_exists(app, controller)['url']
+
+        url = f'/{app_url}/{controller_url}/'
+
+    # Controller not inserted
+    else:
+        url = f'/{app_url}/'
+
+    return url
 
 
 ###################
@@ -607,18 +871,18 @@ def app_name(name:str):
 
 
 ##
-# @desc Validates base url
+# @desc Validates app url
 #
-# @param url: str - The app name
+# @param url: str - The app url
 #
 # @retun dict
 ##
-def base_url(url:str):
-    # Check required base URL
+def app_url(url:str):
+    # Check required app URL
     if not url:
         return {
             'result': False, 
-            'message': 'The base URL is required!'
+            'message': 'The app URL is required!'
         }
 
     # Regular expression
@@ -635,7 +899,7 @@ def base_url(url:str):
     else:
         return {
             'result': False, 
-            'message': 'The base URL is invalid.\nValid characters: a-z, -'
+            'message': 'The app URL is invalid.\nValid characters: a-z, -'
         }
 
 
@@ -688,7 +952,7 @@ def controller_url(url:str):
         }
 
     # Regular expression
-    regex = '^[a-z]+[a-z-<>:/]*$'
+    regex = '^[a-z0-9]+[a-z0-9-<>:/]*$'
 
     # Valid URL
     if re.match(regex, url):
@@ -701,7 +965,7 @@ def controller_url(url:str):
     else:
         return {
             'result': False, 
-            'message': 'The controller URL is invalid.\nValid characters: a-z, -, /, <, :, >'
+            'message': 'The controller URL is invalid.\nValid characters: a-z, 0-9, -, /, <, :, >'
         }
 
 
@@ -903,3 +1167,4 @@ def column_name(name:str):
             'result': False, 
             'message': 'Database column names must be in "snake_case" form with at least two a-z, _ characters.'
         }
+
