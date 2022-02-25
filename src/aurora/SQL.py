@@ -41,6 +41,7 @@ class Database:
         self.conn = None
         self.cur = None
         self.sp_char = None
+        self.development = getattr(self.config, "DEVELOPMENT")
         self.debug = getattr(self.config, 'DEBUG')
         self.db_system = getattr(self.config, 'DB_SYSTEM')
         self.app_path = getattr(self.config, "ROOT_PATH")
@@ -293,7 +294,7 @@ class Database:
     # Exist Methods #
     #################
     ##
-    # CAUTION! Use this methods only in developement.
+    # CAUTION! Use this methods only in development.
     #
     # @desc Checks if a column is a foreign key
     #
@@ -389,7 +390,7 @@ class Database:
 
 
     ##
-    # CAUTION! Use this methods only in developement.
+    # CAUTION! Use this methods only in development.
     #
     # @desc Checks if a column exists
     #
@@ -449,7 +450,7 @@ class Database:
 
 
     ##
-    # CAUTION! Use this methods only in developement.
+    # CAUTION! Use this methods only in development.
     #
     # @desc Checks if a table exist
     #
@@ -522,7 +523,7 @@ class Database:
 
 
     ##
-    # CAUTION! Use this methods only in developement.
+    # CAUTION! Use this methods only in development.
     #
     # @desc Checks if a database (file - SQLite) exists
     #
@@ -755,7 +756,7 @@ class Database:
 
 
     ##
-    # CAUTION! Use this methods only in developement.
+    # CAUTION! Use this methods only in development.
     #
     # @desc Adds a foreign key to an existing column (MySQL and Postgres)
     #
@@ -771,7 +772,21 @@ class Database:
     #
     # @return bool
     ##
-    def _create_fk(self, table:str, column:str, r_table:str, r_column:str, on_update:str='CASCADE', on_delete:str='CASCADE'):
+    def _create_fk(self, table:str, column:str, r_table:str, r_column:str, fk_symbol:str=None, on_update:str='CASCADE', on_delete:str='CASCADE'):
+
+        # Check the development
+        if not self.development:
+            alert = '''----------------------------------------------------------\n'''
+            alert += '''INFO!\n'''
+            alert += '''This method is only available in development!\n'''
+            alert += '''----------------------------------------------------------'''
+
+            # Alert the user
+            print(alert)
+
+            # Exit the program
+            exit()
+
         # Check the database system
         if not self.db_system == 'Postgres' and not self.db_system == 'MySQL':
             # Developer mode
@@ -832,9 +847,29 @@ class Database:
                 print('The foreign key already exists!')
                 return False
 
+        # Check on_update & on_delete
+        if on_update or on_delete:
+            valid_rel = ['RESTRICT', 'CASCADE', 'SET NULL', 'NO ACTION', 'SET DEFAULT']
+
+            if not on_update.upper() in valid_rel or not on_delete.upper() in valid_rel:
+                # Prepare the alert message
+                alert = f'''The "on_update" and/or "on_delete" parameters are invalid!\n'''
+                alert += f'Valid characters are: {valid_rel}'
+                
+                # Developer mode
+                if self.debug:
+                    # Raise error
+                    raise TypeError(alert)
+
+                # Production mode
+                else:
+                    print(alert)
+                    return False
+
         # Everything is OK
         # Foreign key symbol
-        fk_symbol = f'fk_{table}_{r_table}'
+        if not fk_symbol:
+            fk_symbol = f'fk_{table}_{r_table}'
 
         # ON UPDATE statement
         if on_update:
@@ -890,7 +925,7 @@ class Database:
 
 
     ##
-    # CAUTION! Use this methods only in developement.
+    # CAUTION! Use this methods only in development.
     #
     # @desc Adds a new column
     #
@@ -903,6 +938,19 @@ class Database:
     # @return bool
     ##
     def _create_column(self, table:str, column:str, datatype:str, constraints:str=None):
+
+        # Check the development
+        if not self.development:
+            alert = '''----------------------------------------------------------\n'''
+            alert += '''INFO!\n'''
+            alert += '''This method is only available in development!\n'''
+            alert += '''----------------------------------------------------------'''
+
+            # Alert the user
+            print(alert)
+
+            # Exit the program
+            exit()
 
         # Check required params
         if not table or not column or not datatype:
@@ -979,7 +1027,7 @@ class Database:
 
 
     ##
-    # CAUTION! Use this methods only in developement.
+    # CAUTION! Use this methods only in development.
     #
     # @desc Creates a table if not exists.
     #
@@ -1021,6 +1069,19 @@ class Database:
     ##
     def _create_table(self, table:str, col_type:dict, primary_key:str=None, unique:list=[], not_null:list=[], 
         default:dict={}, check:dict={}, foreign_key:dict={}):
+
+        # Check the development
+        if not self.development:
+            alert = '''----------------------------------------------------------\n'''
+            alert += '''INFO!\n'''
+            alert += '''This method is only available in development!\n'''
+            alert += '''----------------------------------------------------------'''
+
+            # Alert the user
+            print(alert)
+
+            # Exit the program
+            exit()
 
         # Placeholders
         data_list = []
@@ -1146,7 +1207,7 @@ class Database:
 
 
     ##
-    # CAUTION! Use this methods only in developement.
+    # CAUTION! Use this methods only in development.
     #
     # @desc Creates a new database (file - SQLite)
     #
@@ -1160,6 +1221,19 @@ class Database:
     # @return bool
     ##
     def _create_database(self, database:str=None):
+
+        # Check the development
+        if not self.development:
+            alert = '''----------------------------------------------------------\n'''
+            alert += '''INFO!\n'''
+            alert += '''This method is only available in development!\n'''
+            alert += '''----------------------------------------------------------'''
+
+            # Alert the user
+            print(alert)
+
+            # Exit the program
+            exit()
 
         # Check the required params
         if not database:
@@ -2026,7 +2100,7 @@ class Database:
 
 
     ##
-    # CAUTION! Use this methods only in developement.
+    # CAUTION! Use this methods only in development.
     #
     # @desc Updates a column
     #
@@ -2043,6 +2117,19 @@ class Database:
     # @return bool
     ##
     def _update_column(self, table:str, old_col:str, new_col:str, datatype:str, constraints:str=None):
+
+        # Check the development
+        if not self.development:
+            alert = '''----------------------------------------------------------\n'''
+            alert += '''INFO!\n'''
+            alert += '''This method is only available in development!\n'''
+            alert += '''----------------------------------------------------------'''
+
+            # Alert the user
+            print(alert)
+
+            # Exit the program
+            exit()
 
         # Check required params
         if not table  or not old_col or not new_col or not datatype:
@@ -2115,7 +2202,7 @@ class Database:
 
 
     ##
-    # CAUTION! Use this methods only in developement.
+    # CAUTION! Use this methods only in development.
     #
     # @desc Renames a table if exists
     #
@@ -2128,6 +2215,19 @@ class Database:
     # @return bool
     ##
     def _update_table(self, old_table:str, new_table:str):
+
+        # Check the development
+        if not self.development:
+            alert = '''----------------------------------------------------------\n'''
+            alert += '''INFO!\n'''
+            alert += '''This method is only available in development!\n'''
+            alert += '''----------------------------------------------------------'''
+
+            # Alert the user
+            print(alert)
+
+            # Exit the program
+            exit()
 
         # Check required params
         if not old_table or not new_table:
@@ -2504,7 +2604,7 @@ class Database:
 
 
     ##
-    # CAUTION! Use this methods only in developement.
+    # CAUTION! Use this methods only in development.
     #
     # @desc Drops a foreign key from an existing table (MySQL and Postgres)
     #
@@ -2517,6 +2617,20 @@ class Database:
     # @return bool
     ##
     def _delete_fk(self, table:str, column:str, fk_symbol:str, confirm:bool=False):
+
+        # Check the development
+        if not self.development:
+            alert = '''----------------------------------------------------------\n'''
+            alert += '''INFO!\n'''
+            alert += '''This method is only available in development!\n'''
+            alert += '''----------------------------------------------------------'''
+
+            # Alert the user
+            print(alert)
+
+            # Exit the program
+            exit()
+
         # Check the database system
         if not self.db_system == 'Postgres' and not self.db_system == 'MySQL':
             # Developer mode
@@ -2604,7 +2718,7 @@ class Database:
     ##
     # DANGER! Be super careful. This method drops your column permanently.
     #
-    # CAUTION! Use this methods only in developement.
+    # CAUTION! Use this methods only in development.
     #
     # @desc Drops a column from a table
     #
@@ -2618,6 +2732,19 @@ class Database:
     # @return bool
     ##
     def _delete_column(self, table:str, column:str, confirm:bool=False):
+
+        # Check the development
+        if not self.development:
+            alert = '''----------------------------------------------------------\n'''
+            alert += '''INFO!\n'''
+            alert += '''This method is only available in development!\n'''
+            alert += '''----------------------------------------------------------'''
+
+            # Alert the user
+            print(alert)
+
+            # Exit the program
+            exit()
 
         # Check required params
         if not table or not column or not confirm:
@@ -2705,7 +2832,7 @@ class Database:
     ##
     # DANGER! Be super careful. This method drops your table permanently.
     #
-    # CAUTION! Use this methods only in developement.
+    # CAUTION! Use this methods only in development.
     #
     # @desc Drops a table if exists
     #
@@ -2718,6 +2845,19 @@ class Database:
     # @return bool
     ##
     def _delete_table(self, table:str, confirm:bool=False):
+
+        # Check the development
+        if not self.development:
+            alert = '''----------------------------------------------------------\n'''
+            alert += '''INFO!\n'''
+            alert += '''This method is only available in development!\n'''
+            alert += '''----------------------------------------------------------'''
+
+            # Alert the user
+            print(alert)
+
+            # Exit the program
+            exit()
 
         # Check required params
         if not table or not confirm:
@@ -2767,7 +2907,7 @@ class Database:
     ##
     # DANGER! Be super careful. This method drops your database permanently.
     #
-    # CAUTION! Use this methods only in developement.
+    # CAUTION! Use this methods only in development.
     #
     # @desc Drops a database (Removes a database file for SQLite)
     #
@@ -2781,6 +2921,19 @@ class Database:
     # @return bool
     ##
     def _delete_database(self, database:str=None, confirm:str=False):
+
+        # Check the development
+        if not self.development:
+            alert = '''----------------------------------------------------------\n'''
+            alert += '''INFO!\n'''
+            alert += '''This method is only available in development!\n'''
+            alert += '''----------------------------------------------------------'''
+
+            # Alert the user
+            print(alert)
+
+            # Exit the program
+            exit()
 
         # Check the required params
         if not database or not confirm:

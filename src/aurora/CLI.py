@@ -30,6 +30,7 @@ else:
 
 # Fetch statics
 config = importlib.import_module('config')
+development = getattr(config, "DEVELOPMENT")
 statics = getattr(config, "STATICS")
 
 # Fetch registered apps
@@ -64,6 +65,20 @@ class CLI:
     # @desc Constructor method
     ##
     def __init__(self):
+
+        # Check the development
+        if not development:
+            alert = '''----------------------------------------------------------\n'''
+            alert += '''INFO!\n'''
+            alert += '''Aurora CLI app is only available in development!\n'''
+            alert += '''----------------------------------------------------------'''
+
+            # Alert the user
+            print(alert)
+            time.sleep(0.1)
+
+            # Exit the program
+            exit()
 
         # Try to run the CLI application
         try:
@@ -2554,7 +2569,7 @@ class CLI:
         # Alert the user for data loss
         alert = '''----------------------------------------------------------\n'''
         alert += '''DANGER!:\n'''
-        alert += '''By reseting the database, you will loose all migrations and the data inserted into the database perminantly.\n'''
+        alert += '''By resetting the database, you will lose all migrations and the data inserted into the database permanently.\n'''
         alert += '''----------------------------------------------------------'''
         
         print(alert)

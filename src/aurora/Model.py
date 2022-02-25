@@ -96,6 +96,9 @@ class Model:
 
         # Safe type is True
         if safe_type:
+            # Convert datatype to lowercase
+            datatype = datatype.lower()
+
             # Safe datatypse
             safe_types = [
                 'str', 
@@ -439,7 +442,7 @@ class Model:
         # Result dictionary placeholder
         result = {}
         
-        result['datatype'] = datatype
+        result['datatype'] = datatype.upper()
         result['unique'] = True if unique else False
         result['not_null'] = True if not_null else False
         result['default'] = default if not default == None else None
@@ -467,7 +470,7 @@ class Model:
 
 
     ##
-    # CAUTION! Use this methods only in developement.
+    # CAUTION! Use this methods only in development.
     #
     # @desc Checks if a database (file - SQLite) exists
     #
