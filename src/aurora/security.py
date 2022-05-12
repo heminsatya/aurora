@@ -5,7 +5,7 @@ import importlib
 from os import replace
 from datetime import datetime, timedelta
 from .helpers import route_url
-from flask import session, request, make_response, jsonify, render_template
+from flask import session, request, make_response, jsonify, render_template, abort as flask_abort, redirect as flask_redirect
 from werkzeug.security import check_password_hash, generate_password_hash
 
 # Fetch configuretion module
@@ -25,11 +25,8 @@ apps = getattr(apps_module, "apps")
 # @return object
 ##
 def abort(code:int=404):
-    # Dependencies
-    from flask import abort
-
     # Return result
-    return abort(code=code)
+    return flask_abort(status=code)
 
 
 ##
@@ -40,11 +37,8 @@ def abort(code:int=404):
 # @return object
 ##
 def redirect(url:str, code:int=302):
-    # Dependencies
-    from flask import redirect
-
     # Return results
-    return redirect(location=url, code=code)
+    return flask_redirect(location=url, code=code)
 
 
 ##

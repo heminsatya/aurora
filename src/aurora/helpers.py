@@ -952,7 +952,7 @@ def controller_url(url:str):
         }
 
     # Regular expression
-    regex = '^[a-z0-9]+[a-z0-9-<>:/]*$'
+    regex = '^[a-z0-9<]+[a-z0-9-<>:/]*$'
 
     # Valid URL
     if re.match(regex, url):
