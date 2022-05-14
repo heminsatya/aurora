@@ -34,7 +34,12 @@ class Aurora():
         # Import the _apps module
         self.apps = importlib.import_module("_apps")
 
-        # Try to serve the root app
+        # App multi-language 
+        self.multi_lang = getattr(self.config, "MULTI_LANG")
+        self.default_lang = getattr(self.config, "DEFAULT_LANG")
+        self.languages = getattr(self.config, "LANGUAGES")
+
+        # Serve the root app
         try:
             self.serve()
         
@@ -96,27 +101,27 @@ class Aurora():
         def global_variables():
             translate = {}
             auto_globals = {}
-
+    
             # Global attibutes
             error_app = getattr(self.config, 'ERROR_APP')
             default_app = getattr(self.config, 'DEFAULT_APP')
             globals = getattr(self.config, 'GLOBALS')
             
             # Auto globals
-            auto_globals['statics'] = statics
+            auto_globals['statics'] = '/' + statics
 
             # Add apps
             for app in apps:
                 # Error app
                 if app[0] == error_app:
-                    auto_globals['error_app'] = app[1]
+                    auto_globals['error_app'] = '/' + app[1]
 
                 # Default app
                 if app[0] == default_app:
-                    auto_globals['default_app'] = app[1]
+                    auto_globals['default_app'] = '/' + app[1]
 
                 # All apps
-                auto_globals[app[0]] = app[1]
+                auto_globals[app[0]] = '/' + app[1]
 
             # Add global variables
             auto_globals.update(globals)
@@ -262,8 +267,18 @@ class Aurora():
             if app[0] == default_app and controller[1] == '':
                 self.app.add_url_rule(rule='/', endpoint='default-app', view_func=view_func, methods=methods)
 
+                # Route languages root
+                if self.multi_lang:
+                    for lang in self.languages:
+                        self.app.add_url_rule(rule='/'+lang+'/', endpoint='default-app'+lang, view_func=view_func, methods=methods)
+
             # Route all apps
             self.app.add_url_rule(rule=rule, endpoint=endpoint, view_func=view_func, methods=methods)
+
+            # Route languages
+            if self.multi_lang:
+                for lang in self.languages:
+                    self.app.add_url_rule(rule='/'+lang+rule, endpoint=endpoint+lang, view_func=view_func, methods=methods)
 
 
     ##

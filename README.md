@@ -93,7 +93,6 @@ PyPI: [Aurora PyPI Page](https://pypi.org/project/aurora-mvc/)
 ## Packages:
  
 - [Flask](https://pypi.org/project/Flask/)
-- [Click](https://pypi.org/project/click/) -- *Will be installed by flask*.
 - [WTForms](https://pypi.org/project/WTForms/) -- For WTForms & CSRF tokens.
 
 ## Database APIs:

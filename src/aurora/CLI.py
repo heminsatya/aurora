@@ -2,11 +2,12 @@
 # Dependencies #
 ################
 import os
-import time
+import sys
 import platform
 import importlib
-import click
+import time
 from datetime import datetime
+from typing import List
 from .helpers import *
 from .SQL import Database
 
@@ -27,6 +28,60 @@ if platform.system() == 'Windows':
 # Linux, Mac
 else:
     url_div = '/'
+
+# Arguments
+args: List[str] = sys.argv
+
+# Available options
+options = [
+    '--help',
+    '--version',
+]
+
+# Available commands
+commands = [
+    'create-app',
+    'delete-app',
+    'create-controller',
+    'delete-controller',
+    'create-view',
+    'delete-view',
+    'create-form',
+    'delete-form',
+    'create-model',
+    'delete-model',
+    'check-db',
+    'init-db',
+    'migrate-db',
+    'repair-db',
+    'reset-db',
+]
+
+# CLI message for invalid inputs
+cli_error = '''----------------------------------------------------------
+Usage: python manage.py OPTIONS | COMMANDS
+
+Options:
+    --help                  Shows the CLI help message.
+    --version               Shows Aurora framework version.
+
+Commands:
+    create-app              Creates a new app with some default components if not exist
+    delete-app              Deletes an existing app and all its components.
+    create-controller       Creates a controller blueprint if not exists for an existing app
+    delete-controller       Deletes an existing controller for an existing app.
+    create-view             Creates a view blueprint if not exists for an existing app.
+    delete-view             Deletes an existing view for an existing app.
+    create-form             Creates a form blueprint if not exists for an existing app.
+    delete-form             Deletes an existing form for an existing app.
+    create-model            Creates a model blueprint if not exists.
+    delete-model            Deletes an existing model.
+    check-db                Checks the models and database for errors and changes.
+    init-db                 Initializes the database for the first time if not initialized already.
+    migrate-db              Migrates the model changes to the database.
+    repair-db               Is used for renaming the existing model columns
+    reset-db                Is used for resetting the database, based on the current models.
+----------------------------------------------------------'''
 
 # Fetch statics
 config = importlib.import_module('config')
@@ -66,60 +121,100 @@ class CLI:
     ##
     def __init__(self):
 
-        # Check the development
-        if not development:
-            alert = '''----------------------------------------------------------\n'''
-            alert += '''INFO!\n'''
-            alert += '''Aurora CLI app is only available in development!\n'''
-            alert += '''----------------------------------------------------------'''
-
-            # Alert the user
-            print(alert)
-            time.sleep(0.1)
-
-            # Exit the program
-            exit()
-
         # Try to run the CLI application
         try:
-            # Call the group method
-            self.group()
+            # Check the development
+            if not development:
+                alert = '''----------------------------------------------------------\n'''
+                alert += '''INFO!\n'''
+                alert += '''Aurora CLI app is only available in development!\n'''
+                alert += '''----------------------------------------------------------'''
 
-            # Call the cli method
-            self.cli()
+                # Alert the user
+                print(alert)
+                time.sleep(0.1)
+
+                # Exit the program
+                exit()
+
+            # Check the arguments
+            elif not len(args) == 2 or not args[1] in options and not args[1] in commands:
+                # Alert the user
+                print(cli_error)
+                time.sleep(0.1)
+
+                # Exit the program
+                exit()
+
+            # Commands are fine
+            else:
+                # Check options and commands
+                if (args[1] == '--help'):
+                    # Alert the user
+                    print(cli_error)
+                    time.sleep(0.1)
+
+                    # Exit the program
+                    exit()
+
+                elif (args[1] == '--version'):
+                    from . import __version__
+                    
+                    # Alert the user
+                    print(f"""Aurora {__version__} beta""")
+                    time.sleep(0.1)
+
+                    # Exit the program
+                    exit()
+
+                elif (args[1] == 'create-app'):
+                    self.create_app()
+
+                elif (args[1] == 'delete-app'):
+                    self.delete_app()
+
+                elif (args[1] == 'create-controller'):
+                    self.create_controller()
+
+                elif (args[1] == 'delete-controller'):
+                    self.delete_controller()
+
+                elif (args[1] == 'create-view'):
+                    self.create_view()
+
+                elif (args[1] == 'delete-view'):
+                    self.delete_view()
+
+                elif (args[1] == 'create-model'):
+                    self.create_model()
+
+                elif (args[1] == 'delete-model'):
+                    self.delete_model()
+
+                elif (args[1] == 'create-form'):
+                    self.create_form()
+
+                elif (args[1] == 'delete-form'):
+                    self.delete_form()
+
+                elif (args[1] == 'check-db'):
+                    self.check_db()
+
+                elif (args[1] == 'init-db'):
+                    self.init_db()
+
+                elif (args[1] == 'migrate-db'):
+                    self.migrate_db()
+
+                elif (args[1] == 'repair-db'):
+                    self.repair_db()
+
+                elif (args[1] == 'reset-db'):
+                    self.reset_db()
 
         # Handle errorr
         except NameError as e:
             raise Exception(e)
-
-
-    ##
-    # @desc group method for grouping commands together
-    ##
-    def group(self):
-        self.cli.add_command(self.create_app)
-        self.cli.add_command(self.delete_app)
-        self.cli.add_command(self.create_controller)
-        self.cli.add_command(self.delete_controller)
-        self.cli.add_command(self.create_view)
-        self.cli.add_command(self.delete_view)
-        self.cli.add_command(self.create_model)
-        self.cli.add_command(self.delete_model)
-        self.cli.add_command(self.create_form)
-        self.cli.add_command(self.delete_form)
-        self.cli.add_command(self.check_db)
-        self.cli.add_command(self.init_db)
-        self.cli.add_command(self.migrate_db)
-        self.cli.add_command(self.repair_db)
-        self.cli.add_command(self.reset_db)
-
-
-    ##
-    # @desc cli method for grouping other methods
-    ##
-    @click.group()
-    def cli():
-        pass
 
 
     ##
@@ -1438,8 +1533,7 @@ class CLI:
     # @var name: str -- The app name
     # @var url: str -- The app base URL
     ##
-    @click.command()
-    def create_app():
+    def create_app(self):
 
         # Prompt for app name
         while True:
@@ -1541,8 +1635,7 @@ class CLI:
     ##
     # @desc delete_app method for removing child apps
     ##
-    @click.command()
-    def delete_app():
+    def delete_app(self):
 
         # Prompt for app name
         while True:
@@ -1615,8 +1708,7 @@ class CLI:
     ##
     # @desc create_controller method for creating new controller
     ##
-    @click.command()
-    def create_controller():
+    def create_controller(self):
 
         # Prompt for app name
         while True:
@@ -1784,8 +1876,7 @@ class CLI:
     ##
     # @desc delete_controller method for removing an existing controller
     ##
-    @click.command()
-    def delete_controller():
+    def delete_controller(self):
 
         # Prompt for app name
         while True:
@@ -1882,8 +1973,7 @@ class CLI:
     ##
     # @desc create_view method for creating new view
     ##
-    @click.command()
-    def create_view():
+    def create_view(self):
 
         # Prompt for app name
         while True:
@@ -1964,8 +2054,7 @@ class CLI:
     ##
     # @desc delete_view method for removing an existing view
     ##
-    @click.command()
-    def delete_view():
+    def delete_view(self):
 
         # Prompt for app name
         while True:
@@ -2047,8 +2136,7 @@ class CLI:
     ##
     # @desc create_model method for creating new model
     ##
-    @click.command()
-    def create_model():
+    def create_model(self):
         # Prompt for model name
         while True:
             model = input("Model Name: ")
@@ -2131,8 +2219,7 @@ class CLI:
     ##
     # @desc delete_model method for removing an existing model
     ##
-    @click.command()
-    def delete_model():
+    def delete_model(self):
         # Prompt for model name
         while True:
             model = input("Model Name: ")
@@ -2203,8 +2290,7 @@ class CLI:
     ##
     # @desc create_form method for creating new form
     ##
-    @click.command()
-    def create_form():
+    def create_form(self):
 
         # Prompt for app name
         while True:
@@ -2306,8 +2392,7 @@ class CLI:
     ##
     # @desc delete_form method for removing an existing form
     ##
-    @click.command()
-    def delete_form():
+    def delete_form(self):
 
         # Prompt for app name
         while True:
@@ -2403,8 +2488,7 @@ class CLI:
     ##
     # @desc check_db method for checking the database for existence and so on
     ##
-    @click.command()
-    def check_db():
+    def check_db(self):
         # Check the database
         CLI.check_database(pattern="check")
 
@@ -2417,8 +2501,7 @@ class CLI:
     ##
     # @desc init_db method for initializing the database for the first time
     ##
-    @click.command()
-    def init_db():
+    def init_db(self):
         # Check the database
         CLI.check_database(pattern="init")
 
@@ -2431,8 +2514,7 @@ class CLI:
     ##
     # @desc Migrates the database changes
     ##
-    @click.command()
-    def migrate_db():
+    def migrate_db(self):
         # Check the database
         CLI.check_database(pattern="migrate")
 
@@ -2446,8 +2528,7 @@ class CLI:
     ##
     # @desc Repair the database (rename the columns)
     ##
-    @click.command()
-    def repair_db():
+    def repair_db(self):
         # Check the database
         CLI.check_database(pattern="repair")
 
@@ -2560,8 +2641,7 @@ class CLI:
     ##
     # @desc Resets the database based on the current models and removes previous migrations
     ##
-    @click.command()
-    def reset_db():
+    def reset_db(self):
         # Check the database
         CLI.check_database(pattern="reset")
         

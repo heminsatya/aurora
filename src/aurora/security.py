@@ -5,12 +5,19 @@ import importlib
 from os import replace
 from datetime import datetime, timedelta
 from .helpers import route_url
-from flask import session, request, make_response, jsonify, render_template, abort as flask_abort, redirect as flask_redirect
+from flask import make_response, jsonify, render_template, request as flask_request, abort as flask_abort, redirect as flask_redirect, session as flask_session
 from werkzeug.security import check_password_hash, generate_password_hash
+
+# Flask objects
+request = flask_request
+session = flask_session
 
 # Fetch configuretion module
 config = importlib.import_module('config')
 debug = getattr(config, "DEBUG")
+default_lang = getattr(config, "DEFAULT_LANG")
+multi_lang = getattr(config, "MULTI_LANG")
+languages = getattr(config, "LANGUAGES")
 
 # Fetch apps module
 apps_module = importlib.import_module('_apps')
@@ -233,6 +240,50 @@ def unset_cookie(name:str, data:dict={}):
 
 
 ##
+# @desc Finds active language
+# 
+# @var active_lang: str - The active language code
+#
+# @return str
+##
+def find_lang():
+    path = request.path
+    lang = path.split('/')[1]
+
+    # Check multi language
+    if multi_lang:
+        # Check the language path
+        if lang in languages:
+            active_lang = lang
+            LANGUAGE = '/' + active_lang
+            set_session('active_lang', lang)
+
+        elif check_cookie('active_lang'):
+            active_lang = get_cookie('active_lang')
+            LANGUAGE = '/' + active_lang
+            set_session('active_lang', get_cookie('active_lang'))
+
+        elif check_session('active_lang'):
+            active_lang = get_session('active_lang')
+            LANGUAGE = '/' + active_lang
+
+        else:
+            active_lang = default_lang
+            LANGUAGE = '/' + active_lang
+            set_session('active_lang', default_lang)
+
+    else:
+        active_lang = default_lang
+        LANGUAGE = ''
+
+    # Return result
+    return {
+        'active_language': active_lang,
+        'LANGUAGE': LANGUAGE,
+    }
+
+
+##
 # @desc Redirects not logged-in users
 #
 # @param url: str -- *Required url for users app
@@ -257,10 +308,16 @@ def login_required(app:str, controller:str=None, validate:str='user'):
 
             # User is not logged-in
             if not check_session(validate):
-                if next:
-                    return redirect(f'{url}?next={next}')
-                else:
-                    return redirect(f'{url}?next={next}')
+                # Check the language
+                if multi_lang:
+                    if check_session('active_lang'):
+                        return redirect(f'''/{get_session('active_lang')}/{url}?next={next}''')
+
+                return redirect(f'{url}?next={next}')
+                # if next:
+                #     return redirect(f'{url}?next={next}')
+                # else:
+                #     return redirect(f'{url}?next={next}')
 
             # User is logged-in
             else:

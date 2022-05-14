@@ -1,7 +1,9 @@
 ################
 # Dependencies #
 ################
-from flask import request
+import importlib
+from aurora.security import request, redirect, check_cookie, get_cookie, check_session, get_session, set_session
+from aurora.helpers import app_exists
 from flask.views import View
 
 
@@ -14,6 +16,58 @@ from flask.views import View
 class Controller(View):
 
     ##
+    # @desc Constructor method -- Generates Pluggable Views
+    ##
+    def __init__(self) -> None:
+        # Required modules
+        config = importlib.import_module('config')
+
+        # Required attributes
+        self.default_lang = getattr(config, 'DEFAULT_LANG') 
+        self.multi_lang = getattr(config, "MULTI_LANG")
+        self.languages = getattr(config, 'LANGUAGES') 
+
+        # Public properties
+        self.active_lang = self.default_lang
+        self.LANGUAGE = ''
+
+        # Check the language
+        if self.multi_lang:
+            # Fetch the lang
+            path = request.path
+            lang = path.split('/')[1]
+
+            # The root path and apps path
+            if path == '/' or app_exists(lang)['result']:
+                # active_lang cookie exists
+                if check_cookie('active_lang'):
+                    self.active_lang = get_cookie('active_lang')
+                    set_session('active_lang', get_cookie('active_lang'))
+
+                # active_lang session exists
+                elif check_session('active_lang'):
+                    self.active_lang = get_session('active_lang')
+
+                # Neighter active_lang cookie nor active_lang session exists
+                else:
+                    self.active_lang = self.default_lang
+                    set_session('active_lang', self.default_lang)
+
+            # Languages path
+            elif lang in self.languages:
+                self.active_lang = lang
+                set_session('active_lang', lang)
+
+            # Other paths
+            else:
+                self.active_lang = self.default_lang
+                set_session('active_lang', self.default_lang)
+
+            # Set active language URL
+            self.LANGUAGE = '/' + self.active_lang
+
+
+    ##
     # @desc Flask dispatch_request method -- Generates Pluggable Views
     ##
     def dispatch_request(self, *class_args, **class_kwargs):
@@ -24,6 +78,22 @@ class Controller(View):
 
         # The 'GET' request
         elif request.method == 'GET':
+            # Check the language
+            if self.multi_lang:
+                # Fetch the path
+                path = request.path
+
+                # The root path
+                if path == '/' or app_exists(path.split('/')[1])['result']:
+                    if check_cookie('active_lang'):
+                        return redirect('/' + get_cookie('active_lang') + path)
+
+                    elif check_session('active_lang'):
+                        return redirect('/' + get_session('active_lang') + path)
+
+                    else:
+                        return redirect('/' + self.default_lang + path)
+
             return self.get(*class_args, **class_kwargs)
 
         # The 'PUT' request
