@@ -126,7 +126,7 @@ class CLI:
             # Check the development
             if not development:
                 alert = '''----------------------------------------------------------\n'''
-                alert += '''INFO!\n'''
+                alert += '''NOTICE!\n'''
                 alert += '''Aurora CLI app is only available in development!\n'''
                 alert += '''----------------------------------------------------------'''
 
@@ -385,7 +385,7 @@ class CLI:
             # Other patterns
             else:
                 alert = '''----------------------------------------------------------\n'''
-                alert += '''CAUTION!\n'''
+                alert += '''WARNING!\n'''
                 alert += '''Database connection not found!\n'''
                 alert += '''To create a connection and initialize the database run the following command:\n'''
                 alert += '''python manage.py init-db\n'''
@@ -403,7 +403,7 @@ class CLI:
             # "init" pattern
             if pattern == "init":
                 alert = '''----------------------------------------------------------\n'''
-                alert += '''INFO!\n'''
+                alert += '''NOTICE!\n'''
                 alert += '''Database connection established successfully!\n'''
                 alert += '''Database already initialized!\n'''
                 alert += '''To check the database run the following command:\n'''
@@ -659,7 +659,7 @@ class CLI:
                     if dict_dup_val(repair):
                         # Prepare the alert message
                         alert = '''----------------------------------------------------------\n'''
-                        alert += '''CAUTION!\n'''
+                        alert += '''WARNING!\n'''
                         alert += f'''Duplicated values for repairing "{model}" model requested!\n'''
                         alert += '''----------------------------------------------------------'''
                         
@@ -718,7 +718,7 @@ class CLI:
                         elif x == primary_key:
                             # Prepare the alert message
                             alert = '''----------------------------------------------------------\n'''
-                            alert += '''CAUTION!\n'''
+                            alert += '''WARNING!\n'''
                             alert += f'''You cannot use the repair-db command for the primary key.\n'''
                             alert += f'''For renaming the primary key:\n'''
                             alert += f'''1. Rename its attribute in it's model.\n'''
@@ -737,7 +737,7 @@ class CLI:
                         elif attrs[x]['related_to']:
                             # Prepare the alert message
                             alert = '''----------------------------------------------------------\n'''
-                            alert += '''CAUTION!\n'''
+                            alert += '''WARNING!\n'''
                             alert += f'''You cannot use the repair-db command for a foreign key.\n'''
                             alert += f'''For renaming a foreign key:\n'''
                             alert += f'''1. Remove its "related_to" parameter, and run:\n'''
@@ -1438,7 +1438,7 @@ class CLI:
 
                 # Alert the user
                 alert = '''----------------------------------------------------------\n'''
-                alert += '''INFO!\n'''
+                alert += '''NOTICE!\n'''
                 alert += "To migrate new changes to the database run the following command:\n"
                 alert += "python manage.py migrate-db\n"
                 alert += '''----------------------------------------------------------'''
@@ -1453,7 +1453,7 @@ class CLI:
 
                 # Alert the user
                 alert = '''----------------------------------------------------------\n'''
-                alert += '''CAUTION!\n'''
+                alert += '''WARNING!\n'''
                 alert += "Before repairing the database you must migrate the new changes.\n"
                 alert += "To migrate new changes to the database run the following command:\n"
                 alert += "python manage.py migrate-db\n"
