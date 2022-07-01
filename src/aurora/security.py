@@ -4,6 +4,7 @@
 import importlib
 from os import replace
 from datetime import datetime, timedelta
+from typing import Union
 from .helpers import route_url
 from flask import make_response, jsonify, render_template, request as flask_request, abort as flask_abort, redirect as flask_redirect, session as flask_session
 from werkzeug.security import check_password_hash, generate_password_hash
@@ -292,7 +293,7 @@ def find_lang():
 # 
 # @return object
 ##
-def login_required(app:str, controller:str=None, validate:str='user'):
+def login_required(app:str, controller:str=None, check:Union[str, list]='user'):
 
     # Fetch the route final url
     url = route_url(app, controller)
@@ -302,26 +303,34 @@ def login_required(app:str, controller:str=None, validate:str='user'):
             # Find next URL
             next = request.url.replace(request.url_root, '/')
 
-            # Check cookie
-            if check_cookie(validate):
-                set_session(validate, get_cookie(validate))
+            # check is of type str
+            if type(check) is str:
+                # Check cookie
+                if check_cookie(check):
+                    set_session(check, get_cookie(check))
+
+                # User is logged-in
+                if check_session(check):
+                    return inner(*args, **kwargs)
+
+            # check is of type list
+            elif type(check) is list:
+                for x in check:
+                    # Check cookie
+                    if check_cookie(x):
+                        set_session(x, get_cookie(x))
+
+                    # User is logged-in
+                    if check_session(x):
+                        return inner(*args, **kwargs)
 
             # User is not logged-in
-            if not check_session(validate):
-                # Check the language
-                if multi_lang:
-                    if check_session('active_lang'):
-                        return redirect(f'''/{get_session('active_lang')}/{url}?next={next}''')
+            # Check the language
+            if multi_lang:
+                if check_session('active_lang'):
+                    return redirect(f'''/{get_session('active_lang')}/{url}?next={next}''')
 
-                return redirect(f'{url}?next={next}')
-                # if next:
-                #     return redirect(f'{url}?next={next}')
-                # else:
-                #     return redirect(f'{url}?next={next}')
-
-            # User is logged-in
-            else:
-                return inner(*args, **kwargs)
+            return redirect(f'{url}?next={next}')
 
         return decorator
     return wrapper
@@ -334,24 +343,36 @@ def login_required(app:str, controller:str=None, validate:str='user'):
 #
 # @return object
 ##
-def login_abort(app:str, controller:str=None, validate:str='user'):
+def login_abort(app:str, controller:str=None, check:Union[str, list]='user'):
 
     # Fetch the route final url
     url = route_url(app, controller)
 
     def wrapper(inner):
         def decorator(*args, **kwargs):
-            # Check cookie
-            if check_cookie(validate):
-                set_session(validate, get_cookie(validate))
+            # check is of type str
+            if type(check) is str:
+                # Check cookie
+                if check_cookie(check):
+                    set_session(check, get_cookie(check))
 
-            # User is logged-in
-            if check_session(validate):
-                return redirect(url)
+                # User is logged-in
+                if check_session(check):
+                    return redirect(url)
+
+            # check is of type list
+            elif type(check) is list:
+                for x in check:
+                    # Check cookie
+                    if check_cookie(x):
+                        set_session(x, get_cookie(x))
+
+                    # User is logged-in
+                    if check_session(x):
+                        return redirect(url)
 
             # User is not logged-in
-            else:
-                return inner(*args, **kwargs)
+            return inner(*args, **kwargs)
 
         return decorator
     return wrapper
