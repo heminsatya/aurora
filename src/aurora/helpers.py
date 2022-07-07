@@ -834,9 +834,9 @@ def delete_dir(dir:str):
         return False
 
 
-#################
+###############
 # CLI Helpers #
-#################
+###############
 ##
 # @desc Validates app name
 #
@@ -1168,3 +1168,41 @@ def column_name(name:str):
             'message': 'Database column names must be in "snake_case" form with at least two a-z, _ characters.'
         }
 
+
+import time
+from datetime import datetime, timezone, timedelta
+################
+# Time Helpers #
+################
+##
+# @desc Generates current time in milliseconds
+#
+# @retun int
+##
+def current_time():
+    return round(time.time() * 1000)
+
+
+##
+# @desc Generates the current date
+# 
+# @param format  -- The date format
+#
+# @retun str
+##
+# Create datetime from time (milliseconds)
+def current_date(format: str = '%Y-%m-%d %H:%M:%S'):
+    return datetime.fromtimestamp(round(current_time() / 1000.0)).strftime(format)
+
+
+##
+# @desc Generates datetime from a time in milliseconds
+# 
+# @param time_ms -- The time in milliseconds
+# @param format  -- The date format
+#
+# @retun str
+##
+# Create datetime from time (milliseconds)
+def generate_date(time_ms: int, format: str = '%Y-%m-%d %H:%M:%S'):
+    return datetime.fromtimestamp(round(time_ms / 1000.0)).strftime(format)

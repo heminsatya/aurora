@@ -23,11 +23,11 @@ app_path = os.getcwd()
 # Check platform system
 # Windows
 if platform.system() == 'Windows':
-    url_div = '\\'
+    sep = '\\'
 
-# Linux, Mac
+# Unix
 else:
-    url_div = '/'
+    sep = '/'
 
 # Arguments
 args: List[str] = sys.argv
@@ -106,7 +106,7 @@ database = getattr(config, "DB_CONFIG")['database']
 safe_type = getattr(config, 'SAFE_TYPE')
 
 # Temporary migration file
-temp_file = f'{app_path + url_div}_migrations{url_div}_temp.py'
+temp_file = f'{app_path + sep}_migrations{sep}_temp.py'
 
 
 #############
@@ -354,11 +354,11 @@ class CLI:
         # Chech the temporary migration file
         if file_exist(temp_file):
             # Write to the temporary migration file
-            write_file(f'{app_path + url_div}_migrations{url_div}_temp.py', content)
+            write_file(f'{app_path + sep}_migrations{sep}_temp.py', content)
 
         else:
             # Create the temporary migration file
-            create_file(f'{app_path + url_div}_migrations{url_div}_temp.py', content)
+            create_file(f'{app_path + sep}_migrations{sep}_temp.py', content)
 
         # Return the migration content
         return content
@@ -950,11 +950,11 @@ class CLI:
         new_db.create(table='_migrations', data={'version':version,'current':True, 'comment':'The initial migration.'})
         
         # Check migration file
-        if file_exist(f"""{app_path + url_div}_migrations{url_div + version}.py"""):
-            delete_file(f"""{app_path + url_div}_migrations{url_div + version}.py""")
+        if file_exist(f"""{app_path + sep}_migrations{sep + version}.py"""):
+            delete_file(f"""{app_path + sep}_migrations{sep + version}.py""")
 
         # Create the migrations file
-        create_file(f"""{app_path + url_div}_migrations{url_div + version}.py""", m_content)
+        create_file(f"""{app_path + sep}_migrations{sep + version}.py""", m_content)
 
         # Print the message
         if pattern == "init":
@@ -1101,7 +1101,49 @@ class CLI:
                             else:
                                 # Delete the column if exists
                                 if db._exist_column(c_attrs['table'], col):
-                                    db._delete_column(c_attrs['table'], col, True)
+                                    # Postgres & MySQL
+                                    if db_system == 'Postgres' or db_system == 'MySQL':
+                                        db._delete_column(c_attrs['table'], col, True)
+
+                                    # SQLite
+                                    elif db_system == 'SQLite':
+                                        # Create column
+                                        try:
+                                            db._delete_column(c_attrs['table'], col, True)
+
+                                        # on error
+                                        except:
+                                            # Rename table to a temporary table
+                                            db._update_table(c_attrs['table'], f"{c_attrs['table']}__temp")
+
+                                            # Create a new table with latest constraints
+                                            db._create_table(c_attrs['table'], c_attrs['col_type'], c_attrs['primary_key'], c_attrs['unique'], 
+                                                c_attrs['not_null'], c_attrs['default'], c_attrs['check'])
+
+                                            # Insert the temp table data into the new table
+                                            db.query(f"INSERT INTO {c_attrs['table']}({c_cols}) SELECT {c_cols} FROM {c_attrs['table']}__temp;")
+                                            
+                                            # Update the column
+                                            try:
+                                                db._update_column(c_attrs['table'], col, col, c_datatype, c_constraints)
+                                            except:
+                                                pass
+
+                                            # Remove the temp table
+                                            db._delete_table(f"{c_attrs['table']}__temp", True)
+                                                
+                                            # Rename table to a temporary table again
+                                            db._update_table(c_attrs['table'], f"{c_attrs['table']}__temp")
+
+                                            # Create a new table with latest constraints & fk
+                                            db._create_table(c_attrs['table'], c_attrs['col_type'], c_attrs['primary_key'], c_attrs['unique'], 
+                                                c_attrs['not_null'], c_attrs['default'], c_attrs['check'], c_attrs['foreign_key'])
+
+                                            # Insert the temp table data into the new table
+                                            db.query(f"INSERT INTO {c_attrs['table']}({c_cols}) SELECT {c_cols} FROM {c_attrs['table']}__temp;")
+
+                                            # Remove the temp table
+                                            db._delete_table(f"{c_attrs['table']}__temp", True)
 
                     # Existed columns (not primary key)
                     elif col in c_attrs['col_type'] and not col == m_attrs['primary_key'] and not col == c_attrs['primary_key']:
@@ -1179,11 +1221,10 @@ class CLI:
                                 print('Updating column in the database...')
                                 time.sleep(0.1)
 
-                                # Column is a foreign key
-                                if m_fk or c_fk:
-                                    # Postgres & MySQL
-                                    if db_system == 'Postgres' or db_system == 'MySQL':
-
+                                # Postgres & MySQL
+                                if db_system == 'Postgres' or db_system == 'MySQL':
+                                    # Column is a foreign key
+                                    if m_fk or c_fk:
                                         # Already a foreign key
                                         if m_fk:
                                             # Foreign key symbol
@@ -1203,49 +1244,52 @@ class CLI:
                                             if not db._exist_fk(m_attrs['table'], col):
                                                 db._create_fk(c_attrs['table'], col, c_r_table, c_r_column, c_on_update, c_on_delete)
 
-                                    # SQLite
-                                    elif db_system == 'SQLite':
-                                        # Update the column
-                                        try:
-                                            # Rename table to a temporary table
-                                            db._update_table(c_attrs['table'], f"{c_attrs['table']}__temp")
-
-                                            # Create a new table with latest constraints
-                                            db._create_table(c_attrs['table'], c_attrs['col_type'], c_attrs['primary_key'], c_attrs['unique'], 
-                                                c_attrs['not_null'], c_attrs['default'], c_attrs['check'])
-
-                                            # Insert the temp table data into the new table
-                                            db.query(f"INSERT INTO {c_attrs['table']}({c_cols}) SELECT {c_cols} FROM {c_attrs['table']}__temp;")
-                                            
-                                            # Update the column
+                                    # Column is not a foreign key
+                                    else:
+                                        # Update the column if exists
+                                        if db._exist_column(c_attrs['table'], col):
                                             db._update_column(c_attrs['table'], col, col, c_datatype, c_constraints)
 
-                                            # Remove the temp table
-                                            db._delete_table(f"{c_attrs['table']}__temp", True)
-                                                
-                                            # Rename table to a temporary table again
-                                            db._update_table(c_attrs['table'], f"{c_attrs['table']}__temp")
+                                # SQLite
+                                elif db_system == 'SQLite':
+                                    # Update the column
+                                    try:
+                                        # Rename table to a temporary table
+                                        db._update_table(c_attrs['table'], f"{c_attrs['table']}__temp")
 
-                                            # Create a new table with latest constraints & fk
-                                            db._create_table(c_attrs['table'], c_attrs['col_type'], c_attrs['primary_key'], c_attrs['unique'], 
-                                                c_attrs['not_null'], c_attrs['default'], c_attrs['check'], c_attrs['foreign_key'])
+                                        # Create a new table with latest constraints
+                                        db._create_table(c_attrs['table'], c_attrs['col_type'], c_attrs['primary_key'], c_attrs['unique'], 
+                                            c_attrs['not_null'], c_attrs['default'], c_attrs['check'])
 
-                                            # Insert the temp table data into the new table
-                                            db.query(f"INSERT INTO {c_attrs['table']}({c_cols}) SELECT {c_cols} FROM {c_attrs['table']}__temp;")
-
-                                            # Remove the temp table
-                                            db._delete_table(f"{c_attrs['table']}__temp", True)
-
-                                        # Pass for any errors
-                                        except NameError as e:
-                                            # print(e)
+                                        # Insert the temp table data into the new table
+                                        db.query(f"INSERT INTO {c_attrs['table']}({c_cols}) SELECT {c_cols} FROM {c_attrs['table']}__temp;")
+                                        
+                                        # Update the column
+                                        try:
+                                            db._update_column(c_attrs['table'], col, col, c_datatype, c_constraints)
+                                        except:
                                             pass
 
-                                # Column is not a foreign key
-                                else:
-                                    # Update the column if exists
-                                    if db._exist_column(c_attrs['table'], col):
-                                        db._update_column(c_attrs['table'], col, col, c_datatype, c_constraints)
+                                        # Remove the temp table
+                                        db._delete_table(f"{c_attrs['table']}__temp", True)
+                                            
+                                        # Rename table to a temporary table again
+                                        db._update_table(c_attrs['table'], f"{c_attrs['table']}__temp")
+
+                                        # Create a new table with latest constraints & fk
+                                        db._create_table(c_attrs['table'], c_attrs['col_type'], c_attrs['primary_key'], c_attrs['unique'], 
+                                            c_attrs['not_null'], c_attrs['default'], c_attrs['check'], c_attrs['foreign_key'])
+
+                                        # Insert the temp table data into the new table
+                                        db.query(f"INSERT INTO {c_attrs['table']}({c_cols}) SELECT {c_cols} FROM {c_attrs['table']}__temp;")
+
+                                        # Remove the temp table
+                                        db._delete_table(f"{c_attrs['table']}__temp", True)
+
+                                    # Pass for any errors
+                                    except NameError as e:
+                                        # print(e)
+                                        pass
 
                 # Check current models (for added columns)
                 for col in c_attrs['col_type']:
@@ -1318,7 +1362,49 @@ class CLI:
                             else:
                                 # Create the column if not exists
                                 if not db._exist_column(c_attrs['table'], col):
-                                    db._create_column(c_attrs['table'], col, c_datatype, c_constraints)
+                                    # Postgres & MySQL
+                                    if db_system == 'Postgres' or db_system == 'MySQL':
+                                        db._create_column(c_attrs['table'], col, c_datatype, c_constraints)
+
+                                    # SQLite
+                                    elif db_system == 'SQLite':
+                                        # Create column
+                                        try:
+                                            db._create_column(c_attrs['table'], col, c_datatype, c_constraints)
+
+                                        # on error
+                                        except:
+                                            # Rename table to a temporary table
+                                            db._update_table(c_attrs['table'], f"{c_attrs['table']}__temp")
+
+                                            # Create a new table with latest constraints
+                                            db._create_table(c_attrs['table'], c_attrs['col_type'], c_attrs['primary_key'], c_attrs['unique'], 
+                                                c_attrs['not_null'], c_attrs['default'], c_attrs['check'])
+
+                                            # Insert the temp table data into the new table
+                                            db.query(f"INSERT INTO {c_attrs['table']}({c_cols}) SELECT {c_cols} FROM {c_attrs['table']}__temp;")
+                                            
+                                            # Update the column
+                                            try:
+                                                db._update_column(c_attrs['table'], col, col, c_datatype, c_constraints)
+                                            except:
+                                                pass
+
+                                            # Remove the temp table
+                                            db._delete_table(f"{c_attrs['table']}__temp", True)
+                                                
+                                            # Rename table to a temporary table again
+                                            db._update_table(c_attrs['table'], f"{c_attrs['table']}__temp")
+
+                                            # Create a new table with latest constraints & fk
+                                            db._create_table(c_attrs['table'], c_attrs['col_type'], c_attrs['primary_key'], c_attrs['unique'], 
+                                                c_attrs['not_null'], c_attrs['default'], c_attrs['check'], c_attrs['foreign_key'])
+
+                                            # Insert the temp table data into the new table
+                                            db.query(f"INSERT INTO {c_attrs['table']}({c_cols}) SELECT {c_cols} FROM {c_attrs['table']}__temp;")
+
+                                            # Remove the temp table
+                                            db._delete_table(f"{c_attrs['table']}__temp", True)
 
                     # Added primary key
                     elif not col in m_attrs['col_type'] and col == c_attrs['primary_key']:
@@ -1418,11 +1504,11 @@ class CLI:
                 content = CLI.migration_data(models)
                 
                 # Check migration file
-                if file_exist(f"""{app_path + url_div}_migrations{url_div + version}.py"""):
-                    delete_file(f"""{app_path + url_div}_migrations{url_div + version}.py""")
+                if file_exist(f"""{app_path + sep}_migrations{sep + version}.py"""):
+                    delete_file(f"""{app_path + sep}_migrations{sep + version}.py""")
 
                 # Create the migrations file
-                create_file(f"""{app_path + url_div}_migrations{url_div + version}.py""", content)
+                create_file(f"""{app_path + sep}_migrations{sep + version}.py""", content)
 
                 # Delete the temporary migration file
                 delete_file(temp_file)
@@ -1578,50 +1664,50 @@ class CLI:
             time.sleep(0.1)
 
             # Create folders: (controllers, forms, statics, views)
-            make_dir(f'{app_path + url_div}controllers{url_div + app}')
-            make_dir(f'{app_path + url_div}forms{url_div + app}')
-            make_dir(f'{app_path + url_div + statics + url_div + app}')
-            make_dir(f'{app_path + url_div}views{url_div + app}')
+            make_dir(f'{app_path + sep}controllers{sep + app}')
+            make_dir(f'{app_path + sep}forms{sep + app}')
+            make_dir(f'{app_path + sep + statics + sep + app}')
+            make_dir(f'{app_path + sep}views{sep + app}')
 
             # Handle controllers blueprint (copy, unzip, delete)
-            controllers_blueprint= f'{aurora_path + url_div}blueprints{url_div}controllers.zip'
-            controllers_file = f'{app_path + url_div}controllers{url_div + app + url_div}controllers.zip'
-            controllers_dir = f'{app_path + url_div}controllers{url_div + app + url_div}'
+            controllers_blueprint= f'{aurora_path + sep}blueprints{sep}controllers.zip'
+            controllers_file = f'{app_path + sep}controllers{sep + app + sep}controllers.zip'
+            controllers_dir = f'{app_path + sep}controllers{sep + app + sep}'
             copy_file(controllers_blueprint, controllers_file)
             unzip_file(controllers_file, controllers_dir)
             delete_file(controllers_file)
 
             # Handle forms blueprint (copy, unzip, delete)
-            forms_blueprint= f'{aurora_path + url_div}blueprints{url_div}forms.zip'
-            forms_file = f'{app_path + url_div}forms{url_div + app + url_div}forms.zip'
-            forms_dir = f'{app_path + url_div}forms{url_div + app + url_div}'
+            forms_blueprint= f'{aurora_path + sep}blueprints{sep}forms.zip'
+            forms_file = f'{app_path + sep}forms{sep + app + sep}forms.zip'
+            forms_dir = f'{app_path + sep}forms{sep + app + sep}'
             copy_file(forms_blueprint, forms_file)
             unzip_file(forms_file, forms_dir)
             delete_file(forms_file)
 
             # Handle statics blueprint (copy, unzip, delete)
-            statics_blueprint= f'{aurora_path + url_div}blueprints{url_div}statics.zip'
-            statics_file = f'{app_path + url_div + statics + url_div + app + url_div}statics.zip'
-            statics_dir = f'{app_path + url_div + statics + url_div + app + url_div}'
+            statics_blueprint= f'{aurora_path + sep}blueprints{sep}statics.zip'
+            statics_file = f'{app_path + sep + statics + sep + app + sep}statics.zip'
+            statics_dir = f'{app_path + sep + statics + sep + app + sep}'
             copy_file(statics_blueprint, statics_file)
             unzip_file(statics_file, statics_dir)
             delete_file(statics_file)
 
             # Handle views blueprint (copy, unzip, delete)
-            views_blueprint= f'{aurora_path + url_div}blueprints{url_div}views.zip'
-            views_file = f'{app_path + url_div}views{url_div + app + url_div}views.zip'
-            views_dir = f'{app_path + url_div}views{url_div + app + url_div}'
+            views_blueprint= f'{aurora_path + sep}blueprints{sep}views.zip'
+            views_file = f'{app_path + sep}views{sep + app + sep}views.zip'
+            views_dir = f'{app_path + sep}views{sep + app + sep}'
             copy_file(views_blueprint, views_file)
             unzip_file(views_file, views_dir)
             delete_file(views_file)
 
             # Update layout.html
-            replace_file_string(f'{app_path + url_div}views{url_div + app + url_div}layout.html', 'app_name', app)
+            replace_file_string(f'{app_path + sep}views{sep + app + sep}layout.html', 'app_name', app)
 
             # Update _apps.py
             new_line = f'''    app(name='{app}', url='{url}'),\n'''
             new_line += ''']#do-not-change-me'''
-            replace_file_line(file_path=f'{app_path + url_div}_apps.py', old_line=']#do-not-change-me', new_line=new_line)
+            replace_file_line(file_path=f'{app_path + sep}_apps.py', old_line=']#do-not-change-me', new_line=new_line)
 
             # print the message
             print('The new app created successfully!')
@@ -1660,10 +1746,10 @@ class CLI:
         # Alert the user for data loss
         alert = '''WARNING! You will loose the following data perminantly:\n'''
         alert += '''----------------------------------------------------------\n'''
-        alert += f'''{app_path + url_div}controllers{url_div + app + url_div}*\n'''
-        alert += f'''{app_path + url_div}forms{url_div + app + url_div}*\n'''
-        alert += f'''{app_path + url_div + statics + url_div + app + url_div}*\n'''
-        alert += f'''{app_path + url_div}views{url_div + app + url_div}*\n'''
+        alert += f'''{app_path + sep}controllers{sep + app + sep}*\n'''
+        alert += f'''{app_path + sep}forms{sep + app + sep}*\n'''
+        alert += f'''{app_path + sep + statics + sep + app + sep}*\n'''
+        alert += f'''{app_path + sep}views{sep + app + sep}*\n'''
         alert += f'''----------------------------------------------------------'''
         
         # Print the alert
@@ -1681,16 +1767,16 @@ class CLI:
             # Begin the process
             try:
                 # Delete the app folders
-                delete_dir(f'{app_path + url_div}controllers{url_div + app + url_div}')
-                delete_dir(f'{app_path + url_div}forms{url_div + app + url_div}')
-                delete_dir(f'{app_path + url_div + statics + url_div + app + url_div}')
-                delete_dir(f'{app_path + url_div}views{url_div + app + url_div}')
+                delete_dir(f'{app_path + sep}controllers{sep + app + sep}')
+                delete_dir(f'{app_path + sep}forms{sep + app + sep}')
+                delete_dir(f'{app_path + sep + statics + sep + app + sep}')
+                delete_dir(f'{app_path + sep}views{sep + app + sep}')
 
                 # Update the _apps.py
                 old_line_1 = rf"""^[ ]*app+[(]+.*name='{app}'."""
                 old_line_2 = rf"""^[ ]*app+[(]+.*name="{app}"."""
-                replace_file_line(file_path=f'{app_path + url_div}_apps.py', old_line=old_line_1, new_line='', regex=True)
-                replace_file_line(file_path=f'{app_path + url_div}_apps.py', old_line=old_line_2, new_line='', regex=True)
+                replace_file_line(file_path=f'{app_path + sep}_apps.py', old_line=old_line_1, new_line='', regex=True)
+                replace_file_line(file_path=f'{app_path + sep}_apps.py', old_line=old_line_2, new_line='', regex=True)
                 
                 print('App deleted successfully')
                 time.sleep(0.1)
@@ -1838,9 +1924,9 @@ class CLI:
             time.sleep(0.1)
             
             # Controller blueprint
-            controller_blueprint = f'{aurora_path + url_div}blueprints{url_div}controller.zip'
-            controller_file = f'{app_path + url_div}controllers{url_div + app + url_div}controller.zip'
-            controller_dir = f'{app_path + url_div}controllers{url_div + app + url_div}'
+            controller_blueprint = f'{aurora_path + sep}blueprints{sep}controller.zip'
+            controller_file = f'{app_path + sep}controllers{sep + app + sep}controller.zip'
+            controller_dir = f'{app_path + sep}controllers{sep + app + sep}'
 
             # Copy, unzip, delete blueprint
             copy_file(controller_blueprint, controller_file)
@@ -1848,8 +1934,8 @@ class CLI:
             delete_file(controller_file)
 
             # Rename _controller.py
-            controller_old = f'{app_path + url_div}controllers{url_div + app + url_div}_controller.py'
-            controller_new = f'{app_path + url_div}controllers{url_div + app + url_div + controller}.py'
+            controller_old = f'{app_path + sep}controllers{sep + app + sep}_controller.py'
+            controller_new = f'{app_path + sep}controllers{sep + app + sep + controller}.py'
             rename_file(controller_old, controller_new)
 
             # Update new controller
@@ -1857,7 +1943,7 @@ class CLI:
             replace_file_line(controller_new, '...', ctrl_methods)
 
             # Update _controllers.py
-            controllers_file = f'{app_path + url_div}controllers{url_div + app + url_div}_controllers.py'
+            controllers_file = f'{app_path + sep}controllers{sep + app + sep}_controllers.py'
 
             new_line = f'''    controller(name='{controller}', url='{url}', methods={methods}),\n'''
             new_line += """]#do-not-change-me"""
@@ -1929,7 +2015,7 @@ class CLI:
         # Alert the user for data loss
         alert = '''WARNING! You will loose the following data perminantly:\n'''
         alert += '''----------------------------------------------------------\n'''
-        alert += f'''{app_path + url_div}controllers{url_div + app + url_div + controller}.py\n'''
+        alert += f'''{app_path + sep}controllers{sep + app + sep + controller}.py\n'''
         alert += f'''----------------------------------------------------------'''
         
         # Print the alert
@@ -1946,10 +2032,10 @@ class CLI:
             # Begin the process
             try:
                 # Delete the controller module
-                delete_file(f'{app_path + url_div}controllers{url_div + app + url_div + controller}.py')
+                delete_file(f'{app_path + sep}controllers{sep + app + sep + controller}.py')
 
                 # Update _controllers.py
-                controllers_file = f'{app_path + url_div}controllers{url_div + app + url_div}_controllers.py'
+                controllers_file = f'{app_path + sep}controllers{sep + app + sep}_controllers.py'
                 
                 old_line_1 = rf"""^[ ]*controller+[(]+.*name='{controller}'."""
                 old_line_2 = rf"""^[ ]*controller+[(]+.*name="{controller}"."""
@@ -2001,7 +2087,7 @@ class CLI:
 
             # Check the view name
             if view_name(view)['result']:
-                view_file = f'{app_path + url_div}views{url_div + app + url_div + view}.html'
+                view_file = f'{app_path + sep}views{sep + app + sep + view}.html'
 
                 # View exists
                 if os.path.exists(view_file):
@@ -2021,9 +2107,9 @@ class CLI:
             time.sleep(0.1)
             
             # View blueprint
-            view_blueprint = f'{aurora_path + url_div}blueprints{url_div}view.zip'
-            view_file = f'{app_path + url_div}views{url_div + app + url_div}view.zip'
-            view_dir = f'{app_path + url_div}views{url_div + app + url_div}'
+            view_blueprint = f'{aurora_path + sep}blueprints{sep}view.zip'
+            view_file = f'{app_path + sep}views{sep + app + sep}view.zip'
+            view_dir = f'{app_path + sep}views{sep + app + sep}'
             
             # Copy the view blueprint
             copy_file(view_blueprint, view_file)
@@ -2035,8 +2121,8 @@ class CLI:
             delete_file(view_file)
 
             # Rename the view blueprint
-            old_view = f'{app_path + url_div}views{url_div + app + url_div}_view.html'
-            new_view = f'{app_path + url_div}views{url_div + app + url_div + view}.html'
+            old_view = f'{app_path + sep}views{sep + app + sep}_view.html'
+            new_view = f'{app_path + sep}views{sep + app + sep + view}.html'
             rename_file(old_view, new_view)
 
             # update the view blue print
@@ -2082,7 +2168,7 @@ class CLI:
 
             # Check the view name
             if view_name(view)['result']:
-                view_file = f'{app_path + url_div}views{url_div + app + url_div + view}.html'
+                view_file = f'{app_path + sep}views{sep + app + sep + view}.html'
 
                 # View not exists
                 if not os.path.exists(view_file):
@@ -2099,7 +2185,7 @@ class CLI:
         # Alert the user for data loss
         alert = '''WARNING! You will loose the following data perminantly:\n'''
         alert += '''----------------------------------------------------------\n'''
-        alert += f'''{app_path + url_div}views{url_div + app + url_div + view}.html\n'''
+        alert += f'''{app_path + sep}views{sep + app + sep + view}.html\n'''
         alert += f'''----------------------------------------------------------'''
         
         # Print the alert
@@ -2116,7 +2202,7 @@ class CLI:
                 time.sleep(0.1)
 
                 # Delete the view file
-                view_file = f'{app_path + url_div}views{url_div + app + url_div + view}.html'
+                view_file = f'{app_path + sep}views{sep + app + sep + view}.html'
                 delete_file(view_file)
 
                 # Print the result
@@ -2163,12 +2249,12 @@ class CLI:
             # Model blueprint
             # Check the safe type
             if safe_type:
-                model_blueprint = f'{aurora_path + url_div}blueprints{url_div}model_safe.zip'
+                model_blueprint = f'{aurora_path + sep}blueprints{sep}model_safe.zip'
             else:
-                model_blueprint = f'{aurora_path + url_div}blueprints{url_div}model.zip'
+                model_blueprint = f'{aurora_path + sep}blueprints{sep}model.zip'
 
-            model_file = f'{app_path + url_div}models{url_div}model.zip'
-            model_dir = f'{app_path + url_div}models{url_div}'
+            model_file = f'{app_path + sep}models{sep}model.zip'
+            model_dir = f'{app_path + sep}models{sep}'
             
             # Copy the model blueprint
             copy_file(model_blueprint, model_file)
@@ -2180,8 +2266,8 @@ class CLI:
             delete_file(model_file)
 
             # Rename the _model.py
-            old_model = f'{app_path + url_div}models{url_div}_model.py'
-            new_model = f'{app_path + url_div}models{url_div + model}.py'
+            old_model = f'{app_path + sep}models{sep}_model.py'
+            new_model = f'{app_path + sep}models{sep + model}.py'
             rename_file(old_model, new_model)
 
             # Update the model blue print
@@ -2189,7 +2275,7 @@ class CLI:
             replace_file_string(new_model, '_table_name', snake_case(model))
 
             # Update the _models.py
-            models_file = f'{app_path + url_div}models{url_div}_models.py'
+            models_file = f'{app_path + sep}models{sep}_models.py'
 
             models_data = f"""    '{model}',\n"""
             models_data += """)#do-not-change-me"""
@@ -2197,7 +2283,7 @@ class CLI:
             replace_file_line(models_file, ')#do-not-change-me', models_data)
 
             # Update the __init__.py
-            init_file = f'{app_path + url_div}models{url_div}__init__.py'
+            init_file = f'{app_path + sep}models{sep}__init__.py'
 
             if len(models) == 0:
                 replace_file_line(init_file, '...', '')
@@ -2241,7 +2327,7 @@ class CLI:
         # Alert the user for data loss
         alert = '''WARNING! You will loose the following data perminantly:\n'''
         alert += '''----------------------------------------------------------\n'''
-        alert += f'''{app_path + url_div}models{url_div + model}.py\n'''
+        alert += f'''{app_path + sep}models{sep + model}.py\n'''
         alert += f'''----------------------------------------------------------'''
         
         # Print the alert
@@ -2258,15 +2344,15 @@ class CLI:
                 time.sleep(0.1)
 
                 # Delete the model module
-                model_file = f'{app_path + url_div}models{url_div + model}.py'
+                model_file = f'{app_path + sep}models{sep + model}.py'
                 delete_file(model_file)
 
                 # Update the _models.py
-                models_file = f'{app_path + url_div}models{url_div}_models.py'
+                models_file = f'{app_path + sep}models{sep}_models.py'
                 replace_file_line(models_file, f"'{model}',", '')
 
                 # Update the __init__.py
-                init_file = f'{app_path + url_div}models{url_div}__init__.py'
+                init_file = f'{app_path + sep}models{sep}__init__.py'
 
                 if len(models) == 1:
                     replace_file_line(init_file, f'from .{model} import {model}', '    ...\n')
@@ -2340,9 +2426,9 @@ class CLI:
             time.sleep(0.1)
 
             # Form blueprint
-            form_blueprint = f'{aurora_path + url_div}blueprints{url_div}form.zip'
-            form_file = f'{app_path + url_div}forms{url_div + app + url_div}form.zip'
-            form_dir = f'{app_path + url_div}forms{url_div + app + url_div}'
+            form_blueprint = f'{aurora_path + sep}blueprints{sep}form.zip'
+            form_file = f'{app_path + sep}forms{sep + app + sep}form.zip'
+            form_dir = f'{app_path + sep}forms{sep + app + sep}'
             
             # Copy the form blueprint
             copy_file(form_blueprint, form_file)
@@ -2354,15 +2440,15 @@ class CLI:
             delete_file(form_file)
 
             # Rename the _form.py
-            old_form = f'{app_path + url_div}forms{url_div + app + url_div}_form.py'
-            new_form = f'{app_path + url_div}forms{url_div + app + url_div + form}.py'
+            old_form = f'{app_path + sep}forms{sep + app + sep}_form.py'
+            new_form = f'{app_path + sep}forms{sep + app + sep + form}.py'
             rename_file(old_form, new_form)
 
             # Update the form blue print
             replace_file_string(new_form, 'FormName', form)
 
             # Update the _forms.py
-            forms_file = f'{app_path + url_div}forms{url_div + app + url_div}_forms.py'
+            forms_file = f'{app_path + sep}forms{sep + app + sep}_forms.py'
 
             forms_data = f"""    '{form}',\n"""
             forms_data += """)#do-not-change-me"""
@@ -2370,7 +2456,7 @@ class CLI:
             replace_file_line(forms_file, ')#do-not-change-me', forms_data)
 
             # Update the __init__.py
-            init_file = f'{app_path + url_div}forms{url_div + app + url_div}__init__.py'
+            init_file = f'{app_path + sep}forms{sep + app + sep}__init__.py'
 
             if len(forms) == 0:
                 replace_file_line(init_file, '...', '')
@@ -2439,7 +2525,7 @@ class CLI:
         # Alert the user for data loss
         alert = '''WARNING! You will loose the following data perminantly:\n'''
         alert += '''----------------------------------------------------------\n'''
-        alert += f'''{app_path + url_div}forms{url_div + app + url_div + form}.py\n'''
+        alert += f'''{app_path + sep}forms{sep + app + sep + form}.py\n'''
         alert += f'''----------------------------------------------------------'''
         
         # Print the alert
@@ -2456,15 +2542,15 @@ class CLI:
                 time.sleep(0.1)
 
                 # Delete the form module
-                form_file = f'{app_path + url_div}forms{url_div + app + url_div + form}.py'
+                form_file = f'{app_path + sep}forms{sep + app + sep + form}.py'
                 delete_file(form_file)
 
                 # Update the _forms.py
-                forms_file = f'{app_path + url_div}forms{url_div + app + url_div}_forms.py'
+                forms_file = f'{app_path + sep}forms{sep + app + sep}_forms.py'
                 replace_file_line(forms_file, f"'{form}',", '')
 
                 # Update the __init__.py
-                init_file = f'{app_path + url_div}forms{url_div + app + url_div}__init__.py'
+                init_file = f'{app_path + sep}forms{sep + app + sep}__init__.py'
 
                 if len(forms) == 1:
                     replace_file_line(init_file, f'from .{form} import {form}', '    ...\n')
@@ -2536,18 +2622,37 @@ class CLI:
         if not CLI.migrate_database(pattern="repair"):
             print('Checking models for repairs...')
 
-            # Repair placeholder
-            is_repair = False
+            # Repair placeholders
+            table_repair = False
+            column_repair = False
 
             # Find migration models info
             m_version = db.read(table="_migrations", cols=['version'], where={"current":True}).first()['version']
             m_module = importlib.import_module(f'_migrations.{m_version}')
             m_models = m_module._models
 
-            # Loop the models
+            # Looping the models
             for model in m_models:
                 # Migration model attributes
                 m_attrs = getattr(m_module, model)
+                table = m_attrs['table']
+
+                # Search for temporary tables
+                if db._exist_table(f"{table}__temp"):
+                    table_repair = True
+
+                    print(f'Corrupted "{table}" table for "{model}" model detected!')
+                    time.sleep(0.1)
+
+                    print(f'Repairing "{table}" table in the database.')
+                    time.sleep(0.1)
+
+                    db._delete_table(f"{table}__temp", True)
+
+                    # Search for temporary columns
+                    for col in m_attrs['col_type']:
+                        if db._exist_column(table, f"{col}__temp"):
+                            db._delete_column(table, f"{col}__temp", True)
 
                 # Find the current model repair attribute
                 c_model = importlib.import_module(f'models.{model}')
@@ -2556,7 +2661,7 @@ class CLI:
 
                 # Check the repair attribute
                 if repair:
-                    is_repair = True
+                    column_repair = True
 
                     # Loop the repair
                     for col in repair:
@@ -2579,9 +2684,9 @@ class CLI:
                         m_constraints = m_pk + m_unique + m_not_null + m_default + m_check
 
                         # Repair the column
-                        db._update_column(m_attrs['table'], col, repair[col], m_datatype, m_constraints)
+                        db._update_column(table, col, repair[col], m_datatype, m_constraints)
                         
-                        model_file = f'{app_path + url_div}models{url_div + model}.py'
+                        model_file = f'{app_path + sep}models{sep + model}.py'
 
                         # Update the model file
                         old_str = rf"^[ ]*{col}+[ ]*[=]+[ ]*Model+\.+"
@@ -2592,8 +2697,8 @@ class CLI:
                         new_line = ""
                         replace_file_line(model_file, old_line, new_line, True)
 
-            # Check requested repairs
-            if is_repair:
+            # Column repair detected
+            if column_repair:
                 # Produce the migration content
                 content = CLI.migration_data(models, True)
 
@@ -2616,17 +2721,22 @@ class CLI:
                 db.create(table='_migrations', data={'version':version,'current':True, 'comment':migration_comment})
                 
                 # Check migration file
-                if file_exist(f"""{app_path + url_div}_migrations{url_div + version}.py"""):
-                    delete_file(f"""{app_path + url_div}_migrations{url_div + version}.py""")
+                if file_exist(f"""{app_path + sep}_migrations{sep + version}.py"""):
+                    delete_file(f"""{app_path + sep}_migrations{sep + version}.py""")
                 
                 # Create the migrations file
-                create_file(f"""{app_path + url_div}_migrations{url_div + version}.py""", content)
+                create_file(f"""{app_path + sep}_migrations{sep + version}.py""", content)
 
                 # Delete the temporary migration file
                 delete_file(temp_file)
 
                 # Alert the user
                 print('Database repaired successfully, and a new migration created!')
+                time.sleep(0.1)
+
+            # Table repair detected
+            elif table_repair:
+                print("Database repaired successfully!")
                 time.sleep(0.1)
 
             # No repair requested
@@ -2669,7 +2779,7 @@ class CLI:
                 migrations = db.read(table="_migrations").all()
                 for migration in migrations:
                     # Delete the migration files
-                    delete_file(f"""{app_path + url_div}_migrations{url_div + migration['version']}.py""")
+                    delete_file(f"""{app_path + sep}_migrations{sep + migration['version']}.py""")
 
                 # Drop the database
                 db._delete_database(database, True)

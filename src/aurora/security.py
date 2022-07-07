@@ -3,8 +3,10 @@
 ################
 import importlib
 from os import replace
+import re
 from datetime import datetime, timedelta
 from typing import Union
+from xmlrpc.client import boolean
 from .helpers import route_url
 from flask import make_response, jsonify, render_template, request as flask_request, abort as flask_abort, redirect as flask_redirect, session as flask_session
 from werkzeug.security import check_password_hash, generate_password_hash
@@ -294,12 +296,11 @@ def find_lang():
 # @return object
 ##
 def login_required(app:str, controller:str=None, check:Union[str, list]='user'):
-
-    # Fetch the route final url
-    url = route_url(app, controller)
-
     def wrapper(inner):
         def decorator(*args, **kwargs):
+            # Fetch the route final url
+            url = route_url(app, controller)
+
             # Find next URL
             next = request.url.replace(request.url_root, '/')
 
@@ -344,12 +345,11 @@ def login_required(app:str, controller:str=None, check:Union[str, list]='user'):
 # @return object
 ##
 def login_abort(app:str, controller:str=None, check:Union[str, list]='user'):
-
-    # Fetch the route final url
-    url = route_url(app, controller)
-
     def wrapper(inner):
         def decorator(*args, **kwargs):
+            # Fetch the route final url
+            url = route_url(app, controller)
+
             # check is of type str
             if type(check) is str:
                 # Check cookie
@@ -390,14 +390,14 @@ def hash_password(password):
 
 
 ##
-# @desc Check hashed password with requested password
+# @desc Validates a hashed password
 # 
 # @param hashed_password: str -- Hashed password from database
 # @param requested_password: str -- Requested password by the user
 #
 # @return bool
 ##
-def check_password(hashed_password, requested_password):
+def validate_password(hashed_password, requested_password):
     # Valid password
     if check_password_hash(hashed_password, requested_password):
         return True
@@ -405,3 +405,54 @@ def check_password(hashed_password, requested_password):
     # Invalid password
     else:
         return False
+
+
+##
+# @desc Checks a password strength
+# 
+# @param password: str   -- The password to validate
+# @param length: int     -- The password minimum length
+# @param digit: bool     -- Check for digit?
+# @param uppercase: bool -- Check for uppercase?
+# @param lowercase: bool -- Check for lowercase?
+# @param symbol: bool    -- Check for symbol?
+#
+# @return dict
+##
+def password_strength(password:str, length:int=8, digit:bool=True, uppercase:bool=True, lowercase:bool=True, symbol:bool=True):
+    """
+        A strong password should:
+        - Be greater than or equal to `length`
+        - Contain one digit or more
+        - Contain one uppercase letter or more
+        - Contain one lowercase letter or more
+        - Contain one symbol or more
+    """
+
+    # Check the length
+    length = len(password) >= length
+
+    # Check for digits
+    digit = bool(re.search(r"\d", password)) if digit else True
+
+    # Check for uppercase
+    uppercase = bool(re.search(r"[A-Z]", password)) if uppercase else True
+
+    # Check for lowercase
+    lowercase = bool(re.search(r"[a-z]", password)) if lowercase else True
+
+    # Check for symbols
+    symbol = bool(re.search(r"[ !#$%&'()*+,-./[\\\]^_`{|}~"+r'"]', password)) if symbol else True
+
+    # Overall result
+    result = length and digit and uppercase and lowercase and symbol
+
+    # Return the collected result
+    return {
+        'result'    : result,
+        'length'    : length,
+        'digit'     : digit,
+        'uppercase' : uppercase,
+        'lowercase' : lowercase,
+        'symbol'    : symbol,
+    }

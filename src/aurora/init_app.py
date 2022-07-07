@@ -15,11 +15,11 @@ def start():
     # Check platform system
     # Windows
     if platform.system() == 'Windows':
-        url_div = '\\'
+        sep = '\\'
 
-    # Linux, Mac
+    # Unix
     else:
-        url_div = '/'
+        sep = '/'
 
     # AuroraMVC path
     aurora_path = os.path.dirname(__file__)
@@ -38,8 +38,8 @@ def start():
 
     # try the process
     try:
-        init_bluprint = f'{aurora_path + url_div}blueprints{url_div}init_app.zip'
-        init_file = f'{app_path + url_div}init_app.zip'
+        init_bluprint = f'{aurora_path + sep}blueprints{sep}init_app.zip'
+        init_file = f'{app_path + sep}init_app.zip'
 
         # Copy the initial blueprint zip file
         copy_file(init_bluprint, init_file)
@@ -55,17 +55,17 @@ def start():
         safe_type = getattr(config, 'SAFE_TYPE')
 
         if safe_type:
-            users_model_bluprint = f'{aurora_path + url_div}blueprints{url_div}users_model_safe.zip'
+            users_model_bluprint = f'{aurora_path + sep}blueprints{sep}users_model_safe.zip'
         else:
-            users_model_bluprint = f'{aurora_path + url_div}blueprints{url_div}users_model.zip'
+            users_model_bluprint = f'{aurora_path + sep}blueprints{sep}users_model.zip'
 
-        users_model_file = f'{app_path + url_div}models{url_div}users_model.zip'
+        users_model_file = f'{app_path + sep}models{sep}users_model.zip'
 
         # Copy the Users model zip file
         copy_file(users_model_bluprint, users_model_file)
 
         # Unzip the file
-        unzip_file(users_model_file, f'{app_path + url_div}models')
+        unzip_file(users_model_file, f'{app_path + sep}models')
 
         # Remove the zip file
         delete_file(users_model_file)

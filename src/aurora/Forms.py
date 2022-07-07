@@ -6,9 +6,10 @@ from wtforms import *
 from wtforms.csrf.session import SessionCSRF
 from datetime import timedelta
 from flask import session
+from .helpers import random_string
 
-config = importlib.import_module('config')
-secret_key = getattr(config, "SECRET_KEY")
+# Set the csrf secret key
+csrf_secret_key = random_string(24)
 
 
 ###############
@@ -32,6 +33,6 @@ class Forms(Form):
     class Meta:
         csrf = True
         csrf_class = SessionCSRF
-        csrf_secret = bytes('{}'.format(secret_key), encoding='utf8')
+        csrf_secret = bytes('{}'.format(csrf_secret_key), encoding='utf8')
         csrf_time_limit = timedelta(minutes=20)
         csrf_context = session

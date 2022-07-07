@@ -169,20 +169,22 @@ class Model:
             if datatype == "str":
                 # Check DEFAULT for safe typing
                 if not default == None and not re.match(r"^['].*.[']$", default):
-                    # Prepare the alert message
-                    alert = f'''For "str" safe typing the DEFAULT constraint value must be wrapped in '...'.\n'''
-                    alert += f'''For example: default="'Hello World!'"'''
+                    default = f"""'{default}'"""
+                #     # Prepare the alert message
+                #     alert = f'''For "str" safe typing the DEFAULT constraint value must be wrapped in '...'.\n'''
+                #     alert += f'''For example: default="'Hello World!'"'''
                     
-                    # Developer mode
-                    if debug:
-                        # Raise error
-                        raise Exception(alert)
+                #     # Developer mode
+                #     if debug:
+                #         # Raise error
+                #         raise Exception(alert)
 
-                    # Production mode
-                    else:
-                        print(alert)
-                        return False
+                #     # Production mode
+                #     else:
+                #         print(alert)
+                #         return False
 
+                # Check database system
                 if db_system == 'SQLite':
                     datatype = 'TEXT'                       # unlimitted characters
 

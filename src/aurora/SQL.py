@@ -32,7 +32,7 @@ class Database:
     # @param table: str - The table name
     # @property config: module - the app config module
     ##
-    def __init__(self):
+    def __init__(self, error:bool = True):
 
         # Import the configuration file
         self.config = importlib.import_module('config')
@@ -42,18 +42,18 @@ class Database:
         self.cur = None
         self.sp_char = None
         self.development = getattr(self.config, "DEVELOPMENT")
-        self.debug = getattr(self.config, 'DEBUG')
+        self.debug = getattr(self.config, 'DEBUG') if error else False
         self.db_system = getattr(self.config, 'DB_SYSTEM')
         self.app_path = getattr(self.config, "ROOT_PATH")
 
         # Check platform system
         # Windows
         if platform.system() == 'Windows':
-            self.url_div = '\\'
+            self.sep = '\\'
 
-        # Linux, Mac
+        # Unix
         else:
-            self.url_div = '/'
+            self.sep = '/'
 
         # Database config attributes
         self.host = None
@@ -553,7 +553,7 @@ class Database:
         if self.db_system == 'SQLite':
 
             # Database exists
-            if os.path.isfile(self.app_path + self.url_div + database):
+            if os.path.isfile(self.app_path + self.sep + database):
                 return True
 
             # Database not exists
@@ -2969,7 +2969,7 @@ class Database:
                 # Attempt the process
                 try:
                     # Remove the database file
-                    delete_file(self.app_path + self.url_div + database)
+                    delete_file(self.app_path + self.sep + database)
 
                     # Return the result
                     return True

@@ -1,7 +1,10 @@
 ################
 # Dependencies #
 ################
+import os
+import platform
 import importlib
+import time
 from flask import Flask
 
 
@@ -30,6 +33,35 @@ class Aurora():
 
         # Debug mode
         self.debug = getattr(self.config, "DEBUG")
+
+        # Timezone
+        timezone   = getattr(self.config, "TIMEZONE")
+
+        # Check timezone
+        if timezone:
+            # Check the OS platform
+            # Windows
+            if platform.system() == 'Windows':
+                # Set timezone
+                # os.system('tzutil /s "Central Standard Time"')
+                if os.system(f'tzutil /s "{timezone}"') == 516:
+                    print(os.system('tzutil /l'))
+
+                    err = "Invalid timezone inserted!"
+                    # Check debug mode
+                    if self.debug:
+                        # Raise error
+                        raise Exception(err)
+
+                    # Return the result
+                    else:
+                        print(err)
+                        return False
+            # Unix
+            else:
+                # Set timezone
+                os.environ['TZ'] = timezone
+                time.tzset()
         
         # Import the _apps module
         self.apps = importlib.import_module("_apps")
@@ -77,16 +109,29 @@ class Aurora():
     ##
     def serve(self):
         # Fetch the required attributes
-        apps = getattr(self.apps, "apps")
-        root_path = getattr(self.config, "ROOT_PATH")
-        statics = getattr(self.config, 'STATICS')
-        secret_key = getattr(self.config, "SECRET_KEY")
-
+        apps              = getattr(self.apps, "apps")
+        root_path         = getattr(self.config, "ROOT_PATH")
+        statics           = getattr(self.config, 'STATICS')
+        secret_key        = getattr(self.config, "SECRET_KEY")
+        upload_size       = getattr(self.config, "UPLOAD_SIZE")
+        upload_extensions = getattr(self.config, "UPLOAD_EXTENSIONS")
+        upload_path       = getattr(self.config, "UPLOAD_PATH")
+        
         # Initialize the root app (Flask instance)
         self.app = Flask(__name__, template_folder=f'{root_path}/views', static_folder=f'{root_path}/{statics}')
         
         # Set the app secret key
         self.app.config['SECRET_KEY'] = secret_key
+
+        # Set maximum upload size
+        self.app.config['MAX_CONTENT_LENGTH'] = upload_size
+
+        # Set allowed upload extensions
+        self.app.config['UPLOAD_EXTENSIONS'] = upload_extensions
+
+        # Set upload path
+        self.app.config['UPLOAD_PATH'] = upload_path
+
 
         ##
         # @desc The local global_variables method -- Sets the global variables usable in views
