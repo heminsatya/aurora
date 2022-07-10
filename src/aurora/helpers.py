@@ -191,7 +191,7 @@ def controller_exists(app:str, controller:str):
     else:
         return {
             'result': False, 
-            'message': f'The "{app}" app doesn\'t have the "{controller}" controller!'
+            'message': f'- The "{app}" app doesn\'t have the "{controller}" controller!'
         }
 
 
@@ -849,7 +849,7 @@ def app_name(name:str):
     if not name:
         return {
             'result': False, 
-            'message': 'The app name is required!'
+            'message': '- The app name is required!'
         }
 
     # Regular expression
@@ -866,7 +866,7 @@ def app_name(name:str):
     else:
         return {
             'result': False, 
-            'message': 'The app name is invalid.\nValid characters: a-z, _'
+            'message': '- The app name is invalid!\n- Valid characters: a-z, _'
         }
 
 
@@ -882,7 +882,7 @@ def app_url(url:str):
     if not url:
         return {
             'result': False, 
-            'message': 'The app URL is required!'
+            'message': '- The app URL is required!'
         }
 
     # Regular expression
@@ -899,7 +899,7 @@ def app_url(url:str):
     else:
         return {
             'result': False, 
-            'message': 'The app URL is invalid.\nValid characters: a-z, -'
+            'message': '- The app URL is invalid!\n- Valid characters: a-z, -'
         }
 
 
@@ -915,7 +915,7 @@ def controller_name(name:str):
     if not name:
         return {
             'result': False, 
-            'message': 'The controller name is required!'
+            'message': '- The controller name is required!'
         }
 
     # Regular expression
@@ -932,7 +932,7 @@ def controller_name(name:str):
     else:
         return {
             'result': False, 
-            'message': 'The controller name must be in "CamelCase" form with at least two "a-z" and "A-Z" characters.'
+            'message': '- The controller name must be in "CamelCase" form with at least two "a-z" and "A-Z" characters!'
         }
 
 
@@ -965,7 +965,7 @@ def controller_url(url:str):
     else:
         return {
             'result': False, 
-            'message': 'The controller URL is invalid.\nValid characters: a-z, 0-9, -, /, <, :, >'
+            'message': '- The controller URL is invalid!\n- Valid characters: a-z, 0-9, -, /, <, :, >'
         }
 
 
@@ -993,7 +993,7 @@ def controller_methods(methods:list):
         if not method.upper() in valid_methods:
             return {
                 'result': False, 
-                'message': 'Valid Methods: POST, GET, PUT, DELETE'
+                'message': '- Valid Methods: POST, GET, PUT, DELETE'
             }
 
         # Valid name
@@ -1016,7 +1016,7 @@ def view_name(view:str):
     if not view:
         return {
             'result': False, 
-            'message': 'The view is required!'
+            'message': '- The view is required!'
         }
 
     # Regular expression
@@ -1033,7 +1033,7 @@ def view_name(view:str):
     else:
         return {
             'result': False, 
-            'message': 'The view is invalid.\nValid characters: a-z, -, _'
+            'message': '- The view is invalid!\n- Valid characters: a-z, -, _'
         }
 
 
@@ -1049,7 +1049,7 @@ def model_name(name:str):
     if not name:
         return {
             'result': False, 
-            'message': 'The model name is required!'
+            'message': '- The model name is required!'
         }
 
     # Regular expression
@@ -1066,7 +1066,7 @@ def model_name(name:str):
     else:
         return {
             'result': False, 
-            'message': 'The model name must be in "CamelCase" form with at least two "a-z" and "A-Z" characters.'
+            'message': '- The model name must be in "CamelCase" form with at least two "a-z" and "A-Z" characters!'
         }
 
 
@@ -1082,7 +1082,7 @@ def form_name(name:str):
     if not name:
         return {
             'result': False, 
-            'message': 'The form name is required!'
+            'message': '- The form name is required!'
         }
 
     # Regular expression
@@ -1099,7 +1099,7 @@ def form_name(name:str):
     else:
         return {
             'result': False, 
-            'message': 'The form name must be in "CamelCase" form with at least two "a-z" and "A-Z" characters.'
+            'message': '- The form name must be in "CamelCase" form with at least two "a-z" and "A-Z" characters!'
         }
 
 
@@ -1115,7 +1115,7 @@ def table_name(name:str):
     if not name:
         return {
             'result': False, 
-            'message': 'The table name is required!'
+            'message': '- The table name is required!'
         }
 
     # Regular expression
@@ -1132,7 +1132,7 @@ def table_name(name:str):
     else:
         return {
             'result': False, 
-            'message': 'Database table names must be in "snake_case" form with at least two a-z, _ characters.'
+            'message': '- Database table names must be in "snake_case" form with at least two a-z, _ characters!'
         }
 
 
@@ -1148,7 +1148,7 @@ def column_name(name:str):
     if not name:
         return {
             'result': False, 
-            'message': 'The column name is required!'
+            'message': '- The column name is required!'
         }
 
     # Regular expression
@@ -1165,7 +1165,7 @@ def column_name(name:str):
     else:
         return {
             'result': False, 
-            'message': 'Database column names must be in "snake_case" form with at least two a-z, _ characters.'
+            'message': '- Database column names must be in "snake_case" form with at least two a-z, _ characters!'
         }
 
 

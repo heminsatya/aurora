@@ -120,7 +120,6 @@ class CLI:
     # @desc Constructor method
     ##
     def __init__(self):
-
         # Try to run the CLI application
         try:
             # Check the development
@@ -379,7 +378,7 @@ class CLI:
             # "init" pattern
             if pattern == "init":
                 # Alert the user
-                print('Database connection not found!')
+                print('- Database connection not found!')
                 time.sleep(0.1)
 
             # Other patterns
@@ -428,7 +427,7 @@ class CLI:
                     # "reset" pattern
                     if pattern == "reset":
                         # Alert the user
-                        print('Database is corrupted!')
+                        print('- Database is corrupted!')
                         time.sleep(0.1)
 
                     # Remain patterns
@@ -467,7 +466,7 @@ class CLI:
                         # "reset" pattern
                         if pattern == "reset":
                             # Alert the user
-                            print('Database system has been changed!')
+                            print('- Database system has been changed!')
                             time.sleep(0.1)
 
                         # Remain patterns
@@ -491,7 +490,7 @@ class CLI:
                         # Check database system change
                         if not db_changed and not db_corrupted:
                             # Alert the user
-                            print('Database connection established successfully!')
+                            print('- Database connection established successfully!')
                             time.sleep(0.1)
 
         # Check the models
@@ -653,14 +652,14 @@ class CLI:
 
             # Not "init" pattern and not reset pattern
             if not pattern == "init" and not pattern == "reset":
-                # Check repair attribute
+                # Check repair columns
                 if repair:
                     # Check the new column for duplicate values
                     if dict_dup_val(repair):
                         # Prepare the alert message
-                        alert = '''----------------------------------------------------------\n'''
+                        alert  = '''----------------------------------------------------------\n'''
                         alert += '''WARNING!\n'''
-                        alert += f'''Duplicated values for repairing "{model}" model requested!\n'''
+                        alert += f'''Duplicated values for repairing "{model}" model detected!\n'''
                         alert += '''----------------------------------------------------------'''
                         
                         # Alert the user
@@ -753,12 +752,12 @@ class CLI:
 
                             # Exit the program
                             exit()
-                    
-        # Models are OK
-        print('Models are fine.')
-        time.sleep(0.1)
 
         # Everything is fine
+        print('- Models are fine!')
+        time.sleep(0.1)
+
+        # Return the result
         return True
 
 
@@ -958,7 +957,7 @@ class CLI:
 
         # Print the message
         if pattern == "init":
-            print('Database initialized successfully!')
+            print('- Database initialized successfully!')
             time.sleep(0.1)
 
         # Everything is fine
@@ -974,7 +973,7 @@ class CLI:
         migration = False
 
         # Checking unmigrated changes
-        print('Checking models for changes...')
+        print('Checking models for migrations...')
         time.sleep(0.1)
 
         # Find migration models info
@@ -998,7 +997,7 @@ class CLI:
             if not model in c_models:
                 migration = True
 
-                print(f'Removed model "{model}" detected!')
+                print(f'- Removed model "{model}" detected!')
                 time.sleep(0.1)
 
                 # Check the pattern
@@ -1019,7 +1018,7 @@ class CLI:
                 if not m_attrs['table'] == c_attrs['table']:
                     migration = True
 
-                    print(f'''Renamed tabel "{c_attrs['table']}" for "{model}" model detected!''')
+                    print(f'''- Renamed tabel "{c_attrs['table']}" for "{model}" model detected!''')
                     time.sleep(0.1)
 
                     # Check the pattern
@@ -1052,7 +1051,7 @@ class CLI:
                     if not col in c_attrs['col_type'] and not col == m_attrs['primary_key'] and not col == c_attrs['primary_key']:
                         migration = True
 
-                        print(f'''Removed column "{col}" for "{model}" model detected!''')
+                        print(f'''- Removed column "{col}" for "{model}" model detected!''')
                         time.sleep(0.1)
 
                         # Check the pattern
@@ -1196,7 +1195,7 @@ class CLI:
                         if not m_data == c_data:
                             migration = True
 
-                            print(f'''Modified column "{col}" for "{model}" model detected!''')
+                            print(f'''- Modified column "{col}" for "{model}" model detected!''')
                             time.sleep(0.1)
 
                             # Check modified columns with not null & no default
@@ -1298,7 +1297,7 @@ class CLI:
                     if not col in m_attrs['col_type'] and not col == c_attrs['primary_key']:
                         migration = True
 
-                        print(f'Added column "{col}" for "{model}" model detected!')
+                        print(f'- Added column "{col}" for "{model}" model detected!')
                         time.sleep(0.1)
 
                         # Check the pattern
@@ -1410,7 +1409,7 @@ class CLI:
                     elif not col in m_attrs['col_type'] and col == c_attrs['primary_key']:
                         migration = True
 
-                        print(f'''Modified primary key "{col}" for "{model}" model detected!''')
+                        print(f'''- Modified primary key "{col}" for "{model}" model detected!''')
                         time.sleep(0.1)
 
                         # Check the pattern
@@ -1465,7 +1464,7 @@ class CLI:
             if not model in m_models:
                 migration = True
 
-                print(f'New model "{model}" detected!')
+                print(f'- New model "{model}" detected!')
                 time.sleep(0.1)
 
                 # Check the pattern
@@ -1514,7 +1513,7 @@ class CLI:
                 delete_file(temp_file)
 
                 # Alert the user
-                print('All changes migrated to the database.')
+                print('- All changes migrated to the database.')
                 time.sleep(0.1)
 
             # Check pattern
@@ -1556,18 +1555,283 @@ class CLI:
             # Delete the temporary migration file
             delete_file(temp_file)
 
-            # Not repair pattern
-            if not pattern == "repair":
-                print('No new change to migrate. Everything is fine!')
-
-            # Repair pattern
-            elif pattern == "repair":
-                print('No new change to migrate.')
-
+            # No migration
+            print('- Nothing to migrate!')
             time.sleep(0.1)
 
             # Return result
             return False
+
+
+    ##
+    # @desc Repairing the database
+    ##
+    @staticmethod
+    def repair_database(pattern: str = "repair"):
+        # Only for check and repair patterns
+        if pattern == "repair" or pattern == "check":
+            print('Checking models for repairs...')
+            time.sleep(0.1)
+
+            # Repair placeholders
+            table_repair = False
+            column_repair = False
+
+            # Find migration models info
+            m_version = db.read(table="_migrations", cols=['version'], where={"current":True}).first()['version']
+            m_module = importlib.import_module(f'_migrations.{m_version}')
+            m_models = m_module._models
+
+            # Looping the models
+            for model in m_models:
+                # Migration model attributes
+                m_attrs = getattr(m_module, model)
+                table = m_attrs['table']
+
+                # Search for temporary tables
+                if db._exist_table(f"{table}__temp"):
+                    table_repair = True
+
+                    print(f'- Corrupted "{table}" table for "{model}" model detected!')
+                    time.sleep(0.1)
+
+                    # For only the repair pattern
+                    if pattern == "repair":
+                        print(f'Repairing "{table}" table in the database...')
+                        time.sleep(0.1)
+
+                        db._delete_table(f"{table}__temp", True)
+
+                        # Search for temporary columns
+                        for col in m_attrs['col_type']:
+                            if db._exist_column(table, f"{col}__temp"):
+                                db._delete_column(table, f"{col}__temp", True)
+
+                # Find the current model repair attribute
+                c_model = importlib.import_module(f'models.{model}')
+                c_class = getattr(c_model, model)
+                repair = c_class().repair
+
+                # Produce repairing model attributes
+                r_attrs = {}
+                for k, v in m_attrs.items():
+                    if k == 'table':
+                        r_attrs[k] = v
+
+                    elif k == 'col_type':
+                        r_col_type = {}
+                        for x, y in m_attrs[k].items():
+                            if x in repair:
+                                r_col_type[repair[x]] = y
+                            else:
+                                r_col_type[x] = y
+
+                        r_attrs[k] = r_col_type
+
+                    elif k == 'primary_key':
+                        r_attrs[k] = v
+                    
+                    elif k == 'unique':
+                        r_unique = [None] * len(m_attrs[k])
+                        for x in range(len(m_attrs[k])):
+                            if m_attrs[k][x] in repair:
+                                r_unique[x] = repair[m_attrs[k][x]]
+                            else:
+                                r_unique[x] = m_attrs[k][x]
+
+                        r_attrs[k] = r_unique
+                    
+                    elif k == 'not_null':
+                        r_not_null = [None] * len(m_attrs[k])
+                        for x in range(len(m_attrs[k])):
+                            if m_attrs[k][x] in repair:
+                                r_not_null[x] = repair[m_attrs[k][x]]
+                            else:
+                                r_not_null[x] = m_attrs[k][x]
+
+                        r_attrs[k] = r_not_null
+                    
+                    elif k == 'default':
+                        r_default = {}
+                        for x, y in m_attrs[k].items():
+                            if x in repair:
+                                r_default[repair[x]] = y
+                            else:
+                                r_default[x] = y
+
+                        r_attrs[k] = r_default
+                    
+                    elif k == 'check':
+                        r_check = {}
+                        for x, y in m_attrs[k].items():
+                            if x in repair:
+                                r_check[repair[x]] = y
+                            else:
+                                r_check[x] = y
+
+                        r_attrs[k] = r_check
+                    
+                    elif k == 'foreign_key':
+                        r_foreign_key = {}
+                        for x, y in m_attrs[k].items():
+                            if x in repair:
+                                r_foreign_key[repair[x]] = y
+                            else:
+                                r_foreign_key[x] = y
+
+                        r_attrs[k] = r_foreign_key
+
+                # if table == 'partials':
+                #     print(m_attrs)
+                #     print(r_attrs)
+
+                # Table temporary columns
+                t_cols = CLI.list_cols(m_attrs['table'])
+                
+                # Repair columns
+                r_cols = []
+
+                # Table current columns
+                c_cols = []
+
+                # Add existed columns to current columns
+                for x in t_cols:
+                    # Model cols
+                    c_cols.append(x)
+
+                    # Renamed columns
+                    if x in repair:
+                        r_cols.append(repair[x])
+
+                    # Other comumns
+                    else:
+                        r_cols.append(x)
+
+                c_cols = ', '.join(c_cols)
+                r_cols = ', '.join(r_cols)
+
+                # if table == 'partials':
+                #     print(c_cols)
+                #     print(r_cols)
+
+                # Check the repair attribute
+                if repair:
+                    column_repair = True
+
+                    # Loop the repair
+                    for col in repair:
+                        print(f'- Repairing "{col}" column for "{model}" model detected!')
+                        time.sleep(0.1)
+
+                        # For only the repair pattern
+                        if pattern == "repair":
+                            print('Repairing column in the database...')
+                            time.sleep(0.1)
+
+                            # Produce migration model data
+                            m_datatype = m_attrs['col_type'][col]
+                            
+                            m_pk = " PRIMARY KEY" if col == m_attrs['primary_key'] else ""
+                            
+                            m_unique = " UNIQUE" if col in m_attrs['unique'] else ""
+                            m_not_null = " NOT NULL" if col in m_attrs['not_null'] else ""
+                            m_default = f" DEFAULT {m_attrs['default'][col]}" if col in m_attrs['default'] else ""
+                            m_check = f" CHECK ({m_attrs['check'][col]})" if col in m_attrs['check'] else ""
+
+                            m_constraints = m_pk + m_unique + m_not_null + m_default + m_check
+
+                            # Repair the column
+                            try:
+                                db._update_column(table, col, repair[col], m_datatype, m_constraints)
+                            
+                            # On error
+                            except:
+                                # Rename table to a temporary table
+                                db._update_table(table, f"{table}__temp")
+
+                                # Create a new table with latest constraints (renamed)
+                                db._create_table(table, r_attrs['col_type'], r_attrs['primary_key'], r_attrs['unique'], 
+                                    r_attrs['not_null'], r_attrs['default'], r_attrs['check'], r_attrs['foreign_key'])
+
+                                # Insert the temp table data into the new table
+                                db.query(f"INSERT INTO {table}({r_cols}) SELECT {c_cols} FROM {table}__temp;")
+                                
+                                # Remove the temp table
+                                db._delete_table(f"{table}__temp", True)
+                            
+                            model_file = f'{app_path + sep}models{sep + model}.py'
+
+                            # Update the model file
+                            old_str = rf"^[ ]*{col}+[ ]*[=]+[ ]*Model+\.+"
+                            new_str = f"    {repair[col]} = Model."
+                            replace_file_string(model_file, old_str, new_str, True)
+
+                            old_line = rf"^[ ]*'{col}'+[ ]*[:]+[ ]*'{repair[col]}'+\,*"
+                            new_line = ""
+                            replace_file_line(model_file, old_line, new_line, True)
+
+            # Column repair detected
+            if column_repair and pattern == "repair":
+                # Produce the migration content
+                content = CLI.migration_data(models, True)
+
+                # Prompt the user for migration comment
+                migration_comment = input("Your Comment (optional): ")
+                migration_comment = migration_comment if migration_comment else "Untitled"
+
+                # Create new migration
+                print('Creating a new migration...')
+                time.sleep(0.1)
+
+                date = datetime.now().strftime("%m-%d-%Y")
+                inserted_id = db.read(table="_migrations").last()["id"] + 1
+                version = f'{inserted_id}-{date}'
+
+                # Set the previous migration current to false
+                db.update(table='_migrations', data={'current':False}, where={'version':m_version})
+
+                # Insert the new migration into the database
+                db.create(table='_migrations', data={'version':version,'current':True, 'comment':migration_comment})
+                
+                # Check migration file
+                if file_exist(f"""{app_path + sep}_migrations{sep + version}.py"""):
+                    delete_file(f"""{app_path + sep}_migrations{sep + version}.py""")
+                
+                # Create the migrations file
+                create_file(f"""{app_path + sep}_migrations{sep + version}.py""", content)
+
+                # Delete the temporary migration file
+                delete_file(temp_file)
+
+                # Alert the user
+                print('- Database repaired successfully, and a new migration created!')
+                time.sleep(0.1)
+
+            # Table repair detected
+            elif table_repair and pattern == "repair":
+                print("- Database repaired successfully!")
+                time.sleep(0.1)
+
+            # Pattern is check and repair detected
+            elif (column_repair or table_repair) and pattern == "check":
+                # Prepare the alert message
+                alert = '''----------------------------------------------------------\n'''
+                alert += '''NOTICE!\n'''
+                alert += f'''To repair the database use the following command:\n'''
+                alert += f'''python manage.py repair-db\n'''
+                alert += f'''----------------------------------------------------------'''
+                
+                # Alert the user
+                print(alert)
+                time.sleep(0.1)
+
+            # No repair requested
+            elif not column_repair and not table_repair:
+                print("- Nothing to repair!")
+                time.sleep(0.1)
+
+        # Everything is fine
+        return True
 
 
     ##
@@ -1620,7 +1884,6 @@ class CLI:
     # @var url: str -- The app base URL
     ##
     def create_app(self):
-
         # Prompt for app name
         while True:
             app = input("App Name: ")
@@ -1629,7 +1892,7 @@ class CLI:
             if app_name(app)['result']:
                 # App name is taken
                 if app_exists(app)['result']:
-                    print(f'The "{app}" is already registered. Try another name.')
+                    print(f'- The "{app}" is already registered! Try another name.')
                     time.sleep(0.1)
 
                 # App name is OK
@@ -1648,7 +1911,7 @@ class CLI:
             if app_url(url)['result']:
                 # App URL is taken
                 if app_url_exists(url):
-                    print(f'The "{url}" is already registered. Try another URL.')
+                    print(f'- The "{url}" is already registered! Try another URL.')
                     time.sleep(0.1)
 
                 # App URL is free
@@ -1710,7 +1973,7 @@ class CLI:
             replace_file_line(file_path=f'{app_path + sep}_apps.py', old_line=']#do-not-change-me', new_line=new_line)
 
             # print the message
-            print('The new app created successfully!')
+            print('- The new app created successfully!')
             time.sleep(0.1)
 
         # Handle errors
@@ -1722,7 +1985,6 @@ class CLI:
     # @desc delete_app method for removing child apps
     ##
     def delete_app(self):
-
         # Prompt for app name
         while True:
             app = input("App Name: ")
@@ -1731,7 +1993,7 @@ class CLI:
             if app_name(app)['result']:
                 # App not exists
                 if not app_exists(app)['result']:
-                    print(f'The "{app}" doesn\'t exist!')
+                    print(f'- The "{app}" doesn\'t exist!')
                     time.sleep(0.1)
 
                 # App exists
@@ -1778,7 +2040,7 @@ class CLI:
                 replace_file_line(file_path=f'{app_path + sep}_apps.py', old_line=old_line_1, new_line='', regex=True)
                 replace_file_line(file_path=f'{app_path + sep}_apps.py', old_line=old_line_2, new_line='', regex=True)
                 
-                print('App deleted successfully')
+                print('- App deleted successfully')
                 time.sleep(0.1)
 
             # Handle errors
@@ -1787,7 +2049,7 @@ class CLI:
 
         # Rejected
         else:
-            print('The operation canceled!')
+            print('- The operation canceled!')
             exit()
 
 
@@ -1795,7 +2057,6 @@ class CLI:
     # @desc create_controller method for creating new controller
     ##
     def create_controller(self):
-
         # Prompt for app name
         while True:
             app = input("App Name: ")
@@ -1804,7 +2065,7 @@ class CLI:
             if app_name(app)['result']:
                 # App not exists
                 if not app_exists(app)['result']:
-                    print(f'The "{app}" doesn\'t exist!')
+                    print(f'- The "{app}" doesn\'t exist!')
                     time.sleep(0.1)
 
                 # App exists
@@ -1828,7 +2089,7 @@ class CLI:
             if controller_name(controller)['result']:
                 # Controller already exists
                 if controller_exists(app, controller)['result']:
-                    print(f'The "{controller}" already exists!')
+                    print(f'- The "{controller}" already exists!')
 
                 # Controller not exists
                 else:
@@ -1850,7 +2111,7 @@ class CLI:
 
                 # Controller url already exists
                 if controller_url_exists(app, url):
-                    print(f'The "{url}" already exists!')
+                    print(f'- The "{url}" already exists!')
 
                 # Controller url not exists
                 else:
@@ -1951,7 +2212,7 @@ class CLI:
             replace_file_line(controllers_file, ']#do-not-change-me', new_line)
 
             # Print result
-            print('The new controller created successfuly!')
+            print('- The new controller created successfuly!')
             time.sleep(0.1)
 
         # Handle errors
@@ -1963,7 +2224,6 @@ class CLI:
     # @desc delete_controller method for removing an existing controller
     ##
     def delete_controller(self):
-
         # Prompt for app name
         while True:
             app = input("App Name: ")
@@ -1972,7 +2232,7 @@ class CLI:
             if app_name(app)['result']:
                 # App not exists
                 if not app_exists(app)['result']:
-                    print(f'The "{app}" doesn\'t exist!')
+                    print(f'- The "{app}" doesn\'t exist!')
                     time.sleep(0.1)
 
                 # App exists
@@ -1990,7 +2250,7 @@ class CLI:
 
         # App controllers
         if len(controllers) == 0:
-            print(f'No controllers found for "{app}" app!')
+            print(f'- No controllers found for "{app}" app!')
             exit()
 
         # Controller name
@@ -2006,7 +2266,7 @@ class CLI:
 
                 # Controller not exists
                 else:
-                    print(f'The "{controller}" does\'nt exist!')
+                    print(f'- The "{controller}" does\'nt exist!')
 
             # Print the error
             else:
@@ -2043,7 +2303,7 @@ class CLI:
                 replace_file_line(controllers_file, old_line_1, new_line='', regex=True)
                 replace_file_line(controllers_file, old_line_2, new_line='', regex=True)
                 
-                print('Controller deleted successfully')
+                print('- Controller deleted successfully!')
                 time.sleep(0.1)
 
             # Handle errors
@@ -2052,7 +2312,7 @@ class CLI:
 
         # Rejected
         else:
-            print('The operation canceled!')
+            print('- The operation canceled!')
             exit()
 
 
@@ -2060,7 +2320,6 @@ class CLI:
     # @desc create_view method for creating new view
     ##
     def create_view(self):
-
         # Prompt for app name
         while True:
             app = input("App Name: ")
@@ -2069,7 +2328,7 @@ class CLI:
             if app_name(app)['result']:
                 # App not exists
                 if not app_exists(app)['result']:
-                    print(f'The "{app}" doesn\'t exist!')
+                    print(f'- The "{app}" doesn\'t exist!')
                     time.sleep(0.1)
 
                 # App exists
@@ -2091,7 +2350,7 @@ class CLI:
 
                 # View exists
                 if os.path.exists(view_file):
-                    print(f'The "{view}" is already exists!')
+                    print(f'- The "{view}" is already exists!')
 
                 # View not exists
                 else:
@@ -2129,7 +2388,7 @@ class CLI:
             replace_file_string(new_view, 'app_name', app)
 
             # Print the result
-            print('The new view created successfully!')
+            print('- The new view created successfully!')
             time.sleep(0.1)
         
         # Handle errors
@@ -2141,7 +2400,6 @@ class CLI:
     # @desc delete_view method for removing an existing view
     ##
     def delete_view(self):
-
         # Prompt for app name
         while True:
             app = input("App Name: ")
@@ -2150,7 +2408,7 @@ class CLI:
             if app_name(app)['result']:
                 # App not exists
                 if not app_exists(app)['result']:
-                    print(f'The "{app}" doesn\'t exist!')
+                    print(f'- The "{app}" doesn\'t exist!')
                     time.sleep(0.1)
 
                 # App exists
@@ -2172,7 +2430,7 @@ class CLI:
 
                 # View not exists
                 if not os.path.exists(view_file):
-                    print(f'The "{view}" deos\'nt exist!')
+                    print(f'- The "{view}" deos\'nt exist!')
 
                 # View exists
                 else:
@@ -2206,7 +2464,7 @@ class CLI:
                 delete_file(view_file)
 
                 # Print the result
-                print('The view deleted successfully!')
+                print('- The view deleted successfully!')
                 time.sleep(0.1)
 
             # Handle errors
@@ -2215,7 +2473,7 @@ class CLI:
 
         # Rejected
         else:
-            print('The operation canceled!')
+            print('- The operation canceled!')
             exit()
 
 
@@ -2231,7 +2489,7 @@ class CLI:
             if model_name(model)['result']:
                 # Model exists
                 if model in models:
-                    print(f'The "{model}" already exist!')
+                    print(f'- The "{model}" already exist!')
 
                 # Model not exists
                 else:
@@ -2294,7 +2552,7 @@ class CLI:
             replace_file_line(init_file, '#do-not-change-me', init_data)
 
             # Print the result
-            print('The new model created successfully!')
+            print('- The new model created successfully!')
             time.sleep(0.1)
         
         # Handle errors
@@ -2314,7 +2572,7 @@ class CLI:
             if model_name(model)['result']:
                 # Model not exists
                 if not model in models:
-                    print(f'The "{model}" doesn\'t exist!')
+                    print(f'- The "{model}" doesn\'t exist!')
 
                 # Model exists
                 else:
@@ -2360,7 +2618,7 @@ class CLI:
                     replace_file_line(init_file, f'from .{model} import {model}', '')
 
                 # Print the result
-                print('The model deleted successfully!')
+                print('- The model deleted successfully!')
                 time.sleep(0.1)
 
             # Handle errors
@@ -2369,7 +2627,7 @@ class CLI:
 
         # Rejected
         else:
-            print('The operation canceled!')
+            print('- The operation canceled!')
             exit()
 
 
@@ -2377,7 +2635,6 @@ class CLI:
     # @desc create_form method for creating new form
     ##
     def create_form(self):
-
         # Prompt for app name
         while True:
             app = input("App Name: ")
@@ -2386,7 +2643,7 @@ class CLI:
             if app_name(app)['result']:
                 # App not exists
                 if not app_exists(app)['result']:
-                    print(f'The "{app}" doesn\'t exist!')
+                    print(f'- The "{app}" doesn\'t exist!')
                     time.sleep(0.1)
 
                 # App exists
@@ -2410,7 +2667,7 @@ class CLI:
             if form_name(form)['result']:
                 # Form exists
                 if form in forms:
-                    print(f'The "{form}" already exist!')
+                    print(f'- The "{form}" already exist!')
 
                 # Form not exists
                 else:
@@ -2467,7 +2724,7 @@ class CLI:
             replace_file_line(init_file, '#do-not-change-me', init_data)
 
             # Print the result
-            print('The new form created successfully!')
+            print('- The new form created successfully!')
             time.sleep(0.1)
         
         # Handle errors
@@ -2479,7 +2736,6 @@ class CLI:
     # @desc delete_form method for removing an existing form
     ##
     def delete_form(self):
-
         # Prompt for app name
         while True:
             app = input("App Name: ")
@@ -2488,7 +2744,7 @@ class CLI:
             if app_name(app)['result']:
                 # App not exists
                 if not app_exists(app)['result']:
-                    print(f'The "{app}" doesn\'t exist!')
+                    print(f'- The "{app}" doesn\'t exist!')
                     time.sleep(0.1)
 
                 # App exists
@@ -2512,7 +2768,7 @@ class CLI:
             if form_name(form)['result']:
                 # Form not exists
                 if not form in forms:
-                    print(f'The "{form}" doesn\'t exist!')
+                    print(f'- The "{form}" doesn\'t exist!')
 
                 # Form exists
                 else:
@@ -2558,7 +2814,7 @@ class CLI:
                     replace_file_line(init_file, f'from .{form} import {form}', '')
 
                 # Print the result
-                print('The form deleted successfully!')
+                print('- The form deleted successfully!')
                 time.sleep(0.1)
 
             # Handle errors
@@ -2567,7 +2823,7 @@ class CLI:
 
         # Rejected
         else:
-            print('The operation canceled!')
+            print('- The operation canceled!')
             exit()
 
 
@@ -2581,8 +2837,12 @@ class CLI:
         # Check for migrations
         CLI.migrate_database(pattern="check")
 
+        # Check the database for repairs
+        CLI.repair_database(pattern="check")
+
         # Exit the program
         exit()
+
 
     ##
     # @desc init_db method for initializing the database for the first time
@@ -2596,6 +2856,7 @@ class CLI:
 
         # Exit the program
         exit()
+
 
     ##
     # @desc Migrates the database changes
@@ -2620,129 +2881,7 @@ class CLI:
 
         # Chech for migrations
         if not CLI.migrate_database(pattern="repair"):
-            print('Checking models for repairs...')
-
-            # Repair placeholders
-            table_repair = False
-            column_repair = False
-
-            # Find migration models info
-            m_version = db.read(table="_migrations", cols=['version'], where={"current":True}).first()['version']
-            m_module = importlib.import_module(f'_migrations.{m_version}')
-            m_models = m_module._models
-
-            # Looping the models
-            for model in m_models:
-                # Migration model attributes
-                m_attrs = getattr(m_module, model)
-                table = m_attrs['table']
-
-                # Search for temporary tables
-                if db._exist_table(f"{table}__temp"):
-                    table_repair = True
-
-                    print(f'Corrupted "{table}" table for "{model}" model detected!')
-                    time.sleep(0.1)
-
-                    print(f'Repairing "{table}" table in the database.')
-                    time.sleep(0.1)
-
-                    db._delete_table(f"{table}__temp", True)
-
-                    # Search for temporary columns
-                    for col in m_attrs['col_type']:
-                        if db._exist_column(table, f"{col}__temp"):
-                            db._delete_column(table, f"{col}__temp", True)
-
-                # Find the current model repair attribute
-                c_model = importlib.import_module(f'models.{model}')
-                c_class = getattr(c_model, model)
-                repair = c_class().repair
-
-                # Check the repair attribute
-                if repair:
-                    column_repair = True
-
-                    # Loop the repair
-                    for col in repair:
-                        print(f'Repairing "{col}" column for "{model}" model requested!')
-                        time.sleep(0.1)
-
-                        print('Repairing column in the database...')
-                        time.sleep(0.1)
-
-                        # Produce migration model data
-                        m_datatype = m_attrs['col_type'][col]
-                        
-                        m_pk = " PRIMARY KEY" if col == m_attrs['primary_key'] else ""
-                        
-                        m_unique = " UNIQUE" if col in m_attrs['unique'] else ""
-                        m_not_null = " NOT NULL" if col in m_attrs['not_null'] else ""
-                        m_default = f" DEFAULT {m_attrs['default'][col]}" if col in m_attrs['default'] else ""
-                        m_check = f" CHECK ({m_attrs['check'][col]})" if col in m_attrs['check'] else ""
-
-                        m_constraints = m_pk + m_unique + m_not_null + m_default + m_check
-
-                        # Repair the column
-                        db._update_column(table, col, repair[col], m_datatype, m_constraints)
-                        
-                        model_file = f'{app_path + sep}models{sep + model}.py'
-
-                        # Update the model file
-                        old_str = rf"^[ ]*{col}+[ ]*[=]+[ ]*Model+\.+"
-                        new_str = f"    {repair[col]} = Model."
-                        replace_file_string(model_file, old_str, new_str, True)
-
-                        old_line = rf"^[ ]*'{col}'+[ ]*[:]+[ ]*'{repair[col]}'+\,*"
-                        new_line = ""
-                        replace_file_line(model_file, old_line, new_line, True)
-
-            # Column repair detected
-            if column_repair:
-                # Produce the migration content
-                content = CLI.migration_data(models, True)
-
-                # Prompt the user for migration comment
-                migration_comment = input("Your Comment (optional): ")
-                migration_comment = migration_comment if migration_comment else "Untitled"
-
-                # Create new migration
-                print('Creating a new migration...')
-                time.sleep(0.1)
-
-                date = datetime.now().strftime("%m-%d-%Y")
-                inserted_id = db.read(table="_migrations").last()["id"] + 1
-                version = f'{inserted_id}-{date}'
-
-                # Set the previous migration current to false
-                db.update(table='_migrations', data={'current':False}, where={'version':m_version})
-
-                # Insert the new migration into the database
-                db.create(table='_migrations', data={'version':version,'current':True, 'comment':migration_comment})
-                
-                # Check migration file
-                if file_exist(f"""{app_path + sep}_migrations{sep + version}.py"""):
-                    delete_file(f"""{app_path + sep}_migrations{sep + version}.py""")
-                
-                # Create the migrations file
-                create_file(f"""{app_path + sep}_migrations{sep + version}.py""", content)
-
-                # Delete the temporary migration file
-                delete_file(temp_file)
-
-                # Alert the user
-                print('Database repaired successfully, and a new migration created!')
-                time.sleep(0.1)
-
-            # Table repair detected
-            elif table_repair:
-                print("Database repaired successfully!")
-                time.sleep(0.1)
-
-            # No repair requested
-            else:
-                print("Nothing to repair. Everything is fine!")
-                time.sleep(0.1)
+            CLI.repair_database(pattern="repair")
 
         # Exit the program
         exit()
@@ -2788,7 +2927,7 @@ class CLI:
                 CLI.initialize_database(pattern="reset")
 
                 # Print the result
-                print('Database reseted successfully!')
+                print('- Database reseted successfully!')
 
             # Handle errors
             except NameError as e:
@@ -2796,6 +2935,5 @@ class CLI:
 
         # Rejected
         else:
-            print('The operation canceled!')
+            print('- The operation canceled!')
             exit()
-
