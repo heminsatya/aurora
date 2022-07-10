@@ -15,11 +15,13 @@ def start():
     # Check platform system
     # Windows
     if platform.system() == 'Windows':
-        sep = '\\'
+        sep    = '\\'
+        py_cli = 'py -m'
 
     # Unix
     else:
         sep = '/'
+        py_cli = 'python -m'
 
     # AuroraMVC path
     aurora_path = os.path.dirname(__file__)
@@ -76,7 +78,7 @@ def start():
 
         # Produce final the message
         message = 'To run the application use the following command:\n'
-        message += 'python app.py'
+        message += f'{py_cli} app'
 
         # Print the message
         print(message)

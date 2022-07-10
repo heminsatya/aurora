@@ -23,11 +23,13 @@ app_path = os.getcwd()
 # Check platform system
 # Windows
 if platform.system() == 'Windows':
-    sep = '\\'
+    sep    = '\\'
+    py_cli = 'py -m'
 
 # Unix
 else:
     sep = '/'
+    py_cli = 'python -m'
 
 # Arguments
 args: List[str] = sys.argv
@@ -58,17 +60,17 @@ commands = [
 ]
 
 # CLI message for invalid inputs
-cli_error = '''----------------------------------------------------------
-Usage: python manage.py OPTIONS | COMMANDS
+cli_error = f'''----------------------------------------------------------
+Usage: {py_cli} manage OPTIONS | COMMANDS
 
 Options:
     --help                  Shows the CLI help message.
     --version               Shows Aurora framework version.
 
 Commands:
-    create-app              Creates a new app with some default components if not exist
+    create-app              Creates a new app with some default components if not exist.
     delete-app              Deletes an existing app and all its components.
-    create-controller       Creates a controller blueprint if not exists for an existing app
+    create-controller       Creates a controller blueprint if not exists for an existing app.
     delete-controller       Deletes an existing controller for an existing app.
     create-view             Creates a view blueprint if not exists for an existing app.
     delete-view             Deletes an existing view for an existing app.
@@ -77,10 +79,10 @@ Commands:
     create-model            Creates a model blueprint if not exists.
     delete-model            Deletes an existing model.
     check-db                Checks the models and database for errors and changes.
-    init-db                 Initializes the database for the first time if not initialized already.
+    init-db                 Initializes the database if not initialized already.
     migrate-db              Migrates the model changes to the database.
-    repair-db               Is used for renaming the existing model columns
-    reset-db                Is used for resetting the database, based on the current models.
+    repair-db               Can be used for renaming the existing model columns and repairing corrupted tables.
+    reset-db                Can be used for resetting the database, based on the current models.
 ----------------------------------------------------------'''
 
 # Fetch statics
@@ -387,7 +389,7 @@ class CLI:
                 alert += '''WARNING!\n'''
                 alert += '''Database connection not found!\n'''
                 alert += '''To create a connection and initialize the database run the following command:\n'''
-                alert += '''python manage.py init-db\n'''
+                alert += f'''{py_cli} manage init-db\n'''
                 alert += '''----------------------------------------------------------'''
 
                 # Alert the user
@@ -406,7 +408,7 @@ class CLI:
                 alert += '''Database connection established successfully!\n'''
                 alert += '''Database already initialized!\n'''
                 alert += '''To check the database run the following command:\n'''
-                alert += '''python manage.py check-db\n'''
+                alert += f'''{py_cli} manage check-db\n'''
                 alert += '''----------------------------------------------------------'''
                     
                 # Alert the user
@@ -436,7 +438,7 @@ class CLI:
                         alert += '''WARNING!\n'''
                         alert += '''Database is corrupted!\n'''
                         alert += '''To reset the database run the following command:\n'''
-                        alert += '''python manage.py reset-db\n'''
+                        alert += f'''{py_cli} manage reset-db\n'''
                         alert += '''----------------------------------------------------------'''
                         
                         # Alert the user
@@ -475,7 +477,7 @@ class CLI:
                             alert += '''WARNING!\n'''
                             alert += '''Database system has been changed, and the migrations cannot be used!\n'''
                             alert += '''You need to go back to the previous database system or reset the database using the following command:\n'''
-                            alert += '''python manage.py reset-db\n'''
+                            alert += f'''{py_cli} manage reset-db\n'''
                             alert += '''----------------------------------------------------------'''
                             
                             # Alert the user
@@ -723,7 +725,7 @@ class CLI:
                             alert += f'''1. Rename its attribute in it's model.\n'''
                             alert += f'''2. Set the "self.primary_key" value to the new name.\n'''
                             alert += f'''3. Run the following command:\n'''
-                            alert += f'''python manage.py migrate-db\n'''
+                            alert += f'''{py_cli} manage migrate-db\n'''
                             alert += f'''----------------------------------------------------------'''
                             
                             # Alert the user
@@ -740,11 +742,11 @@ class CLI:
                             alert += f'''You cannot use the repair-db command for a foreign key.\n'''
                             alert += f'''For renaming a foreign key:\n'''
                             alert += f'''1. Remove its "related_to" parameter, and run:\n'''
-                            alert += f'''python manage.py migrate-db\n'''
+                            alert += f'''{py_cli} manage migrate-db\n'''
                             alert += f'''2. Repair it using the following command:\n'''
-                            alert += f'''python manage.py repair-db\n'''
+                            alert += f'''{py_cli} manage repair-db\n'''
                             alert += f'''3. Set the "related_to" parameter again, and rerun:\n'''
-                            alert += f'''python manage.py migrate-db\n'''
+                            alert += f'''{py_cli} manage migrate-db\n'''
                             alert += f'''----------------------------------------------------------'''
                             
                             # Alert the user
@@ -1525,7 +1527,7 @@ class CLI:
                 alert = '''----------------------------------------------------------\n'''
                 alert += '''NOTICE!\n'''
                 alert += "To migrate new changes to the database run the following command:\n"
-                alert += "python manage.py migrate-db\n"
+                alert += f"{py_cli} manage migrate-db\n"
                 alert += '''----------------------------------------------------------'''
 
                 print(alert)
@@ -1541,7 +1543,7 @@ class CLI:
                 alert += '''WARNING!\n'''
                 alert += "Before repairing the database you must migrate the new changes.\n"
                 alert += "To migrate new changes to the database run the following command:\n"
-                alert += "python manage.py migrate-db\n"
+                alert += f"{py_cli} manage migrate-db\n"
                 alert += '''----------------------------------------------------------'''
 
                 print(alert)
@@ -1818,7 +1820,7 @@ class CLI:
                 alert = '''----------------------------------------------------------\n'''
                 alert += '''NOTICE!\n'''
                 alert += f'''To repair the database use the following command:\n'''
-                alert += f'''python manage.py repair-db\n'''
+                alert += f'''{py_cli} manage repair-db\n'''
                 alert += f'''----------------------------------------------------------'''
                 
                 # Alert the user
@@ -2834,11 +2836,10 @@ class CLI:
         # Check the database
         CLI.check_database(pattern="check")
 
-        # Check for migrations
-        CLI.migrate_database(pattern="check")
-
-        # Check the database for repairs
-        CLI.repair_database(pattern="check")
+        # Chech for migrations
+        if not CLI.migrate_database(pattern="check"):
+            # Check the database for repairs
+            CLI.repair_database(pattern="check")
 
         # Exit the program
         exit()
