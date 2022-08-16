@@ -9,6 +9,8 @@ import shutil
 import importlib
 from zipfile import ZipFile
 from pathlib import Path
+import time
+from datetime import datetime, timezone, timedelta
 
 
 ##########
@@ -1169,8 +1171,6 @@ def column_name(name:str):
         }
 
 
-import time
-from datetime import datetime, timezone, timedelta
 ################
 # Time Helpers #
 ################
@@ -1190,7 +1190,6 @@ def current_time():
 #
 # @retun str
 ##
-# Create datetime from time (milliseconds)
 def current_date(format: str = '%Y-%m-%d %H:%M:%S'):
     return datetime.fromtimestamp(round(current_time() / 1000.0)).strftime(format)
 
@@ -1203,6 +1202,5 @@ def current_date(format: str = '%Y-%m-%d %H:%M:%S'):
 #
 # @retun str
 ##
-# Create datetime from time (milliseconds)
 def generate_date(time_ms: int, format: str = '%Y-%m-%d %H:%M:%S'):
     return datetime.fromtimestamp(round(time_ms / 1000.0)).strftime(format)

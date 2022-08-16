@@ -34,6 +34,9 @@ class Model:
         caller_file = pathlib.PurePath(caller_path).name
         caller_name = caller_file.replace('.py', '')
 
+        # Model name
+        self.model = caller_name
+
         # The table name
         self.table = snake_case(caller_name)
 
@@ -485,7 +488,7 @@ class Model:
 
 
     ##
-    # @desc Insert single row
+    # @desc Inserts single row
     #
     # @param data: dict -- *Required data (ex. {"username": "john-doe", "password": "123456"})
     # 
@@ -497,7 +500,7 @@ class Model:
 
 
     ##
-    # @desc Insert multi rows
+    # @desc Inserts multi rows
     #
     # @param table: str -- *Required Table name (ex. "users")
     # @param data: list -- *Required data (ex. [{...}, {...}, ...])
@@ -518,7 +521,7 @@ class Model:
 
 
     ##
-    # @desc Select rows
+    # @desc Selects rows
     #
     # @param cols: list -- Optional Columns (ex. ["id", "first_name", "last_name"])
     # @param where: dict -- Optional WHERE statement (ex. {"id": "2", "username": "admin"})
@@ -533,9 +536,69 @@ class Model:
 
 
     ##
+    # @desc Joins tables
+    #
+    # @param Models: list -- *Required foreign tables (ex. ["Model1", "Model2"])
+    # @param cols: list -- Optional Columns (ex. ["table.id", "table_2.name", "table_3.address"])
+    #
+    # @param join_stmt: str -- The join statement:
+    #        SQLite: INNER JOIN, LEFT JOIN, CROSS JOIN (Learn More: https://www.sqlitetutorial.net/sqlite-join/)
+    #        MySQL: INNER JOIN, LEFT JOIN, RIGHT JOIN, CROSS JOIN (Learn More: https://www.w3schools.com/mysql/mysql_join.asp)
+    #        Postgres: INNER JOIN, LEFT JOIN, RIGHT JOIN, FULL JOIN (Learn More: https://www.postgresqltutorial.com/postgresql-tutorial/postgresql-joins/)
+    #        JOIN vs INNER JOIN: https://stackoverflow.com/questions/565620/difference-between-join-and-inner-join
+    #
+    # @param where: dict -- Optional WHERE statement (ex. {"table.id": "2", "table_2.name": "John"})
+    # @param order_by: dict -- Optional ORDER BY statement (ex. {"table.id": "ASC", "table.date": "DESC"})
+    # @param group_by: str -- Optional GROUP BY statement (ex. 'table.country')
+    # @param limit: int -- Optional LIMIT statement (ex. "10")
+    # @param offset: int -- Optional OFFSET statement (ex. "10")
+    #
+    # @var sql: str -- The sql statement
+    # @var data_bind: list -- Data binding against SQL Injection
+    # @var where_sql: list -- A placeholder for the WHERE clause
+    # @var order_by_sql: list -- A placeholder for the ORDER BY clause
+    # @var in_bind: list -- A placeholder IN operator
+    # @var in_sql: str -- The sql statement for IN operator
+    #
+    # @return class: type
+    ##
+    def join(self, models:list, cols:list=[], join_stmt:str='INNER JOIN', where:dict={}, order_by:dict={}, group_by:str=None, limit:int=None, offset:int=None):
+        # Find last last migration
+        migration = Database.read(self, '_migrations').last()
+
+        # Migration module
+        module = importlib.import_module(f'_migrations.{migration["version"]}')
+
+        # Main model info
+        m_model = getattr(module, self.model)
+        m_foreign_key = m_model['foreign_key']
+
+        # Foreign tables data
+        f_tables = []
+        p_keys = []
+        f_keys = []
+
+        # Find foreign models info
+        for i in range(len(models)):
+            f_model = getattr(module, models[i])
+
+            # Update foreign tables data
+            f_tables.append(f_model['table'])
+            p_keys.append(f_model['primary_key'])
+
+            # Find main model f_keys
+            for key, value in m_foreign_key.items():
+                if value['r_table'] == f_model['table']:
+                    f_keys.append(key)
+
+        return Database.join(self, table=self.table, f_keys=f_keys, f_tables=f_tables, p_keys=p_keys, cols=cols, join_stmt=join_stmt, 
+                             where=where, order_by=order_by, group_by=group_by, limit=limit, offset=offset)
+
+
+    ##
     # *CAUTION! If you ignore the 'where' parameter, it may updates the columns for all records!
     #
-    # @desc Update row(s)
+    # @desc Updates row(s)
     #
     # @param data: dict -- *Required data (ex. {"first_name": "John", "last_name": "Doe"})
     # @param where: dict -- Optional (*CAUTION!) WHERE statement (ex. {"id": "2", "username": "admin"})
@@ -549,7 +612,7 @@ class Model:
     ##
     # *WARNING! If you ignore the 'where' parameter, it will deletes all the records inside your table! (must confirm)
     #
-    # @desc Delete row(s)
+    # @desc Deletes row(s)
     #
     # @param table: str -- *Required Table name (ex. "users")
     # @param where: dict -- Optional (*WARNING!) WHERE statement (ex. {"id": "2", "username": "admin"})

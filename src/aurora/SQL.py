@@ -1760,6 +1760,471 @@ class Database:
         return Read(self, sql, data_bind)
 
 
+    ##
+    # @desc Joins tables
+    #
+    # @param table: str -- *Required main Table (ex. "table_1")
+    # @param f_keys: list -- *Required foreign keys (ex. ["user_id", "flight_id"])
+    # @param f_tables: list -- *Required foreign tables (ex. ["table_2", "table_3"])
+    # @param p_keys: list -- *Required foreign tables (ex. ["pk_2", "pk__3"])
+    # @param cols: list -- Optional Columns (ex. ["table.id", "table_2.name", "table_3.address"])
+    #
+    # @param join_stmt: str -- The join statement:
+    #        SQLite: INNER JOIN, LEFT JOIN, CROSS JOIN (Learn More: https://www.sqlitetutorial.net/sqlite-join/)
+    #        MySQL: INNER JOIN, LEFT JOIN, RIGHT JOIN, CROSS JOIN (Learn More: https://www.w3schools.com/mysql/mysql_join.asp)
+    #        Postgres: INNER JOIN, LEFT JOIN, RIGHT JOIN, FULL JOIN (Learn More: https://www.postgresqltutorial.com/postgresql-tutorial/postgresql-joins/)
+    #        JOIN vs INNER JOIN: https://stackoverflow.com/questions/565620/difference-between-join-and-inner-join
+    #
+    # @param where: dict -- Optional WHERE statement (ex. {"table.id": "2", "table_2.name": "John"})
+    # @param order_by: dict -- Optional ORDER BY statement (ex. {"table.id": "ASC", "table.date": "DESC"})
+    # @param group_by: str -- Optional GROUP BY statement (ex. 'table.country')
+    # @param limit: int -- Optional LIMIT statement (ex. "10")
+    # @param offset: int -- Optional OFFSET statement (ex. "10")
+    #
+    # @var sql: str -- The sql statement
+    # @var data_bind: list -- Data binding against SQL Injection
+    # @var where_sql: list -- A placeholder for the WHERE clause
+    # @var order_by_sql: list -- A placeholder for the ORDER BY clause
+    # @var in_bind: list -- A placeholder IN operator
+    # @var in_sql: str -- The sql statement for IN operator
+    #
+    # @return class: type
+    ##
+    def join(self, table:str, f_keys:list, f_tables:list, p_keys:list, cols:list=[], join_stmt:str='INNER JOIN', where:dict={}, order_by:dict={}, group_by:str=None, limit:int=None, offset:int=None):
+
+        # Check required params
+        if not table and not f_keys and not f_tables and not p_keys:
+            # Developer mode
+            if self.debug:
+                # Raise error
+                raise Exception("You must provide the required parameters: 'main_table', 'join_tables'")
+
+            # Production mode
+            else:
+                print("You must provide the required parameters: 'main_table', 'join_tables'")
+                return False
+
+        # The default variables
+        data_col = []
+        data_bind = []
+        join_sql = ""
+        where_sql = []
+        order_by_sql = []
+
+        # Check cols
+        if not cols or cols == ['*'] or cols == ["*"]:
+            cols = '*'
+        else:
+            # SQLite
+            if self.db_system == 'SQLite':
+                for col in cols:
+                    # Check the key
+                    if not '.' in col:
+                        data_col.append(f'"{col}"')
+                    else:
+                        data_col.append(f'{col}')
+
+            # MySQL
+            elif self.db_system == 'MySQL':
+                for col in cols:
+                    # Check the key
+                    if not '.' in col:
+                        data_col.append(f'`{col}`')
+                    else:
+                        data_col.append(f'{col}')
+
+            # Postgres
+            elif self.db_system == 'Postgres':
+                for col in cols:
+                    # Check the key
+                    if not '.' in col:
+                        data_col.append(f'"{col}"')
+                    else:
+                        data_col.append(f'{col}')
+
+            cols = ', '.join(data_col)
+
+        # Prepare Join statement
+        for i in range(len(f_tables)):
+            fk = f_keys[i]
+            f_table = f_tables[i]
+            f_pk = p_keys[i]
+
+            # SQLite and Postgres
+            if self.db_system == 'SQLite' or self.db_system == 'Postgres':
+                join_sql += f' {join_stmt.upper()} "{f_table}" ON "{table}"."{fk}" = "{f_table}"."{f_pk}" '
+
+            # MySQL
+            elif self.db_system == 'MySQL':
+                join_sql += f' {join_stmt.upper()} `{f_table}` ON `{table}`.`{fk}` = `{f_table}`.`{f_pk}` '
+
+        join = join_sql
+
+        # Check where
+        if where:
+            for key, value in where.items():
+                in_bind = []
+
+                # Remove the Ineffective characters (#)
+                key = delete_chars(key, '#')
+        
+                # Check patterns
+                # Equal to (strict)
+                if re.search('--equal$', key) or re.search('--e$', key):
+                    key = key.replace('--equal', '')
+                    key = key.replace('--e', '')
+
+                    # Check the key
+                    if not '.' in key:
+                        # SQLite and Postgres
+                        if self.db_system == 'SQLite' or self.db_system == 'Postgres':
+                            where_sql.append(f'"{key}"={self.sp_char}')
+
+                        # MySQL
+                        elif self.db_system == 'MySQL':
+                            where_sql.append(f'`{key}`={self.sp_char}')
+
+                    else:
+                        where_sql.append(f'{key}={self.sp_char}')
+
+                    data_bind.append(value)
+
+                # Not equal to
+                elif re.search('--not-equal$', key) or re.search('--ne$', key):
+                    key = key.replace('--not-equal', '')
+                    key = key.replace('--ne', '')
+
+                    # Check the key
+                    if not '.' in key:
+                        # SQLite and Postgres
+                        if self.db_system == 'SQLite' or self.db_system == 'Postgres':
+                            where_sql.append(f'"{key}"<>{self.sp_char}')
+
+                        # MySQL
+                        elif self.db_system == 'MySQL':
+                            where_sql.append(f'`{key}`<>{self.sp_char}')
+                    else:
+                        where_sql.append(f'{key}<>{self.sp_char}')
+
+                    data_bind.append(value)
+
+                # Greater than
+                elif re.search('--greater-than$', key) or re.search('--gt$', key):
+                    key = key.replace('--greater-than', '')
+                    key = key.replace('--gt', '')
+
+                    # Check the key
+                    if not '.' in key:
+                        # SQLite and Postgres
+                        if self.db_system == 'SQLite' or self.db_system == 'Postgres':
+                            where_sql.append(f'"{key}">{self.sp_char}')
+
+                        # MySQL
+                        elif self.db_system == 'MySQL':
+                            where_sql.append(f'`{key}`>{self.sp_char}')
+                    else:
+                        where_sql.append(f'{key}>{self.sp_char}')
+                    
+                    data_bind.append(value)
+
+                # Greater than or equal to
+                elif re.search('--greater-equal$', key) or re.search('--ge$', key):
+                    key = key.replace('--greater-equal', '')
+                    key = key.replace('--ge', '')
+
+                    # Check the key
+                    if not '.' in key:
+                        # SQLite and Postgres
+                        if self.db_system == 'SQLite' or self.db_system == 'Postgres':
+                            where_sql.append(f'"{key}">={self.sp_char}')
+
+                        # MySQL
+                        elif self.db_system == 'MySQL':
+                            where_sql.append(f'`{key}`>={self.sp_char}')
+                    else:
+                        where_sql.append(f'{key}>={self.sp_char}')
+
+                    data_bind.append(value)
+
+                # Less than
+                elif re.search('--less-than$', key) or re.search('--lt$', key):
+                    key = key.replace('--less-than', '')
+                    key = key.replace('--lt', '')
+
+                    # Check the key
+                    if not '.' in key:
+                        # SQLite and Postgres
+                        if self.db_system == 'SQLite' or self.db_system == 'Postgres':
+                            where_sql.append(f'"{key}"<{self.sp_char}')
+
+                        # MySQL
+                        elif self.db_system == 'MySQL':
+                            where_sql.append(f'`{key}`<{self.sp_char}')
+                    else:
+                        where_sql.append(f'{key}<{self.sp_char}')
+
+                    data_bind.append(value)
+
+                # Less than or equal to
+                elif re.search('--less-equal$', key) or re.search('--le$', key):
+                    key = key.replace('--less-equal', '')
+                    key = key.replace('--le', '')
+
+                    # Check the key
+                    if not '.' in key:
+                        # SQLite and Postgres
+                        if self.db_system == 'SQLite' or self.db_system == 'Postgres':
+                            where_sql.append(f'"{key}"<={self.sp_char}')
+
+                        # MySQL
+                        elif self.db_system == 'MySQL':
+                            where_sql.append(f'`{key}`<={self.sp_char}')
+                    else:
+                        where_sql.append(f'{key}<={self.sp_char}')
+                        
+                    data_bind.append(value)
+
+                # LIKE
+                elif re.search('--like$', key) or re.search('--l$', key):
+                    key = key.replace('--like', '')
+                    key = key.replace('--l', '')
+
+                    # Check the key
+                    if not '.' in key:
+                        # SQLite and Postgres
+                        if self.db_system == 'SQLite' or self.db_system == 'Postgres':
+                            where_sql.append(f'"{key}" LIKE {self.sp_char}')
+
+                        # MySQL
+                        elif self.db_system == 'MySQL':
+                            where_sql.append(f'`{key}` LIKE {self.sp_char}')
+                    else:
+                        where_sql.append(f'{key} LIKE {self.sp_char}')
+
+                    data_bind.append(value)
+                    
+                # NOT LIKE
+                elif re.search('--not-like$', key) or re.search('--nl$', key):
+                    key = key.replace('--not-like', '')
+                    key = key.replace('--nl', '')
+
+                    # Check the key
+                    if not '.' in key:
+                        # SQLite and Postgres
+                        if self.db_system == 'SQLite' or self.db_system == 'Postgres':
+                            where_sql.append(f'"{key}" NOT LIKE {self.sp_char}')
+
+                        # MySQL
+                        elif self.db_system == 'MySQL':
+                            where_sql.append(f'`{key}`  NOT LIKE {self.sp_char}')
+                    else:
+                        where_sql.append(f'{key}  NOT LIKE {self.sp_char}')
+
+                    data_bind.append(value)
+                
+                # BETWEEN
+                elif re.search('--between$', key) or re.search('--b$', key):
+                    key = key.replace('--between', '')
+                    key = key.replace('--b', '')
+
+                    # Check the key
+                    if not '.' in key:
+                        # SQLite and Postgres
+                        if self.db_system == 'SQLite' or self.db_system == 'Postgres':
+                            where_sql.append(f'"{key}" BETWEEN {self.sp_char} AND {self.sp_char}')
+
+                        # MySQL
+                        elif self.db_system == 'MySQL':
+                            where_sql.append(f'`{key}` BETWEEN {self.sp_char} AND {self.sp_char}')
+                    else:
+                        where_sql.append(f'{key} BETWEEN {self.sp_char} AND {self.sp_char}')
+
+                    data_bind.append(value[0])
+                    data_bind.append(value[1])
+                
+                # NOT BETWEEN
+                elif re.search('--not-between$', key) or re.search('--nb$', key):
+                    key = key.replace('--not-between', '')
+                    key = key.replace('--nb', '')
+
+                    # Check the key
+                    if not '.' in key:
+                        # SQLite and Postgres
+                        if self.db_system == 'SQLite' or self.db_system == 'Postgres':
+                            where_sql.append(f'"{key}" NOT BETWEEN {self.sp_char} AND {self.sp_char}')
+
+                        # MySQL
+                        elif self.db_system == 'MySQL':
+                            where_sql.append(f'`{key}` NOT BETWEEN {self.sp_char} AND {self.sp_char}')
+                    else:
+                        where_sql.append(f'{key} NOT BETWEEN {self.sp_char} AND {self.sp_char}')
+                        
+                    data_bind.append(value[0])
+                    data_bind.append(value[1])
+                
+                # IN
+                elif re.search('--in$', key) or re.search('--i$', key):
+                    key = key.replace('--in', '')
+                    key = key.replace('--i', '')
+                    for x in value:
+                        in_bind.append(self.sp_char)
+                        data_bind.append(x)
+
+                    in_sql =','.join(in_bind)
+
+                    # Check the key
+                    if not '.' in key:
+                        # SQLite and Postgres
+                        if self.db_system == 'SQLite' or self.db_system == 'Postgres':
+                            where_sql.append(f'"{key}" IN ({in_sql})')
+
+                        # MySQL
+                        elif self.db_system == 'MySQL':
+                            where_sql.append(f'`{key}` IN ({in_sql})')
+                    else:
+                        where_sql.append(f'{key} IN ({in_sql})')
+
+                # NOT IN
+                elif re.search('--not-in$', key) or re.search('--ni$', key):
+                    key = key.replace('--not-in', '')
+                    key = key.replace('--ni', '')
+                    for x in value:
+                        in_bind.append(self.sp_char)
+                        data_bind.append(x)
+
+                    in_sql =','.join(in_bind)
+
+                    # Check the key
+                    if not '.' in key:
+                        # SQLite and Postgres
+                        if self.db_system == 'SQLite' or self.db_system == 'Postgres':
+                            where_sql.append(f'"{key}" NOT IN ({in_sql})')
+
+                        # MySQL
+                        elif self.db_system == 'MySQL':
+                            where_sql.append(f'`{key}` NOT IN ({in_sql})')
+                    else:
+                        where_sql.append(f'{key} NOT IN ({in_sql})')
+
+                # Equal to (default)
+                else:
+                    # Check the key
+                    if not '.' in key:
+                        # SQLite and Postgres
+                        if self.db_system == 'SQLite' or self.db_system == 'Postgres':
+                            where_sql.append(f'"{key}"={self.sp_char}')
+
+                        # MySQL
+                        elif self.db_system == 'MySQL':
+                            where_sql.append(f'`{key}`={self.sp_char}')
+                    else:
+                        where_sql.append(f'{key}={self.sp_char}')
+
+                    data_bind.append(value)
+
+            # Prepare the where SQL
+            where = ' WHERE '
+
+            # Check column prefixes (and/or)
+            i = 0
+            for x in where_sql:
+                ch = ''
+
+                if re.search('^or--', x) or re.search('^o--', x):
+                    x = x.replace('or--', '')
+                    x = x.replace('o--', '')
+                    if i > 0:
+                        ch = 'OR '
+
+                    where_sql[i] = f'{ch + x}'
+                
+                elif re.search('^and--', x) or re.search('^a--', x):
+                    x = x.replace('and--', '')
+                    x = x.replace('a--', '')
+                    if i > 0:
+                        ch = 'AND '
+
+                    where_sql[i] = f'{ch + x}'
+                
+                else:
+                    if i > 0:
+                        ch = 'AND '
+
+                    where_sql[i] = f'{ch + x}'
+
+                i += 1
+
+            where += ' '.join(where_sql)
+
+        else:
+            where = ''
+
+        # Check order_by
+        if order_by:
+            for key, value in order_by.items():
+                # Check the key
+                if not '.' in key:
+                    # SQLite and Postgres
+                    if self.db_system == 'SQLite' or self.db_system == 'Postgres':
+                        order_by_sql.append(f'"{key}" {value.upper()}')
+
+                    # MySQL
+                    elif self.db_system == 'MySQL':
+                        order_by_sql.append(f'`{key}` {value.upper()}')
+                else:
+                    order_by_sql.append(f'{key} {value.upper()}')
+
+            order_by = ' ORDER BY ' + ', '.join(order_by_sql)
+
+        else:
+            order_by = ''
+
+        # Check group_by
+        if group_by:
+            # Check the key
+            if not '.' in key:
+                # SQLite and Postgres
+                if self.db_system == 'SQLite' or self.db_system == 'Postgres':
+                    group_by = f' GROUP BY "{group_by}"'
+
+                # MySQL
+                elif self.db_system == 'MySQL':
+                    group_by = f' GROUP BY `{group_by}`'
+            else:
+                group_by = f' GROUP BY {group_by}'
+
+        else:
+            group_by = ''
+
+        # Check limit
+        if limit:
+            limit = f' LIMIT {limit}'
+        else:
+            limit = ''
+
+        # Check offset
+        if offset:
+            offset = f' OFFSET {offset}'
+        else:
+            offset = ''
+
+        # Prepare the sql statement
+        # SQLite
+        if self.db_system == 'SQLite':
+            sql = f'''SELECT {cols} FROM '{table}'{join + where + order_by + group_by + limit + offset};'''
+            
+        # MySQL
+        elif self.db_system == 'MySQL':
+            sql = f'''SELECT {cols} FROM `{table}`{join + where + order_by + group_by + limit + offset};'''
+            
+        # Postgres
+        elif self.db_system == 'Postgres':
+            sql = f'''SELECT {cols} FROM "{table}"{join + where + order_by + group_by + limit + offset};'''
+
+        # Return result
+        return Join(self, sql, data_bind)
+
+
     ##################
     # Update Methods #
     ##################
@@ -3303,3 +3768,82 @@ class Read:
 
             return self.query(sql, self.data_bind).fetchone()[col]
 
+
+##############
+# Join Class #
+##############
+##
+# @desc Provides several methods for join methods of the Database class
+##
+class Join:
+    ##
+    # @desc Constructor method
+    #
+    # @param parent: type - The Database Class
+    # @param sql: str - The sql query string
+    # @param data_bind: list - The data to bind
+    #
+    # @property sql: str - the sql query string
+    # @property data_bind: object - the data to bind
+    # @property query: method - the query method of the Database class
+    # @property regex: str - the regular expression for the select statement
+    # @property col: str - the first column extracted from the match
+    #
+    # @var regex: str - the regular expression for the select statement
+    # @var match: str - the regular expression match
+    # @var cols: list - the columns list extracted from the match
+    ##
+    def __init__(self, parent, sql, data_bind):
+        # Class properties
+        self.sql = sql
+        self.data_bind = data_bind
+        self.query = parent.query
+        self.db_system = parent.db_system
+
+
+    ##
+    # @desc Fetches the first row
+    #
+    # @return dict
+    ##
+    def first(self):
+        if self.all():
+            return self.all()[0]
+        else:
+            return False
+
+
+    ##
+    # @desc Fetches the last row
+    #
+    # @return dict
+    ##
+    def last(self):
+        if self.all()[self.count()-1]:
+            return self.all()[self.count()-1]
+        else:
+            return False
+
+
+    ##
+    # @desc Fetches all the rows
+    #
+    # @return list
+    ##
+    def all(self):
+        # Postgres
+        if self.db_system == 'Postgres':
+            return real_dict(self.query(self.sql, self.data_bind).fetchall())
+
+        # SQLite or MySQL
+        elif self.db_system == 'SQLite' or self.db_system == 'MySQL':
+            return self.query(self.sql, self.data_bind).fetchall()
+
+
+    ##
+    # @desc Counts the number of rows
+    #
+    # @return int
+    ##
+    def count(self):
+        return len(self.all())
