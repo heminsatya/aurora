@@ -561,6 +561,29 @@ def write_file(file:str, content:str=''):
 
 
 ##
+# @desc Reads a file and returns its content if exists
+#
+# @param file_path: str - The absolute file path
+#
+# @retun any
+##
+def read_file(file_path:str):
+    # File already exists
+    if os.path.exists(file_path):
+        # Read file
+        with open(file_path, 'r') as file:
+            f = file.read()
+
+        # Return result
+        return f
+
+    # File not exists
+    else:
+        # Return Result
+        return False
+
+
+##
 # @desc Writes to a file if exists
 #
 # @param src: str - The source file path
