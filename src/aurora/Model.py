@@ -475,6 +475,13 @@ class Model:
 
 
     ##
+    # @desc save method to save the changes manually
+    ##
+    def save(self):
+        return Database.save(self)
+
+
+    ##
     # CAUTION! Use this methods only in development.
     #
     # @desc Checks if a database (file - SQLite) exists
