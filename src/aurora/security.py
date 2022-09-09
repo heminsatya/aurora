@@ -1,12 +1,10 @@
 ################
 # Dependencies #
 ################
-import importlib
-from os import replace
 import re
+import importlib
 from datetime import datetime, timedelta
 from typing import Union
-from xmlrpc.client import boolean
 from .helpers import route_url
 from flask import make_response, jsonify, render_template, request as flask_request, abort as flask_abort, redirect as flask_redirect, session as flask_session
 from werkzeug.security import check_password_hash, generate_password_hash
@@ -456,3 +454,29 @@ def password_strength(password:str, length:int=8, digit:bool=True, uppercase:boo
         'lowercase' : lowercase,
         'symbol'    : symbol,
     }
+
+
+##
+# @desc Returns the server IP
+#
+# @retun str
+##
+def server_ip():
+    return request.remote_addr
+
+
+##
+# @desc Returns the client IP
+# 
+# @param strict: bool -- If True, returns the client's public IP, not a private IP behind a proxy
+#
+# @retun str
+##
+def client_ip(strict:bool=True):
+    # Client is behind a proxy (strict mod)
+    if request.environ.get('HTTP_X_FORWARDED_FOR') and strict:
+        return request.environ['HTTP_X_FORWARDED_FOR']
+    
+    # Client doesn't use proxy
+    else:
+        return request.environ['REMOTE_ADDR']
