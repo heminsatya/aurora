@@ -10,7 +10,7 @@ import importlib
 from zipfile import ZipFile
 from pathlib import Path
 import time
-from datetime import datetime, timezone, timedelta
+from datetime import datetime
 
 
 ##########
@@ -1227,3 +1227,29 @@ def current_date(format: str = '%Y-%m-%d %H:%M:%S'):
 ##
 def generate_date(time_ms: int, format: str = '%Y-%m-%d %H:%M:%S'):
     return datetime.fromtimestamp(round(time_ms / 1000.0)).strftime(format)
+
+
+##
+# @desc Returns days difference between two times (in milliseconds) or dates
+# 
+# @param time_one: int -- The first time
+# @param time_two: int -- The second time
+# @param format: str   -- The date format if times are date
+#
+# @retun int
+##
+def delta_days(time_one, time_two, format='%Y-%m-%d'):
+    # Generates dates
+    if isinstance(time_one, int):
+        date_one = datetime.strptime(generate_date(time_one, '%Y-%m-%d'), '%Y-%m-%d')
+        date_two = datetime.strptime(generate_date(time_two, '%Y-%m-%d'), '%Y-%m-%d')
+    else:
+        date_one = datetime.strptime(time_one, '%Y-%m-%d')
+        date_two = datetime.strptime(time_two, '%Y-%m-%d')
+
+
+    # Find date delta
+    delta = date_one - date_two
+
+    # Return delta days
+    return delta.days
