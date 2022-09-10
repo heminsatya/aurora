@@ -10,7 +10,7 @@ import importlib
 from zipfile import ZipFile
 from pathlib import Path
 import time
-from datetime import datetime
+from datetime import datetime, timedelta
 
 
 ##########
@@ -1243,6 +1243,36 @@ def generate_date(time_ms: int, format: str = '%Y-%m-%d %H:%M:%S'):
 
 
 ##
+# @desc Returns week number of a time (in milliseconds) or a date, starting from 1
+# 
+# @param time: int|str  -- The time (or date)
+# @param first_day: str -- The first day of week (Sunday|Monday)
+# @param format: str    -- The date format if time is date
+#
+# @retun int
+##
+def week_number(time, first_day='Sunday', format='%Y-%m-%d'):
+    # Generates date
+    if isinstance(time, int):
+        date = datetime.strptime(generate_date(time, format), format)
+    else:
+        date = datetime.strptime(time, format)
+
+    # Sunday as the first day of the week
+    if first_day == 'Sunday':
+        week_format = '%U'
+
+    # Monday as the first day of the week
+    elif first_day == 'Monday':
+        week_format = '%W'
+
+    week = datetime.date(date).strftime(week_format)
+
+    # Return week number
+    return int(week)
+
+
+##
 # @desc Returns days difference between two times (in milliseconds) or dates
 # 
 # @param time_one: int|str -- The first time (or date)
@@ -1260,8 +1290,7 @@ def delta_days(time_one, time_two, format='%Y-%m-%d'):
         date_one = datetime.strptime(time_one, format)
         date_two = datetime.strptime(time_two, format)
 
-
-    # Find date delta
+    # Find dates delta
     delta = date_one - date_two
 
     # Return delta days
@@ -1269,21 +1298,93 @@ def delta_days(time_one, time_two, format='%Y-%m-%d'):
 
 
 ##
-# @desc Returns week number of a time (in milliseconds) or a date
+# @desc Returns weeks difference between two times (in milliseconds) or dates
 # 
-# @param time: int|str -- The time (or date)
-# @param format: str   -- The date format if time is date
+# @param time_one: int|str -- The first time (or date)
+# @param time_two: int|str -- The second time (or date)
+# @param first_day: str    -- The first day of week (Sunday|Monday)
+# @param format: str       -- The date format if times are date
 #
 # @retun int
 ##
-def week_number(time, format='%Y-%m-%d'):
-    # Generates date
-    if isinstance(time, int):
-        date = datetime.strptime(generate_date(time, format), format)
+def delta_weeks(time_one, time_two, first_day='Sunday', format='%Y-%m-%d'):
+    # Generates dates
+    if isinstance(time_one, int):
+        date_one = datetime.strptime(generate_date(time_one, format), format)
+        date_two = datetime.strptime(generate_date(time_two, format), format)
     else:
-        date = datetime.strptime(time, format)
+        date_one = datetime.strptime(time_one, format)
+        date_two = datetime.strptime(time_two, format)
 
-    week = datetime.date(date).strftime("%V")
+    # Find dates delta
+    delta_one = (date_one - timedelta(date_one.weekday()))
+    delta_two = (date_two - timedelta(date_two.weekday()))
 
-    # Return week number
-    return int(week)
+    # Find week delta
+    delta = int((delta_one - delta_two).days / 7)
+
+    # Check starting day
+    if first_day == 'Sunday':
+        # Check delta
+        if delta == 0:
+            # Check week day
+            if date_one.weekday() == 6 and date_two.weekday() == 5:
+                # Update delta
+                delta = 1
+                
+        # Return week delta
+        return delta
+
+    elif first_day == 'Monday':
+        # Return week delta
+        return delta
+
+
+##
+# @desc Returns months difference between two times (in milliseconds) or dates
+# 
+# @param time_one: int|str -- The first time (or date)
+# @param time_two: int|str -- The second time (or date)
+# @param format: str       -- The date format if times are date
+#
+# @retun int
+##
+def delta_months(time_one, time_two, format='%Y-%m-%d'):
+    # Generates dates
+    if isinstance(time_one, int):
+        date_one = datetime.strptime(generate_date(time_one, format), format)
+        date_two = datetime.strptime(generate_date(time_two, format), format)
+    else:
+        date_one = datetime.strptime(time_one, format)
+        date_two = datetime.strptime(time_two, format)
+
+    # Find dates delta
+    delta = (date_one.year - date_two.year) * 12 + date_one.month - date_two.month
+
+    # Return delta months
+    return delta
+
+
+##
+# @desc Returns years difference between two times (in milliseconds) or dates
+# 
+# @param time_one: int|str -- The first time (or date)
+# @param time_two: int|str -- The second time (or date)
+# @param format: str       -- The date format if times are date
+#
+# @retun int
+##
+def delta_years(time_one, time_two, format='%Y-%m-%d'):
+    # Generates dates
+    if isinstance(time_one, int):
+        date_one = datetime.strptime(generate_date(time_one, format), format)
+        date_two = datetime.strptime(generate_date(time_two, format), format)
+    else:
+        date_one = datetime.strptime(time_one, format)
+        date_two = datetime.strptime(time_two, format)
+
+    # Find dates delta
+    delta = date_one.year - date_two.year
+
+    # Return delta years
+    return delta
