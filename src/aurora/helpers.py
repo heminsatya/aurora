@@ -1207,6 +1207,19 @@ def current_time():
 
 
 ##
+# @desc Generates time in milliseconds from a date
+#
+# @retun int
+##
+def generate_time(date, format='%Y-%m-%d %H:%M:%S'):
+    # Convert date to datetime
+    date = datetime.strptime(date, format)
+
+    # Return the result
+    return round(date.timestamp() * 1000)
+
+
+##
 # @desc Generates the current date
 # 
 # @param format  -- The date format
@@ -1232,20 +1245,20 @@ def generate_date(time_ms: int, format: str = '%Y-%m-%d %H:%M:%S'):
 ##
 # @desc Returns days difference between two times (in milliseconds) or dates
 # 
-# @param time_one: int -- The first time
-# @param time_two: int -- The second time
-# @param format: str   -- The date format if times are date
+# @param time_one: int|str -- The first time (or date)
+# @param time_two: int|str -- The second time (or date)
+# @param format: str       -- The date format if times are date
 #
 # @retun int
 ##
 def delta_days(time_one, time_two, format='%Y-%m-%d'):
     # Generates dates
     if isinstance(time_one, int):
-        date_one = datetime.strptime(generate_date(time_one, '%Y-%m-%d'), '%Y-%m-%d')
-        date_two = datetime.strptime(generate_date(time_two, '%Y-%m-%d'), '%Y-%m-%d')
+        date_one = datetime.strptime(generate_date(time_one, format), format)
+        date_two = datetime.strptime(generate_date(time_two, format), format)
     else:
-        date_one = datetime.strptime(time_one, '%Y-%m-%d')
-        date_two = datetime.strptime(time_two, '%Y-%m-%d')
+        date_one = datetime.strptime(time_one, format)
+        date_two = datetime.strptime(time_two, format)
 
 
     # Find date delta
@@ -1253,3 +1266,24 @@ def delta_days(time_one, time_two, format='%Y-%m-%d'):
 
     # Return delta days
     return delta.days
+
+
+##
+# @desc Returns week number of a time (in milliseconds) or a date
+# 
+# @param time: int|str -- The time (or date)
+# @param format: str   -- The date format if time is date
+#
+# @retun int
+##
+def week_number(time, format='%Y-%m-%d'):
+    # Generates date
+    if isinstance(time, int):
+        date = datetime.strptime(generate_date(time, format), format)
+    else:
+        date = datetime.strptime(time, format)
+
+    week = datetime.date(date).strftime("%V")
+
+    # Return week number
+    return int(week)
