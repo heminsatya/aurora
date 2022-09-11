@@ -1325,19 +1325,13 @@ def delta_weeks(time_one, time_two, first_day='Sunday', format='%Y-%m-%d'):
 
     # Check starting day
     if first_day == 'Sunday':
-        # Check delta
-        if delta == 0:
-            # Check week day
-            if date_one.weekday() == 6 and date_two.weekday() == 5:
-                # Update delta
-                delta = 1
+        # Check week day
+        if date_one.weekday() == 6 and date_two.weekday() <= 5:
+            # Update delta
+            delta += 1
                 
-        # Return week delta
-        return delta
-
-    elif first_day == 'Monday':
-        # Return week delta
-        return delta
+    # Return week delta
+    return delta
 
 
 ##
