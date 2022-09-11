@@ -1273,6 +1273,31 @@ def week_number(time, first_day='Sunday', format='%Y-%m-%d'):
 
 
 ##
+# @desc Returns seconds difference between two times (in milliseconds) or dates
+# 
+# @param time_one: int|str -- The first time (or date)
+# @param time_two: int|str -- The second time (or date)
+# @param format: str       -- The date format if times are date
+#
+# @retun int
+##
+def delta_seconds(time_one, time_two, format='%Y-%m-%d %H:%M:%S'):
+    # Generates dates
+    if isinstance(time_one, int):
+        date_one = datetime.strptime(generate_date(time_one, format), format)
+        date_two = datetime.strptime(generate_date(time_two, format), format)
+    else:
+        date_one = datetime.strptime(time_one, format)
+        date_two = datetime.strptime(time_two, format)
+
+    # Find dates delta
+    delta = date_one - date_two
+
+    # Return delta seconds
+    return round(delta.total_seconds())
+
+
+##
 # @desc Returns days difference between two times (in milliseconds) or dates
 # 
 # @param time_one: int|str -- The first time (or date)
