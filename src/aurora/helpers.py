@@ -1317,18 +1317,23 @@ def delta_weeks(time_one, time_two, first_day='Sunday', format='%Y-%m-%d'):
         date_two = datetime.strptime(time_two, format)
 
     # Find dates delta
-    delta_one = (date_one - timedelta(date_one.weekday()))
-    delta_two = (date_two - timedelta(date_two.weekday()))
+    # Sunday
+    if first_day == 'Sunday':
+        if date_one.weekday() + 1 == 7: weekday = 0
+        else: weekday = date_one.weekday() + 1
+        delta_one = (date_one - timedelta(weekday))
+
+        if date_two.weekday() + 1 == 7: weekday = 0
+        else: weekday = date_two.weekday() + 1
+        delta_two = (date_two - timedelta(weekday))
+
+    # Monday
+    elif first_day == 'Monday':
+        delta_one = (date_one - timedelta(date_one.weekday()))
+        delta_two = (date_two - timedelta(date_two.weekday()))
 
     # Find week delta
     delta = int((delta_one - delta_two).days / 7)
-
-    # Check starting day
-    if first_day == 'Sunday':
-        # Check week day
-        if date_one.weekday() == 6 and date_two.weekday() <= 5:
-            # Update delta
-            delta += 1
                 
     # Return week delta
     return delta
