@@ -1220,6 +1220,120 @@ def generate_time(date, format='%Y-%m-%d %H:%M:%S'):
 
 
 ##
+# @desc Creates a time in milliseconds from given parameters
+#
+# @param seconds -- The seconds from or before the current time
+# @param minutes -- The minutes from or before the current time
+# @param hours   -- The hours from or before the current time
+# @param days    -- The days from or before the current time
+# @param weeks   -- The weeks from or before the current time
+# @param months  -- The months from or before the current time
+# @param years   -- The years from or before the current time
+# 
+# @retun int|bool
+##
+def create_time(seconds:int=0, minutes:int=0, hours:int=0, days:int=0, weeks:int=0, months:int=0, years:int=0):
+    # Find today datetime
+    today = datetime.now()
+
+    # Check months & year
+    if months or years:
+        # Split date
+        split_date = str(today).split('-')
+
+        # Find year
+        year  = int(split_date[0]) + years
+
+        # Find month
+        month = int(split_date[1]) + months
+
+        # Update year
+        year += month // 12
+
+        # Update month
+        month = month % 12
+
+        # Check final month
+        if month == 0:
+            # Update month and year
+            month = 12
+            year -= 1
+
+        # Check year
+        if year not in range(1970, 2038):
+            print('Warning! create_time() method can only create date from 1970, 2038!')
+            return False
+
+        # Stringify month
+        if month >= 10: month = str(month)
+        else:           month = '0' + str(month)
+
+        # Stringify year
+        year = str(year)
+
+        # Generate the new date
+        new_date = year + '-' + month + '-' + split_date[2]
+
+        # Correct time range
+        try:
+            # Update today
+            today = datetime.strptime(new_date, '%Y-%m-%d %H:%M:%S.%f')
+
+        # Wrong time range
+        except:
+            split_day = split_date[2].split(' ')
+
+            # Go to the first day of the next month
+            # Update day
+            day = 1
+
+            # Refine month & year formats
+            year  = int(year)
+            month = int(month)
+
+            # Check month
+            if month == 12:
+                month = 1
+                year += 1
+            else:
+                month += 1
+
+            # Stringify day
+            day = str(day)
+
+            # Stringify month
+            if month >= 10: month = str(month)
+            else:           month = '0' + str(month)
+
+            # Stringify year
+            year = str(year)
+
+            # Generate the new date
+            new_date = year + '-' + month + '-' + day + ' ' + split_day[1]
+
+            # Update today
+            today = datetime.strptime(new_date, '%Y-%m-%d %H:%M:%S.%f')
+
+    # Generate time delta
+    delta = timedelta(
+        seconds = seconds * -1,
+        minutes = minutes * -1,
+        hours = hours * -1,
+        days = days * -1,
+        weeks = weeks * -1
+    )
+
+    # Generate the date without months & years
+    final_date = str(today - delta)
+
+    # Convert the date into milliseconds
+    result = generate_time(date=final_date, format='%Y-%m-%d %H:%M:%S.%f')
+
+    # Return the result
+    return result
+
+
+##
 # @desc Generates the current date
 # 
 # @param format  -- The date format
@@ -1240,6 +1354,24 @@ def current_date(format: str = '%Y-%m-%d %H:%M:%S'):
 ##
 def generate_date(time_ms: int, format: str = '%Y-%m-%d %H:%M:%S'):
     return datetime.fromtimestamp(round(time_ms / 1000.0)).strftime(format)
+
+
+##
+# @desc Creates datetime from given parameters
+# 
+# @param seconds -- The seconds from or before the current time
+# @param minutes -- The minutes from or before the current time
+# @param hours   -- The hours from or before the current time
+# @param days    -- The days from or before the current time
+# @param weeks   -- The weeks from or before the current time
+# @param months  -- The months from or before the current time
+# @param years   -- The years from or before the current time
+# @param format  -- The date format
+#
+# @retun int|bool
+##
+def create_date(seconds:int=0, minutes:int=0, hours:int=0, days:int=0, weeks:int=0, months:int=0, years:int=0, format: str = '%Y-%m-%d %H:%M:%S'):
+    return generate_date(time_ms=create_time(seconds=seconds, minutes=minutes, hours=hours, days=days, weeks=weeks, months=months, years=years), format=format)
 
 
 ##
