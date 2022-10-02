@@ -4,5 +4,6 @@ requires = [
     "wheel",
     "flask>=2.0.0",
     "WTForms>=3.0.0",
+    "flask_compress>=1.13",
 ]
 build-backend = "setuptools.build_meta"

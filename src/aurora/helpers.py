@@ -637,7 +637,7 @@ def move_file(src:str, dst:str):
 
 
 ##
-# @desc Writes to a file if exists
+# @desc Renames a file if exists
 #
 # @param src: str - The absolute source path
 # @param dst: str - The absolute destination path
@@ -824,13 +824,13 @@ def dir_empty(dir:str):
 
 
 ##
-# @desc Create a directory if not exists
+# @desc Creates a directory if not exists
 #
 # @param dir: str - The directory string
 #
 # @retun bool -- True (on success), False (on error)
 ##
-def make_dir(dir:str):
+def create_dir(dir:str):
     # Try to create the directory
     try:
         Path(dir).mkdir(parents=True, exist_ok=True)
@@ -842,6 +842,29 @@ def make_dir(dir:str):
 
 
 ##
+# @desc Renames a directory if exists
+#
+# @param src: str - The absolute source path
+# @param dst: str - The absolute destination path
+#
+# @retun bool
+##
+def rename_dir(src:str, dst:str):
+    # Directory exists
+    if dir_exist(src):
+        # Rename directory
+        os.rename(src, dst)
+
+        # Return result
+        return True
+
+    # Directory not exists
+    else:
+        # Return Result
+        return False
+
+
+##
 # @desc removes a directory and all its contents
 #
 # @param dir: str - The directory string
@@ -849,7 +872,7 @@ def make_dir(dir:str):
 # @retun bool -- True (on success), False (on error)
 ##
 def delete_dir(dir:str):
-    # Try to create the directory
+    # Try to delete the directory
     try:
         shutil.rmtree(dir)
         return True
@@ -857,6 +880,40 @@ def delete_dir(dir:str):
     # Handle errors
     except:
         return False
+
+
+##
+# @desc Calculates a directory size (in Bytes)
+#
+# @param dir: str - The directory string
+#
+# @retun int|bool -- int (on success), False (on error)
+##
+def dir_size(dir:str):
+    # Check directory existance
+    if not dir_exist(dir):
+        return False
+
+    # Default size
+    size = 0
+
+    # Find all items
+    for item in os.listdir(dir):
+        # List item
+        items = os.path.join(dir, item)
+
+        # File
+        if os.path.isfile(items):
+            # Update size
+            size += os.path.getsize(items)
+
+        # Folder
+        elif os.path.isdir(items):
+            # Update size
+            size += dir_size(items)
+
+    # Return calculated size
+    return size
 
 
 ###############

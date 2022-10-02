@@ -1929,10 +1929,10 @@ class CLI:
             time.sleep(0.1)
 
             # Create folders: (controllers, forms, statics, views)
-            make_dir(f'{app_path + sep}controllers{sep + app}')
-            make_dir(f'{app_path + sep}forms{sep + app}')
-            make_dir(f'{app_path + sep + statics + sep + app}')
-            make_dir(f'{app_path + sep}views{sep + app}')
+            create_dir(f'{app_path + sep}controllers{sep + app}')
+            create_dir(f'{app_path + sep}forms{sep + app}')
+            create_dir(f'{app_path + sep + statics + sep + app}')
+            create_dir(f'{app_path + sep}views{sep + app}')
 
             # Handle controllers blueprint (copy, unzip, delete)
             controllers_blueprint= f'{aurora_path + sep}blueprints{sep}controllers.zip'

@@ -6,6 +6,7 @@ import platform
 import importlib
 import time
 from flask import Flask
+from flask_compress import Compress
 
 
 ################
@@ -114,11 +115,14 @@ class Aurora():
         statics           = getattr(self.config, 'STATICS')
         secret_key        = getattr(self.config, "SECRET_KEY")
         upload_size       = getattr(self.config, "UPLOAD_SIZE")
-        upload_extensions = getattr(self.config, "UPLOAD_EXTENSIONS")
+        UPLOAD_TYPES      = getattr(self.config, "UPLOAD_TYPES")
         upload_path       = getattr(self.config, "UPLOAD_PATH")
         
         # Initialize the root app (Flask instance)
         self.app = Flask(__name__, template_folder=f'{root_path}/views', static_folder=f'{root_path}/{statics}')
+
+        # Compress the app using flask_compress for better performance
+        Compress(self.app)
         
         # Set the app secret key
         self.app.config['SECRET_KEY'] = secret_key
@@ -127,7 +131,7 @@ class Aurora():
         self.app.config['MAX_CONTENT_LENGTH'] = upload_size
 
         # Set allowed upload extensions
-        self.app.config['UPLOAD_EXTENSIONS'] = upload_extensions
+        self.app.config['UPLOAD_TYPES'] = UPLOAD_TYPES
 
         # Set upload path
         self.app.config['UPLOAD_PATH'] = upload_path
