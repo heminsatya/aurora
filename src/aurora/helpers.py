@@ -3,6 +3,7 @@
 ################
 import os
 import re
+import json
 import string
 import random
 import shutil
@@ -1601,3 +1602,30 @@ def delta_years(time_one, time_two, format='%Y-%m-%d'):
 
     # Return delta years
     return delta
+
+
+##################
+# Useful Helpers #
+##################
+##
+# @desc Checks a text if it in correct JSON format
+# 
+# @param {str} text -- The text to execute
+# 
+# @var {boolean} result -- The execution result
+#
+# @retun boolean
+##
+def is_json(text:str):
+    result = True
+
+    # Is JSON
+    try:
+        json.loads(text)
+
+    # Is not JSON
+    except ValueError as e:
+        result = False
+
+    # Return the result
+    return result

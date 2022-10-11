@@ -358,4 +358,3 @@ class Aurora():
                 # Print error
                 print(e)
                 return False
-
