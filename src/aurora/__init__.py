@@ -13,5 +13,5 @@ View = Template().render
 
 
 # Descriptions
-__version__ = '0.8.16'
+__version__ = '0.8.17'
 __author__ = '<https://github.com/heminsatya>'

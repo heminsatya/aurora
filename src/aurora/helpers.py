@@ -1270,6 +1270,9 @@ def current_time():
 # @retun int
 ##
 def generate_time(date, format='%Y-%m-%d %H:%M:%S'):
+    # Clean the date
+    date = date.replace('T', ' ')
+
     # Convert date to datetime
     date = datetime.strptime(date, format)
 
@@ -1399,6 +1402,7 @@ def create_time(seconds:int=0, minutes:int=0, hours:int=0, days:int=0, weeks:int
 # @retun str
 ##
 def current_date(format: str = '%Y-%m-%d %H:%M:%S'):
+    # Return the result
     return datetime.fromtimestamp(round(current_time() / 1000.0)).strftime(format)
 
 
@@ -1411,6 +1415,7 @@ def current_date(format: str = '%Y-%m-%d %H:%M:%S'):
 # @retun str
 ##
 def generate_date(time_ms: int, format: str = '%Y-%m-%d %H:%M:%S'):
+    # Return the result
     return datetime.fromtimestamp(round(time_ms / 1000.0)).strftime(format)
 
 
@@ -1429,6 +1434,7 @@ def generate_date(time_ms: int, format: str = '%Y-%m-%d %H:%M:%S'):
 # @retun int|bool
 ##
 def create_date(seconds:int=0, minutes:int=0, hours:int=0, days:int=0, weeks:int=0, months:int=0, years:int=0, format: str = '%Y-%m-%d %H:%M:%S'):
+    # Return the result
     return generate_date(time_ms=create_time(seconds=seconds, minutes=minutes, hours=hours, days=days, weeks=weeks, months=months, years=years), format=format)
 
 
