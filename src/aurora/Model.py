@@ -546,7 +546,7 @@ class Model:
     # @desc Joins tables
     #
     # @param Models: list -- *Required foreign tables (ex. ["Model1", "Model2"])
-    # @param cols: list -- Optional Columns (ex. ["table.id", "table_2.name", "table_3.address"])
+    # @param cols: list -- Optional Columns (ex. ["Model.*", "Model1.name", "Model2.address"])
     #
     # @param join_stmt: str -- The join statement:
     #        SQLite: INNER JOIN, LEFT JOIN, CROSS JOIN (Learn More: https://www.sqlitetutorial.net/sqlite-join/)
@@ -554,9 +554,9 @@ class Model:
     #        Postgres: INNER JOIN, LEFT JOIN, RIGHT JOIN, FULL JOIN (Learn More: https://www.postgresqltutorial.com/postgresql-tutorial/postgresql-joins/)
     #        JOIN vs INNER JOIN: https://stackoverflow.com/questions/565620/difference-between-join-and-inner-join
     #
-    # @param where: dict -- Optional WHERE statement (ex. {"table.id": "2", "table_2.name": "John"})
-    # @param order_by: dict -- Optional ORDER BY statement (ex. {"table.id": "ASC", "table.date": "DESC"})
-    # @param group_by: str -- Optional GROUP BY statement (ex. 'table.country')
+    # @param where: dict -- Optional WHERE statement (ex. {"Model.id": "2", "Model1.name": "John"})
+    # @param order_by: dict -- Optional ORDER BY statement (ex. {"Model.id": "ASC", "Model.date": "DESC"})
+    # @param group_by: str -- Optional GROUP BY statement (ex. 'Model.country')
     # @param limit: int -- Optional LIMIT statement (ex. "10")
     # @param offset: int -- Optional OFFSET statement (ex. "10")
     #
@@ -598,8 +598,47 @@ class Model:
                 if value['r_table'] == f_model['table']:
                     f_keys.append(key)
 
-        return Database.join(self, table=self.table, f_keys=f_keys, f_tables=f_tables, p_keys=p_keys, cols=cols, join_stmt=join_stmt, 
-                             where=where, order_by=order_by, group_by=group_by, limit=limit, offset=offset)
+        # Refine cols
+        r_col = []
+        for x in cols:
+            try:
+                r_col.append(getattr(module, x.split('.')[0])['table'] + '.' + x.split('.')[1])
+            except:
+                r_col.append(x)
+
+        # Refine where
+        r_where = {}
+        for key, value in where.items():
+            try:
+                if len(key.split('.')[0].split('--')) > 1:
+                    r_where[key.split('.')[0].split('--')[0] + '--' + getattr(module, key.split('.')[0].split('--')[1])['table'] + '.' + key.split('.')[1]] = value
+                    pass
+                else:
+                    r_where[getattr(module, key.split('.')[0])['table'] + '.' + key.split('.')[1]] = value
+            except:
+                r_where[key] = value
+
+        # Refine order_by
+        r_order_by = {}
+        for key, value in order_by.items():
+            try:
+                if len(key.split('.')[0].split('--')) > 1:
+                    r_order_by[key.split('.')[0].split('--')[0] + '--' + getattr(module, key.split('.')[0].split('--')[1])['table'] + '.' + key.split('.')[1]] = value
+                    pass
+                else:
+                    r_order_by[getattr(module, key.split('.')[0])['table'] + '.' + key.split('.')[1]] = value
+            except:
+                r_order_by[key] = value
+
+        # Refine group_by
+        try:
+            group_by = getattr(module, group_by.split('.')[0])['table'] + '.' + group_by.split('.')[1]
+        except:
+            pass
+                
+        # Return the results
+        return Database.join(self, table=self.table, f_keys=f_keys, f_tables=f_tables, p_keys=p_keys, cols=r_col, join_stmt=join_stmt, 
+                             where=r_where, order_by=r_order_by, group_by=group_by, limit=limit, offset=offset)
 
 
     ##
