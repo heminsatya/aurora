@@ -56,3 +56,7 @@ class Template():
 
         # Render the view template      
         return render_template(view_path, *class_args, **class_kwargs), int(code)
+
+
+# Create the view object
+View = Template().render
