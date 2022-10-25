@@ -1,17 +1,19 @@
 # Dependencies
 from .Aurora import Aurora
-from .Controller import Controller
-from .View import View as Template
 
+# For the sake of init_app
 try:
+    from .Controller import Controller
+    from .View import View as Template
     from .Forms import Forms
     from .Model import Model
+
+    View = Template().render
+
+# Pass on error
 except:
     pass
 
-View = Template().render
-
-
 # Descriptions
-__version__ = '0.8.18'
+__version__ = '0.8.19'
 __author__ = '<https://github.com/heminsatya>'
