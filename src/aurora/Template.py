@@ -11,9 +11,9 @@ from .helpers import delete_chars
 # Aurora Class #
 ################
 ##
-# @desc Aurora View to render the specified app view 
+# @desc Aurora Template to render the specified app view 
 ##
-class View():
+class Template():
     
     ##
     # @desc Constructor method
@@ -56,4 +56,3 @@ class View():
 
         # Render the view template      
         return render_template(view_path, *class_args, **class_kwargs), int(code)
-
