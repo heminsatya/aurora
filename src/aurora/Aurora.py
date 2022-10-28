@@ -32,6 +32,9 @@ class Aurora():
         # Import the config module
         self.config = importlib.import_module("config")
 
+        # Developement mode
+        self.development = getattr(self.config, "DEVELOPMENT")
+
         # Debug mode
         self.debug = getattr(self.config, "DEBUG")
 
@@ -345,7 +348,10 @@ class Aurora():
 
         # Try to run the app
         try:
-            return self.app.run(host=host, port=port, debug=self.debug, *class_args, **class_kwargs)
+            if self.development:
+                return self.app.run(host=host, port=port, debug=self.debug)
+            else:
+                return self.app.run(*class_args, **class_kwargs)
 
         except NameError as e:
             # Developer mode
