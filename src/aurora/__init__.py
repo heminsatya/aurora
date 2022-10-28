@@ -13,5 +13,5 @@ except:
     pass
 
 # Descriptions
-__version__ = '0.8.24'
+__version__ = '0.8.25'
 __author__ = '<https://github.com/heminsatya>'
