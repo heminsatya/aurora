@@ -348,11 +348,12 @@ class Aurora():
 
         # Try to run the app
         try:
-            return self.app.run(host=host, port=port, debug=self.debug)
-            # if self.development:
-            #     return self.app.run(host=host, port=port, debug=self.debug)
-            # else:
-            #     return self.app.run(*class_args, **class_kwargs)
+            # return self.app.run(host=host, port=port, debug=self.debug)
+            if self.development:
+                return self.app.run(host=host, port=port, debug=self.debug)
+            else:
+                # return self.app.run(*class_args, **class_kwargs)
+                return self.app.run()
 
         except NameError as e:
             # Developer mode
