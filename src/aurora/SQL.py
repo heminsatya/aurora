@@ -204,14 +204,18 @@ class Database:
     def __del__(self):
         # Check the database connection
         if self.conn:
-            # Commit query result
-            self.conn.commit()
+            try:
+                # Commit query result
+                self.conn.commit()
 
-            # Close the connection
-            self.conn.close()
+                # Close the connection
+                self.conn.close()
 
-            # For test
-            # print("Database Connection Closed!")
+            except:
+                pass
+
+        # For test
+        # print("Database Connection Closed!")
 
 
     ##
