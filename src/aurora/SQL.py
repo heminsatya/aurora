@@ -312,6 +312,10 @@ class Database:
     ##
     def _exist_fk(self, table:str, column:str):
 
+        # Check development
+        if not self.development:
+            return True
+
         # Check required params
         if not table or not column:
             # Developer mode
@@ -407,6 +411,10 @@ class Database:
     ##
     def _exist_column(self, table:str, column:str):
 
+        # Check development
+        if not self.development:
+            return True
+
         # Check required params
         if not table or not column:
             # Developer mode
@@ -466,6 +474,10 @@ class Database:
     # @return bool
     ##
     def _exist_table(self, table:str):
+
+        # Check development
+        if not self.development:
+            return True
         
         # Check required params
         if not table:
@@ -540,6 +552,10 @@ class Database:
     # @return bool
     ##
     def _exist_database(self, database:str=None):
+
+        # Check development
+        if not self.development:
+            return True
 
         # Check the required params
         if not database:
@@ -777,6 +793,10 @@ class Database:
     # @return bool
     ##
     def _create_fk(self, table:str, column:str, r_table:str, r_column:str, fk_symbol:str=None, on_update:str='CASCADE', on_delete:str='CASCADE'):
+        
+        # Check development
+        if not self.development:
+            return True
 
         # Check the development
         if not self.development:
@@ -943,6 +963,10 @@ class Database:
     ##
     def _create_column(self, table:str, column:str, datatype:str, constraints:str=None):
 
+        # Check development
+        if not self.development:
+            return True
+
         # Check the development
         if not self.development:
             alert = '''----------------------------------------------------------\n'''
@@ -1073,6 +1097,10 @@ class Database:
     ##
     def _create_table(self, table:str, col_type:dict, primary_key:str=None, unique:list=[], not_null:list=[], 
         default:dict={}, check:dict={}, foreign_key:dict={}):
+
+        # Check development
+        if not self.development:
+            return True
 
         # Check the development
         if not self.development:
@@ -1225,6 +1253,10 @@ class Database:
     # @return bool
     ##
     def _create_database(self, database:str=None):
+
+        # Check development
+        if not self.development:
+            return True
 
         # Check the development
         if not self.development:
@@ -2587,6 +2619,10 @@ class Database:
     ##
     def _update_column(self, table:str, old_col:str, new_col:str, datatype:str, constraints:str=None):
 
+        # Check development
+        if not self.development:
+            return True
+
         # Check the development
         if not self.development:
             alert = '''----------------------------------------------------------\n'''
@@ -2684,6 +2720,10 @@ class Database:
     # @return bool
     ##
     def _update_table(self, old_table:str, new_table:str):
+
+        # Check development
+        if not self.development:
+            return True
 
         # Check the development
         if not self.development:
@@ -3087,6 +3127,10 @@ class Database:
     ##
     def _delete_fk(self, table:str, column:str, fk_symbol:str, confirm:bool=False):
 
+        # Check development
+        if not self.development:
+            return True
+
         # Check the development
         if not self.development:
             alert = '''----------------------------------------------------------\n'''
@@ -3202,6 +3246,10 @@ class Database:
     ##
     def _delete_column(self, table:str, column:str, confirm:bool=False):
 
+        # Check development
+        if not self.development:
+            return True
+
         # Check the development
         if not self.development:
             alert = '''----------------------------------------------------------\n'''
@@ -3315,6 +3363,10 @@ class Database:
     ##
     def _delete_table(self, table:str, confirm:bool=False):
 
+        # Check development
+        if not self.development:
+            return True
+
         # Check the development
         if not self.development:
             alert = '''----------------------------------------------------------\n'''
@@ -3390,6 +3442,10 @@ class Database:
     # @return bool
     ##
     def _delete_database(self, database:str=None, confirm:str=False):
+        
+        # Check development
+        if not self.development:
+            return True
 
         # Check the development
         if not self.development:

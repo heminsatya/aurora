@@ -484,9 +484,29 @@ class Model:
     ##
     # CAUTION! Use this methods only in development.
     #
-    # @desc Checks if a database (file - SQLite) exists
+    # @desc Checks if a column exists
     #
-    # @param database: str -- *Required database name (file - SQLite)
+    # @return bool
+    ##
+    def _exist_column(self, *class_args, **class_kwargs):
+        return Database._exist_column(self, *class_args, **class_kwargs)
+
+
+    ##
+    # CAUTION! Use this methods only in development.
+    #
+    # @desc Checks if a table exist
+    #
+    # @return bool
+    ##
+    def _exist_table(self, *class_args, **class_kwargs):
+        return Database._exist_table(self, *class_args, **class_kwargs)
+
+
+    ##
+    # CAUTION! Use this methods only in development.
+    #
+    # @desc Checks if a database (file - SQLite) exists
     #
     # @return bool -- Query result
     ##
