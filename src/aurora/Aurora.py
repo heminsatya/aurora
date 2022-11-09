@@ -336,19 +336,24 @@ class Aurora():
     ##
     # @desc The run method -- Runs the root app
     # 
+    # @param {any} host  -- Optional host
+    # @param {any} port  -- Optional port
+    # @param {any} debug -- Optional debug
+    # 
     # @var host: str -- The HOST attribute of the config module
     # @var port: str -- The PORT attribute of the config module
     # 
     # @return object: NoneType -- The root app
     ##
-    def run(self):    
+    def run(self, host='', port='', debug=''):    
         # Fetch the required attributes
-        host = getattr(self.config, "HOST")
-        port = getattr(self.config, "PORT")
+        if not host:  host  = getattr(self.config, "HOST")
+        if not port:  port  = getattr(self.config, "PORT")
+        if not debug: debug = self.debug
 
         # Try to run the app
         try:
-            return self.app.run(host=host, port=port, debug=self.debug)
+            return self.app.run(host=host, port=port, debug=debug)
 
         except NameError as e:
             # Developer mode
