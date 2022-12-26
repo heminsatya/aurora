@@ -99,7 +99,8 @@ models_module = importlib.import_module('models._models')
 models = getattr(models_module, "models")
 
 # Database system
-db_system = getattr(config, "DB_SYSTEM")
+db_system  = getattr(config, "DB_SYSTEM")
+db_systems = ['SQLite', 'MySQL', 'Postgres']
 
 # The database (file)
 database = getattr(config, "DB_CONFIG")['database']
@@ -459,10 +460,25 @@ class CLI:
                         m_models = m_module._models
                         m_db_system =  m_module.DB_SYSTEM
                     except:
-                        m_db_system = False
+                        m_db_system = 'Unknown'
+
+                    # Unknown database system
+                    if not m_db_system in db_systems:
+                        alert = '''----------------------------------------------------------\n'''
+                        alert += '''WARNING!\n'''
+                        alert += '''Unknown database system has been selected!\n'''
+                        alert += f'''Supported database systems are: {', '.join(db_systems)}\n'''
+                        alert += '''----------------------------------------------------------'''
+                        
+                        # Alert the user
+                        print(alert)
+                        time.sleep(0.1)
+
+                        # Exit the program
+                        exit()
 
                     # Database system has been changed
-                    if not db_system == m_db_system:
+                    elif not db_system == m_db_system:
                         db_changed = True
 
                         # "reset" pattern
@@ -500,7 +516,17 @@ class CLI:
         time.sleep(0.1)
 
         # Global placeholders
-        tables = []
+        tables   = []
+        m_tables = []
+        f_tables = []
+
+        # Find migration tables
+        for model in m_models:
+            m_tables.append(getattr(m_module, model)['table'])
+
+            for x in getattr(m_module, model)['foreign_key']:
+                if not getattr(m_module, model)['foreign_key'][x]['r_table'] in f_tables:
+                    f_tables.append(getattr(m_module, model)['foreign_key'][x]['r_table'])
 
         # Loop models
         for model in models:
@@ -544,12 +570,27 @@ class CLI:
                 exit()
 
             # Check duplicated table names
-            if list_dup(tables):
+            elif list_dup(tables):
                 # Prepare the alert message
                 alert = '''----------------------------------------------------------\n'''
                 alert += '''WARNING!\n'''
                 alert += f'Duplicated "{table}" table name is detected!\n'
                 alert += 'Please select unique names for your tables!\n'
+                alert += '''----------------------------------------------------------'''
+                
+                # Alert the user
+                print(alert)
+
+                # Exit the program
+                exit()
+
+            # Check foreign key renaming tables
+            elif bool(m_attrs) and not table in m_tables and m_attrs['table'] in f_tables:
+                # Prepare the alert message
+                alert = '''----------------------------------------------------------\n'''
+                alert += '''WARNING!\n'''
+                alert += f'Model "{model}" is a foreign key for other Models!\n'
+                alert += 'You cannot rename its table name!\n'
                 alert += '''----------------------------------------------------------'''
                 
                 # Alert the user
@@ -601,7 +642,7 @@ class CLI:
                         exit()
 
                     # Same foreign key as the model name
-                    if attrs[x]['related_to'] == model:
+                    elif attrs[x]['related_to'] == model:
                         # Prepare the alert message
                         alert = '''----------------------------------------------------------\n'''
                         alert += '''WARNING!\n'''
@@ -656,7 +697,7 @@ class CLI:
             if not pattern == "init" and not pattern == "reset":
                 # Check repair columns
                 if repair:
-                    # Check the new column for duplicate values
+                    # Check the new columns for duplicate values
                     if dict_dup_val(repair):
                         # Prepare the alert message
                         alert  = '''----------------------------------------------------------\n'''
@@ -1072,9 +1113,9 @@ class CLI:
                                     if db._exist_fk(c_attrs['table'], col):
                                         db._delete_fk(c_attrs['table'], col, fk_symbol, True)
 
-                                # Delete the column if exists
-                                if db._exist_column(c_attrs['table'], col):
-                                    db._delete_column(c_attrs['table'], col, True)
+                                    # Delete the column if exists
+                                    if db._exist_column(c_attrs['table'], col):
+                                        db._delete_column(c_attrs['table'], col, True)
                                     
                                 # SQLite
                                 elif db_system == 'SQLite':

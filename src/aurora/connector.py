@@ -32,8 +32,8 @@ if not db_engine in db_engines:
 ################
 # Database API #
 ################
-db_system = getattr(config, 'DB_SYSTEM')
-db_systems = ['SQLite', 'Postgres', 'MySQL']
+db_system  = getattr(config, 'DB_SYSTEM')
+db_systems = ['SQLite', 'MySQL', 'Postgres']
 
 # Check Database System
 if db_system in db_systems:
@@ -68,7 +68,7 @@ if db_system in db_systems:
 
 # Raise error
 else:
-    error = ''' Unsupported Database System!\n'''
+    error = '''Unsupported Database System!\n'''
     error += f'''Supported Database Systems: {', '.join(db_systems)}'''
 
     # Check debug mode
