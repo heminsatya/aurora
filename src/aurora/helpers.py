@@ -364,6 +364,23 @@ def delete_chars(string:str, char:str):
     return re.sub(r'{}'.format(char), '', string)
 
 
+##
+# @desc Cleans keys for the WHERE clause for SQL Class
+#
+# @param key: str - The key to clean
+#
+# @retun str
+##
+def clean_key(key:str):
+    # Clean the key
+    new_key = delete_chars(key, "'")
+    new_key = delete_chars(new_key, '"')
+    new_key = delete_chars(new_key, "`")
+
+    # Return the new key
+    return new_key
+
+
 ################
 # Collections  #
 ################

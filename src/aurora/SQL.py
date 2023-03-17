@@ -6,7 +6,7 @@ import re
 import platform
 import importlib
 from .connector import DatabaseAPI, DatabaseError
-from .helpers import dict_factory, real_dict, check_file, delete_chars, delete_file
+from .helpers import dict_factory, real_dict, check_file, delete_chars, clean_key, delete_file
 
 
 ##################
@@ -1709,7 +1709,7 @@ class Database:
             for x in where_sql:
                 ch = ''
 
-                if re.search('^or--', x) or re.search('^o--', x):
+                if re.search('^or--', clean_key(x)) or re.search('^o--', clean_key(x)):
                     x = x.replace('or--', '')
                     x = x.replace('o--', '')
                     if i > 0:
@@ -1717,7 +1717,7 @@ class Database:
 
                     where_sql[i] = f'{ch + x}'
                 
-                elif re.search('^and--', x) or re.search('^a--', x):
+                elif re.search('^and--', clean_key(x)) or re.search('^a--', clean_key(x)):
                     x = x.replace('and--', '')
                     x = x.replace('a--', '')
                     if i > 0:
@@ -2166,7 +2166,7 @@ class Database:
             for x in where_sql:
                 ch = ''
 
-                if re.search('^or--', x) or re.search('^o--', x):
+                if re.search('^or--', clean_key(x)) or re.search('^o--', clean_key(x)):
                     x = x.replace('or--', '')
                     x = x.replace('o--', '')
                     if i > 0:
@@ -2174,7 +2174,7 @@ class Database:
 
                     where_sql[i] = f'{ch + x}'
                 
-                elif re.search('^and--', x) or re.search('^a--', x):
+                elif re.search('^and--', clean_key(x)) or re.search('^a--', clean_key(x)):
                     x = x.replace('and--', '')
                     x = x.replace('a--', '')
                     if i > 0:
@@ -2547,7 +2547,7 @@ class Database:
             for x in where_sql:
                 ch = ''
 
-                if re.search('^or--', x) or re.search('^o--', x):
+                if re.search('^or--', clean_key(x)) or re.search('^o--', clean_key(x)):
                     x = x.replace('or--', '')
                     x = x.replace('o--', '')
                     if i > 0:
@@ -2555,7 +2555,7 @@ class Database:
 
                     where_sql[i] = f'{ch + x}'
                 
-                elif re.search('^and--', x) or re.search('^a--', x):
+                elif re.search('^and--', clean_key(x)) or re.search('^a--', clean_key(x)):
                     x = x.replace('and--', '')
                     x = x.replace('a--', '')
                     if i > 0:
@@ -3059,7 +3059,7 @@ class Database:
             for x in where_sql:
                 ch = ''
 
-                if re.search('^or--', x) or re.search('^o--', x):
+                if re.search('^or--', clean_key(x)) or re.search('^o--', clean_key(x)):
                     x = x.replace('or--', '')
                     x = x.replace('o--', '')
                     if i > 0:
@@ -3067,7 +3067,7 @@ class Database:
 
                     where_sql[i] = f'{ch + x}'
                 
-                elif re.search('^and--', x) or re.search('^a--', x):
+                elif re.search('^and--', clean_key(x)) or re.search('^a--', clean_key(x)):
                     x = x.replace('and--', '')
                     x = x.replace('a--', '')
                     if i > 0:
