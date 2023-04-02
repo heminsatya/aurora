@@ -119,7 +119,9 @@ class Controller(View):
     # @return any
     ##
     def post(self):
-        return 'POST Method'
+        return {
+            'result': 'Method is forbidden!'
+        }
 
 
     ##
@@ -128,7 +130,9 @@ class Controller(View):
     # @return any
     ##
     def get(self):
-        return 'GET Method'
+        return {
+            'result': 'Method is forbidden!'
+        }
      
 
     ##
@@ -137,7 +141,9 @@ class Controller(View):
     # @return any
     ##
     def put(self):
-        return 'PUT Method'
+        return {
+            'result': 'Method is forbidden!'
+        }
      
 
     ##
@@ -146,5 +152,7 @@ class Controller(View):
     # @return any
     ##
     def delete(self):
-        return 'DELETE Method'
+        return {
+            'result': 'Method is forbidden!'
+        }
 

@@ -1,7 +1,7 @@
 # Dependencies
 from .Aurora import Aurora
 
-# For the sake of init_app
+# For the sake of init root app
 try:
     from .Controller import Controller
     from .Template import View
@@ -13,5 +13,5 @@ except:
     pass
 
 # Descriptions
-__version__ = '0.8.33'
-__author__ = '<https://github.com/heminsatya>'
+__version__ = '0.9.0'
+__author__  = '<https://github.com/heminsatya>'

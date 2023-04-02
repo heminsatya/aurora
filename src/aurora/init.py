@@ -21,7 +21,7 @@ def start():
     # Unix
     else:
         sep = '/'
-        py_cli = 'python -m'
+        py_cli = 'python3 -m'
 
     # AuroraMVC path
     aurora_path = os.path.dirname(__file__)
@@ -40,8 +40,8 @@ def start():
 
     # try the process
     try:
-        init_bluprint = f'{aurora_path + sep}blueprints{sep}init_app.zip'
-        init_file = f'{app_path + sep}init_app.zip'
+        init_bluprint = f'{aurora_path + sep}blueprints{sep}init.zip'
+        init_file = f'{app_path + sep}init.zip'
 
         # Copy the initial blueprint zip file
         copy_file(init_bluprint, init_file)

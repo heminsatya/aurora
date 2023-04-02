@@ -17,20 +17,20 @@ from .helpers import dict_factory, real_dict, check_file, delete_chars, clean_ke
 ##
 class Database:
 
+
     #################
     # Basic Methods #
     #################
     ##
     # @desc Constructor method
     #
-    # @param database: str - *Required database name (file -- SQLite)
-    # @param debug: bool - Optional debug mode
+    # @param {str}  database - Required database name (file -- SQLite)
+    # @param {bool} debug    - Optional debug mode
     #
-    # @property conn: object - SQLite connection
-    # @property cur: object - connection cursor
-    # @param debug: str - The debug mode
-    # @param table: str - The table name
-    # @property config: module - the app config module
+    # @property {object} conn   - SQLite connection
+    # @property {object} cur    - connection cursor
+    # @property {str}    debug  - The debug mode
+    # @property {module} config - the app config module
     ##
     def __init__(self, error:bool = True):
 
@@ -253,12 +253,12 @@ class Database:
     ##
     # @desc query method
     #
-    # @param sql: str -- *Required SQL statement (ex. "SELECT * FROM users")
-    # @param data_bind: list -- Optional data to bind to the sql safely
+    # @param {str}  sql       -- Required SQL statement (ex. "SELECT * FROM users")
+    # @param {list} data_bind -- Optional data to bind to the sql safely
     #
     # @var result: object -- Database query
     #
-    # @return any
+    # @return {any}
     ##
     def query(self, sql:str, data_bind:list=[]):
 
@@ -302,13 +302,13 @@ class Database:
     #
     # @desc Checks if a column is a foreign key
     #
-    # @param table: str -- *Required table name
-    # @param col: str -- *Required column name
+    # @param {str} table -- Required table name
+    # @param {str} col   -- Required column name
     # 
-    # @var sql: str -- The sql statement
-    # @var fk_fetch: dict -- The query for SQLite
+    # @var {str} sql       -- The sql statement
+    # @var {dict} fk_fetch -- The query for SQLite
     #
-    # @return bool
+    # @return {bool}
     ##
     def _exist_fk(self, table:str, column:str):
 
@@ -402,12 +402,12 @@ class Database:
     #
     # @desc Checks if a column exists
     #
-    # @param table: str -- *Required table name
-    # @param column: str -- *Required column name
+    # @param {str} table  -- Required table name
+    # @param {str} column -- Required column name
     # 
-    # @var sql: str -- The sql statement
+    # @var {str} sql -- The sql statement
     #
-    # @return bool
+    # @return {bool}
     ##
     def _exist_column(self, table:str, column:str):
 
@@ -466,12 +466,12 @@ class Database:
     #
     # @desc Checks if a table exist
     #
-    # @param table: str -- *Required table name
+    # @param {str} table -- Required table name
     # 
-    # @var sql: str -- The sql statement
-    # @var cur: object - The custom connection cursor for Postgres
+    # @var {str}    sql -- The sql statement
+    # @var {object} cur - The custom connection cursor for Postgres
     #
-    # @return bool
+    # @return {bool}
     ##
     def _exist_table(self, table:str):
 
@@ -543,13 +543,13 @@ class Database:
     #
     # @desc Checks if a database (file - SQLite) exists
     #
-    # @param database: str -- *Required database name (file - SQLite)
+    # @param {str} database -- Required database name (file - SQLite)
     # 
-    # @var sql: str -- The sql statement
-    # @var conn: object - The custom database connection for MySQL and Postgres
-    # @var cur: object - The custom connection cursor for MySQL and Postgres
+    # @var {str} sql     -- The sql statement
+    # @var {object} conn -- The custom database connection for MySQL and Postgres
+    # @var {object} cur  -- The custom connection cursor for MySQL and Postgres
     #
-    # @return bool
+    # @return {bool}
     ##
     def _exist_database(self, database:str=None):
 
@@ -646,16 +646,16 @@ class Database:
     ##
     # @desc Inserts a single row into a table
     #
-    # @param table: str -- *Required Table name (ex. "users")
-    # @param data: dict -- *Required data (ex. {"username": "john-doe", "password": "123456"})
+    # @param {str}  table -- Required Table name (ex. "users")
+    # @param {dict} data  -- Required data (ex. {"username": "john-doe", "password": "123456"})
     #
-    # @var sql: str -- The sql statement
-    # @var data_bind: list -- Data binding against SQL Injection
-    # @var data_key: list
-    # @var data_value: list
-    # @var sql_inserted: str -- SQL statement for the last inserted id
+    # @var {str}  sql          -- The sql statement
+    # @var {list} data_bind    -- Data binding against SQL Injection
+    # @var {list} data_key
+    # @var {list} data_value
+    # @var {str}  sql_inserted -- SQL statement for the last inserted id
     #
-    # @return int | bool -- Last inserted id on success | False on error
+    # @return {int|bool} -- Last inserted id on success | False on error
     ##
     def create(self, table:str, data:dict):
         # Check required params
@@ -743,10 +743,10 @@ class Database:
     ##
     # @desc Inserts multi rows
     #
-    # @param table: str -- *Required Table name (ex. "users")
-    # @param data: list -- *Required data (ex. [{...}, {...}, ...])
+    # @param {str}  table -- Required Table name (ex. "users")
+    # @param {list} data  -- Required data (ex. [{...}, {...}, ...])
     # 
-    # @return int -- Last inserted id
+    # @return {int} -- Last inserted id
     ##
     def create_multi(self, table:str, data:list):
         # Check required params
@@ -780,17 +780,17 @@ class Database:
     #
     # @desc Adds a foreign key to an existing column (MySQL and Postgres)
     #
-    # @param table: str -- *Required table name
-    # @param column: str -- *Required column name
-    # @param r_table: str -- *Required reference table name
-    # @param r_column: str -- *Required reference column name
-    # @param on_update: str -- Optional ON UPDATE statement
-    # @param on_delete: str -- Optional ON DELETE statement
+    # @param {str} table     -- Required table name
+    # @param {str} column    -- Required column name
+    # @param {str} r_table   -- Required reference table name
+    # @param {str} r_column  -- Required reference column name
+    # @param {str} fk_symbol -- Optional foreign key symbol
+    # @param {str} on_update -- Optional ON UPDATE statement
+    # @param {str} on_delete -- Optional ON DELETE statement
     # 
-    # @var sql: str -- The sql statement
-    # @var fk_symbol: str -- The foreign key symbol
+    # @var {str} sql -- The sql statement
     #
-    # @return bool
+    # @return {bool}
     ##
     def _create_fk(self, table:str, column:str, r_table:str, r_column:str, fk_symbol:str=None, on_update:str='CASCADE', on_delete:str='CASCADE'):
         
@@ -953,13 +953,15 @@ class Database:
     #
     # @desc Adds a new column
     #
-    # @var sql: str -- The sql statement
-    # @param table: str -- *Required table name
-    # @param col_data: str -- *Required column and it's data
+    # @param {str} table       -- Required table name
+    # @param {str} col_data    -- Required column and it's data
+    # @param {str} datatype    -- Required datatype of the column
+    # @param {str} constraints -- Optional column constraints 
     #
-    # @var table_existance: str -- SQL statement for sqlite_master
+    # @var {str} sql             -- The sql statement
+    # @var {str} table_existance -- SQL statement for sqlite_master
     #
-    # @return bool
+    # @return {bool}
     ##
     def _create_column(self, table:str, column:str, datatype:str, constraints:str=None):
 
@@ -1059,41 +1061,42 @@ class Database:
     #
     # @desc Creates a table if not exists.
     #
-    # @param table: str -- *Required table name
-    # @param col_type: dict -- *Required column names and datatypes
-    # @param primary_key: str -- Optional PRIMARY KEY column
-    # @param unique: list -- Optional UNIQUE Constraint columns
-    # @param not_null: list -- Optional NOT NULL Constraint columns
-    # @param default: dict -- Optional DEFAULT Constraint columns
-    # @param check: str -- Optional CHECK Constraint for the table
-    # @param foreign_key: dict -- Optional FOREIGN KEY Constraints
-    # @Syntax: foreign_key
-    # {
+    # @Syntax:
+    # foreign_key = {
     #   'user_id': {
-    #       'r_table': 'users',
-    #       'r_column': 'id',
+    #       'r_table':   'users',
+    #       'r_column':  'id',
     #       'on_update': RESTRICT | CASCADE | SET NULL | NO ACTION | SET DEFAULT,
     #       'on_delete': RESTRICT | CASCADE | SET NULL | NO ACTION | SET DEFAULT,
     #   },
     # }
     #
-    # @var sql: str -- The sql statement
-    # @var data_list: list -- SQL data as list
-    # @var data_sql: str -- The sql data
-    # @var table_existance: str -- SQL statement for sqlite_master
-    # @var pk_col: str -- The PRIMARY KEY sql statement
-    # @var unique_col: str -- The UNIQUE sql statement
-    # @var null_col: str -- The NOT NULL sql statement
-    # @var default_col: str -- The DEFAULT sql statement
-    # @var check_col: str -- The CHECK sql statement
-    # @var auto_increment: str -- The AUTO_INCREMENT sql statement for MySQL
-    # @var r_table: str -- The reference table name for the foreign key
-    # @var r_column: str -- The reference column name for the foreign key
-    # @var fk_symbol: str -- The foreign key symbol for Postgres and MySQL
-    # @var on_update: str -- ON UPDATE statement for the foreign key
-    # @var on_delete: str -- ON DELETE statement for the foreign key
+    # @param {str}  table       -- Required table name
+    # @param {dict} col_type    -- Required column names and datatypes
+    # @param {str}  primary_key -- Optional PRIMARY KEY column
+    # @param {list} unique      -- Optional UNIQUE Constraint columns
+    # @param {list} not_null    -- Optional NOT NULL Constraint columns
+    # @param {dict} default     -- Optional DEFAULT Constraint columns
+    # @param {dict} check       -- Optional CHECK Constraint for the table
+    # @param {dict} foreign_key -- Optional FOREIGN KEY Constraints
     #
-    # @return bool
+    # @var {str}  sql             -- The sql statement
+    # @var {list} data_list       -- SQL data as list
+    # @var {str}  data_sql        -- The sql data
+    # @var {str}  table_existance -- SQL statement for sqlite_master
+    # @var {str}  pk_col          -- The PRIMARY KEY sql statement
+    # @var {str}  unique_col      -- The UNIQUE sql statement
+    # @var {str}  null_col        -- The NOT NULL sql statement
+    # @var {str}  default_col     -- The DEFAULT sql statement
+    # @var {str}  check_col       -- The CHECK sql statement
+    # @var {str}  auto_increment  -- The AUTO_INCREMENT sql statement for MySQL
+    # @var {str}  r_table         -- The reference table name for the foreign key
+    # @var {str}  r_column        -- The reference column name for the foreign key
+    # @var {str}  fk_symbol       -- The foreign key symbol for Postgres and MySQL
+    # @var {str}  on_update       -- ON UPDATE statement for the foreign key
+    # @var {str}  on_delete       -- ON DELETE statement for the foreign key
+    #
+    # @return {bool}
     ##
     def _create_table(self, table:str, col_type:dict, primary_key:str=None, unique:list=[], not_null:list=[], 
         default:dict={}, check:dict={}, foreign_key:dict={}):
@@ -1243,14 +1246,14 @@ class Database:
     #
     # @desc Creates a new database (file - SQLite)
     #
-    # @param database: str -- *Required database name (file - SQLite)
+    # @param {str} database -- Required database name (file - SQLite)
     # 
-    # @var sql: str -- The sql statement
-    # @var err: str -- The error message for SQLite
-    # @var conn: object -- The custom database connection for Postgres and MySQL
-    # @var cur: object -- The custom connection cursor for Postgres and MySQL
+    # @var {str}    sql   -- The sql statement
+    # @var {str}    err   -- The error message for SQLite
+    # @var {object} conn  -- The custom database connection for Postgres and MySQL
+    # @var {object} cur:  -- The custom connection cursor for Postgres and MySQL
     #
-    # @return bool
+    # @return {bool}
     ##
     def _create_database(self, database:str=None):
 
@@ -1429,22 +1432,22 @@ class Database:
     ##
     # @desc Selects rows
     #
-    # @param table: str -- *Required Table name (ex. "users")
-    # @param cols: list -- Optional Columns (ex. ["id", "first_name", "last_name"])
-    # @param where: dict -- Optional WHERE statement (ex. {"id": "2", "username": "admin"})
-    # @param order_by: dict -- Optional ORDER BY statement (ex. {"id": "ASC", "date": "DESC"})
-    # @param group_by: str -- Optional GROUP BY statement (ex. 'country')
-    # @param limit: int -- Optional LIMIT statement (ex. "10")
-    # @param offset: int -- Optional OFFSET statement (ex. "10")
+    # @param {str}  table    -- Required Table name (ex. "users")
+    # @param {list} cols     -- Optional Columns (ex. ["id", "first_name", "last_name"])
+    # @param {dict} where    -- Optional WHERE statement (ex. {"id": "2", "username": "admin"})
+    # @param {dict} order_by -- Optional ORDER BY statement (ex. {"id": "ASC", "date": "DESC"})
+    # @param {str}  group_by -- Optional GROUP BY statement (ex. 'country')
+    # @param {int}  limit    -- Optional LIMIT statement (ex. "10")
+    # @param {int}  offset   -- Optional OFFSET statement (ex. "10")
     #
-    # @var sql: str -- The sql statement
-    # @var data_bind: list -- Data binding against SQL Injection
-    # @var where_sql: list -- A placeholder for the WHERE clause
-    # @var order_by_sql: list -- A placeholder for the ORDER BY clause
-    # @var in_bind: list -- A placeholder IN operator
-    # @var in_sql: str -- The sql statement for IN operator
+    # @var {str}  sql: str     -- The sql statement
+    # @var {list} data_bind    -- Data binding against SQL Injection
+    # @var {list} where_sql    -- A placeholder for the WHERE clause
+    # @var {list} order_by_sql -- A placeholder for the ORDER BY clause
+    # @var {list} in_bind      -- A placeholder IN operator
+    # @var {str}  in_sql       -- The sql statement for IN operator
     #
-    # @return class: type
+    # @return {class}
     ##
     def read(self, table:str, cols:list=[], where:dict={}, order_by:dict={}, group_by:str=None, limit:int=None, offset:int=None):
 
@@ -1797,34 +1800,34 @@ class Database:
 
 
     ##
-    # @desc Joins tables
+    # @desc Joins related tables
     #
-    # @param table: str -- *Required main Table (ex. "table_1")
-    # @param f_keys: list -- *Required foreign keys (ex. ["user_id", "flight_id"])
-    # @param f_tables: list -- *Required foreign tables (ex. ["table_2", "table_3"])
-    # @param p_keys: list -- *Required foreign tables (ex. ["pk_2", "pk__3"])
-    # @param cols: list -- Optional Columns (ex. ["table.id", "table_2.name", "table_3.address"])
+    # @param {str}  table     -- Required main Table (ex. "table_1")
+    # @param {list} f_keys    -- Required foreign keys (ex. ["user_id", "flight_id"])
+    # @param {list} f_tables  -- Required foreign tables (ex. ["table_2", "table_3"])
+    # @param {list} p_keys    -- Required primary keys (ex. ["pk_2", "pk_3"])
+    # @param {list} cols      -- Optional Columns (ex. ["table.id", "table_2.name", "table_3.address"])
     #
-    # @param join_stmt: str -- The join statement:
+    # @param {str}  join_stmt -- The join statement:
     #        SQLite: INNER JOIN, LEFT JOIN, CROSS JOIN (Learn More: https://www.sqlitetutorial.net/sqlite-join/)
     #        MySQL: INNER JOIN, LEFT JOIN, RIGHT JOIN, CROSS JOIN (Learn More: https://www.w3schools.com/mysql/mysql_join.asp)
     #        Postgres: INNER JOIN, LEFT JOIN, RIGHT JOIN, FULL JOIN (Learn More: https://www.postgresqltutorial.com/postgresql-tutorial/postgresql-joins/)
     #        JOIN vs INNER JOIN: https://stackoverflow.com/questions/565620/difference-between-join-and-inner-join
     #
-    # @param where: dict -- Optional WHERE statement (ex. {"table.id": "2", "table_2.name": "John"})
-    # @param order_by: dict -- Optional ORDER BY statement (ex. {"table.id": "ASC", "table.date": "DESC"})
-    # @param group_by: str -- Optional GROUP BY statement (ex. 'table.country')
-    # @param limit: int -- Optional LIMIT statement (ex. "10")
-    # @param offset: int -- Optional OFFSET statement (ex. "10")
+    # @param {dict} where    -- Optional WHERE statement (ex. {"table.id": "2", "table_2.name": "John"})
+    # @param {dict} order_by -- Optional ORDER BY statement (ex. {"table.id": "ASC", "table.date": "DESC"})
+    # @param {str}  group_by -- Optional GROUP BY statement (ex. 'table.country')
+    # @param {int}  limit    -- Optional LIMIT statement (ex. "10")
+    # @param {int}  offset   -- Optional OFFSET statement (ex. "10")
     #
-    # @var sql: str -- The sql statement
-    # @var data_bind: list -- Data binding against SQL Injection
-    # @var where_sql: list -- A placeholder for the WHERE clause
-    # @var order_by_sql: list -- A placeholder for the ORDER BY clause
-    # @var in_bind: list -- A placeholder IN operator
-    # @var in_sql: str -- The sql statement for IN operator
+    # @var {str}  sql: str     -- The sql statement
+    # @var {list} data_bind    -- Data binding against SQL Injection
+    # @var {list} where_sql    -- A placeholder for the WHERE clause
+    # @var {list} order_by_sql -- A placeholder for the ORDER BY clause
+    # @var {list} in_bind      -- A placeholder IN operator
+    # @var {str}  in_sql       -- The sql statement for IN operator
     #
-    # @return class: type
+    # @return {class}
     ##
     def join(self, table:str, f_keys:list, f_tables:list, p_keys:list, cols:list=[], join_stmt:str='INNER JOIN', where:dict={}, order_by:dict={}, group_by:str=None, limit:int=None, offset:int=None):
 
@@ -2269,19 +2272,19 @@ class Database:
     #
     # @desc Updates row(s)
     #
-    # @param table: str -- *Required Table name (ex. "users")
-    # @param data: dict -- *Required data (ex. {"first_name": "John", "last_name": "Doe"})
-    # @param where: dict -- Optional (*CAUTION!) WHERE statement (ex. {"id": "2", "username": "admin"})
-    # @param confirm: bool -- Required|Optional confirm (if not where it will be Required)
+    # @param {str}  table   -- Required Table name (ex. "users")
+    # @param {dict} data    -- Required data (ex. {"first_name": "John", "last_name": "Doe"})
+    # @param {dict} where   -- Optional (*CAUTION!) WHERE statement (ex. {"id": "2", "username": "admin"})
+    # @param {bool} confirm -- Optional|Required confirm (if not where it will be Required)
     #
-    # @var sql: str -- The sql statement
-    # @var data_bind: list -- Data binding against SQL Injection
-    # @var data_sql: list -- A placeholder for the update data
-    # @var where_sql: list -- A placeholder for the WHERE clause
-    # @var in_bind: list -- A placeholder IN operator
-    # @var in_sql: str -- The sql statement for IN operator
+    # @var {str}  sql       -- The sql statement
+    # @var {list} data_bind -- Data binding against SQL Injection
+    # @var {list} data_sql  -- A placeholder for the update data
+    # @var {list} where_sql -- A placeholder for the WHERE clause
+    # @var {list} in_bind   -- A placeholder IN operator
+    # @var {str}  in_sql    -- The sql statement for IN operator
     #
-    # @return bool
+    # @return {bool}
     ##
     def update(self, table:str, data:dict={}, where:dict={}, confirm:bool=False):
 
@@ -2605,17 +2608,17 @@ class Database:
     #
     # @desc Updates a column
     #
-    # @param table: str -- *Required table name
-    # @param old_col: str -- *Required old column name
-    # @param new_col: str -- *Required new column name
-    # @param datatype: str -- *Required new column data
-    # @param constraints: str -- Optional new column constraints
+    # @param {str} table       -- Required table name
+    # @param {str} old_col     -- Required old column name
+    # @param {str} new_col     -- Required new column name
+    # @param {str} datatype    -- Required new column data
+    # @param {str} constraints -- Optional new column constraints
     # 
-    # @var sql: str -- The sql statement
-    # @var table_existance: str -- SQL statement for sqlite_master
-    # @var recursion: bool -- For recursion the method
+    # @var {str}  sql             -- The sql statement
+    # @var {str}  table_existance -- SQL statement for sqlite_master
+    # @var {bool} recursion       -- For recursion the method
     #
-    # @return bool
+    # @return {bool}
     ##
     def _update_column(self, table:str, old_col:str, new_col:str, datatype:str, constraints:str=None):
 
@@ -2711,13 +2714,13 @@ class Database:
     #
     # @desc Renames a table if exists
     #
-    # @param old_table: str -- *Required table old name
-    # @param new_table: str -- *Required table new name
+    # @param {str} old_table -- Required table old name
+    # @param {str} new_table -- Required table new name
     #
-    # @var sql: str -- The sql statement
-    # @var table_existance: str -- SQL statement for sqlite_master
+    # @var {str} sql             -- The sql statement
+    # @var {str} table_existance -- SQL statement for sqlite_master
     #
-    # @return bool
+    # @return {bool}
     ##
     def _update_table(self, old_table:str, new_table:str):
 
@@ -2801,17 +2804,17 @@ class Database:
     #
     # @desc Deletes row(s)
     #
-    # @param table: str -- *Required Table name (ex. "users")
-    # @param where: dict -- Optional (*WARNING!) WHERE statement (ex. {"id": "2", "username": "admin"})
-    # @param confirm: bool -- Required|Optional confirm (if not where it will be Required)
+    # @param {str}  table   -- Required Table name (ex. "users")
+    # @param {dict} where   -- Optional (*WARNING!) WHERE statement (ex. {"id": "2", "username": "admin"})
+    # @param {bool} confirm -- Optional|Required confirm (if not where it will be Required)
     #
-    # @var sql: str -- The sql statement
-    # @var data_bind: list -- Data binding against SQL Injection
-    # @var where_sql: list -- A placeholder for the WHERE clause
-    # @var in_bind: list -- A placeholder IN operator
-    # @var in_sql: str -- The sql statement for IN operator
+    # @var {str}  sql       -- The sql statement
+    # @var {list} data_bind -- Data binding against SQL Injection
+    # @var {list} where_sql -- A placeholder for the WHERE clause
+    # @var {list} in_bind   -- A placeholder IN operator
+    # @var {str}  in_sql    -- The sql statement for IN operator
     #
-    # @return bool
+    # @return {bool}
     ##
     def delete(self, table:str, where:dict={}, confirm:bool=False):
         
@@ -3117,13 +3120,13 @@ class Database:
     #
     # @desc Drops a foreign key from an existing table (MySQL and Postgres)
     #
-    # @param table: str -- *Required table name
-    # @param table: str -- *Required column name
-    # @param fk_symbol: str -- *Required foreign key symbol
+    # @param {str} table     -- Required table name
+    # @param {str} table     -- Required column name
+    # @param {str} fk_symbol -- Required foreign key symbol
     # 
-    # @var sql: str -- The sql statement
+    # @var {str} sql -- The sql statement
     #
-    # @return bool
+    # @return {bool}
     ##
     def _delete_fk(self, table:str, column:str, fk_symbol:str, confirm:bool=False):
 
@@ -3235,14 +3238,14 @@ class Database:
     #
     # @desc Drops a column from a table
     #
-    # @var sql: str -- The sql statement
-    # @param table: str -- *Required table name
-    # @param column: str -- *Required column name
-    # @param confirm: bool -- *Required confirmation
+    # @param {str}  table   -- Required table name
+    # @param {str}  column  -- Required column name
+    # @param {bool} confirm -- Required confirmation
     # 
-    # @var table_existance: str -- SQL statement for sqlite_master
+    # @var {str} sql             -- The sql statement
+    # @var {str} table_existance -- SQL statement for sqlite_master
     #
-    # @return bool
+    # @return {bool}
     ##
     def _delete_column(self, table:str, column:str, confirm:bool=False):
 
@@ -3353,13 +3356,13 @@ class Database:
     #
     # @desc Drops a table if exists
     #
-    # @param table: str -- *Required table name
-    # @param confirm: bool -- *Required confirmation
+    # @param {str}  table   -- Required table name
+    # @param {bool} confirm -- Required confirmation
     # 
-    # @var sql: str -- The sql statement
-    # @var table_existance: str -- SQL statement for sqlite_master
+    # @var {str} sql             -- The sql statement
+    # @var {str} table_existance -- SQL statement for sqlite_master
     #
-    # @return bool
+    # @return {bool}
     ##
     def _delete_table(self, table:str, confirm:bool=False):
 
@@ -3432,14 +3435,14 @@ class Database:
     #
     # @desc Drops a database (Removes a database file for SQLite)
     #
-    # @param database: str -- *Required database name (file -- SQLite)
-    # @param confirm: bool -- *Required confirmation
+    # @param {str}  database -- Required database name (file -- SQLite)
+    # @param {bool} confirm  -- Required confirmation
     # 
-    # @var sql: str -- The sql statement
-    # @var conn: object -- The custom database connection form Postgres and MySQL
-    # @var cur: object -- The custom connection cursor form Postgres and MySQL
+    # @var {str}    sql  -- The sql statement
+    # @var {object} conn -- The custom database connection form Postgres and MySQL
+    # @var {object} cur  -- The custom connection cursor form Postgres and MySQL
     #
-    # @return bool
+    # @return {bool}
     ##
     def _delete_database(self, database:str=None, confirm:str=False):
         
@@ -3602,19 +3605,19 @@ class Read:
     ##
     # @desc Constructor method
     #
-    # @param parent: type - The Database Class
-    # @param sql: str - The sql query string
-    # @param data_bind: list - The data to bind
+    # @param {class} parent    -- The Database Class
+    # @param {str}   sql       -- The sql query string
+    # @param {list}  data_bind -- The data to bind
     #
-    # @property sql: str - the sql query string
-    # @property data_bind: object - the data to bind
-    # @property query: method - the query method of the Database class
-    # @property regex: str - the regular expression for the select statement
-    # @property col: str - the first column extracted from the match
+    # @property {str}    sql       -- the sql query string
+    # @property {object} data_bind -- the data to bind
+    # @property {method} query     -- the query method of the Database class
+    # @property {str}    regex     -- the regular expression for the select statement
+    # @property {str}    col       -- the first column extracted from the match
     #
-    # @var regex: str - the regular expression for the select statement
-    # @var match: str - the regular expression match
-    # @var cols: list - the columns list extracted from the match
+    # @var {str}  regex -- the regular expression for the select statement
+    # @var {str}  match -- the regular expression match
+    # @var {list} cols  -- the columns list extracted from the match
     ##
     def __init__(self, parent, sql, data_bind):
         # Regular expression
@@ -3640,7 +3643,7 @@ class Read:
     ##
     # @desc Fetches the first row
     #
-    # @return dict
+    # @return {dict}
     ##
     def first(self):
         if self.all():
@@ -3652,7 +3655,7 @@ class Read:
     ##
     # @desc Fetches the last row
     #
-    # @return dict
+    # @return {dict}
     ##
     def last(self):
         if self.all()[self.count()-1]:
@@ -3664,7 +3667,7 @@ class Read:
     ##
     # @desc Fetches all the rows
     #
-    # @return list
+    # @return {list}
     ##
     def all(self):
         # Postgres
@@ -3679,7 +3682,7 @@ class Read:
     ##
     # @desc Counts the number of rows
     #
-    # @return int
+    # @return {int}
     ##
     def count(self):
         return len(self.all())
@@ -3688,9 +3691,9 @@ class Read:
     ##
     # @desc Fetches the minimum of the first given column (must be of type int or float)
     #
-    # @param option: int -- Optional -- 0(@return int|float) 1(@return dict) 2 (@return list)
+    # @param {int} option -- Optional -- 0(@return int|float) 1(@return dict) 2 (@return list)
     #
-    # @return int|float|dict|list
+    # @return {int|float|dict|list}
     ##
     def min(self, option=0):
         # Prepare the sql query
@@ -3729,9 +3732,9 @@ class Read:
     ##
     # @desc Fetches the maximum of the first given column (must be of type int or float)
     #
-    # @param option: int -- Optional -- 0(@return int|float) 1(@return dict) 2 (@return list)
+    # @param {int} option -- Optional -- 0(@return int|float) 1(@return dict) 2 (@return list)
     #
-    # @return int|float|dict|list
+    # @return {int|float|dict|list}
     ##
     def max(self, option=0):
         # Prepare the sql query
@@ -3770,9 +3773,9 @@ class Read:
     ##
     # @desc Fetches the average of the first given column (must be of type int or float)
     #
-    # @param option: int -- Optional -- 0(@return float) 1(@return dict)
+    # @param {int} option -- Optional -- 0(@return float) 1(@return dict)
     #
-    # @return float
+    # @return {float}
     ##
     def avg(self, option=0):
         # Prepare the sql query
@@ -3801,9 +3804,9 @@ class Read:
     ##
     # @desc Fetches the summary of the first given column (must be of type int or float)
     #
-    # @param option: int -- Optional -- 0(@return int|float) 1(@return dict)
+    # @param {int} option -- Optional -- 0(@return int|float) 1(@return dict)
     #
-    # @return int|float
+    # @return {int|float}
     ##
     def sum(self, option=0):
         # Prepare the sql query
@@ -3839,19 +3842,19 @@ class Join:
     ##
     # @desc Constructor method
     #
-    # @param parent: type - The Database Class
-    # @param sql: str - The sql query string
-    # @param data_bind: list - The data to bind
+    # @param {class} parent    -- The Database Class
+    # @param {str}   sql       -- The sql query string
+    # @param {list}  data_bind -- The data to bind
     #
-    # @property sql: str - the sql query string
-    # @property data_bind: object - the data to bind
-    # @property query: method - the query method of the Database class
-    # @property regex: str - the regular expression for the select statement
-    # @property col: str - the first column extracted from the match
+    # @property {str}    sql       -- the sql query string
+    # @property {object} data_bind -- the data to bind
+    # @property {method} query     -- the query method of the Database class
+    # @property {str}    regex     -- the regular expression for the select statement
+    # @property {str}    col       -- the first column extracted from the match
     #
-    # @var regex: str - the regular expression for the select statement
-    # @var match: str - the regular expression match
-    # @var cols: list - the columns list extracted from the match
+    # @var {int}  regex -- the regular expression for the select statement
+    # @var {int}  match -- the regular expression match
+    # @var {list} cols  -- the columns list extracted from the match
     ##
     def __init__(self, parent, sql, data_bind):
         # Class properties
@@ -3864,7 +3867,7 @@ class Join:
     ##
     # @desc Fetches the first row
     #
-    # @return dict
+    # @return {dict}
     ##
     def first(self):
         if self.all():
@@ -3876,7 +3879,7 @@ class Join:
     ##
     # @desc Fetches the last row
     #
-    # @return dict
+    # @return {dict}
     ##
     def last(self):
         if self.all()[self.count()-1]:
@@ -3888,7 +3891,7 @@ class Join:
     ##
     # @desc Fetches all the rows
     #
-    # @return list
+    # @return {list}
     ##
     def all(self):
         # Postgres
@@ -3903,7 +3906,7 @@ class Join:
     ##
     # @desc Counts the number of rows
     #
-    # @return int
+    # @return {int}
     ##
     def count(self):
         return len(self.all())

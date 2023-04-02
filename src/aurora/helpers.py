@@ -20,11 +20,11 @@ from datetime import datetime, timedelta
 ##
 # @desc Generates controller routes
 # 
-# @param controller: str -- The controller class name
-# @param url: str -- The controller url
-# @param methods: list -- The controller REST methods
+# @param {str}  controller -- The controller class name
+# @param {str}  url        -- The controller url
+# @param {list} methods    -- The controller REST methods
 # 
-# @return tuple
+# @return {tuple}
 ##
 def controller(name:str, url:str='', methods:list=['GET']):
     # Check required params
@@ -53,10 +53,10 @@ def controller(name:str, url:str='', methods:list=['GET']):
 ##
 # @desc Generates app route
 # 
-# @param name: str -- The app name
-# @param url: str -- The app base url
+# @param {str} name -- The app name
+# @param {str} url  -- The app base url
 # 
-# @return tuple
+# @return {tuple}
 ##
 def app(name:str, url:str):
     # Check required params
@@ -78,12 +78,13 @@ def app(name:str, url:str):
 
 
 ##
-# @desc Check if an app exists
+# @desc Checks if an app exists
 # 
-# @param app: str -- The app name
-# @param apps: list -- The apps list
+# @param {str} app -- The app name
+#
+# @var {list} apps -- The apps list
 # 
-# @return dict
+# @return {dict}
 ##
 def app_exists(app:str):
     # Apps info
@@ -123,9 +124,9 @@ def app_exists(app:str):
 ##
 # @desc Check if an app url exists
 # 
-# @param url: str -- The app url
+# @param {str} url -- The app url
 # 
-# @return bool
+# @return {bool}
 ##
 def app_url_exists(url:str):
     # Apps info
@@ -155,13 +156,14 @@ def app_url_exists(url:str):
 
 
 ##
-# @desc Check if an controller exists
+# @desc Check if an controller name exists
 # 
-# @param app: str -- The app name
-# @param controller: str -- The controller name
-# @param controller: list -- The controllers list
+# @param {str} app        -- The app name
+# @param {str} controller -- The controller name
+#
+# @var {list} controllers -- The controllers list
 # 
-# @return dict
+# @return {dict}
 ##
 def controller_exists(app:str, controller:str):
     # Controllers info
@@ -199,12 +201,12 @@ def controller_exists(app:str, controller:str):
 
 
 ##
-# @desc Check if an app url exists
+# @desc Check if a controller url exists
 # 
-# @param app: str -- The app name
-# @param url: str -- The app url
+# @param {str} app -- The app name
+# @param {str} url -- The controller url
 # 
-# @return dict
+# @return {bool}
 ##
 def controller_url_exists(app:str, url:str=''):
     # Controllers info
@@ -236,8 +238,8 @@ def controller_url_exists(app:str, url:str=''):
 ##
 # @desc Produces the final url for a route (app url + controller url)
 # 
-# @param app: str - The app name
-# @param controller: str - The app controller name
+# @param {str} app        -- The app name
+# @param {str} controller -- The app controller name
 #
 # @return object
 ##
@@ -277,49 +279,384 @@ def route_url(app:str, controller:str=None):
     return url
 
 
+###############
+# CLI Helpers #
+###############
+##
+# @desc Validates app name
+#
+# @param {str} name -- The app name
+#
+# @retun {dict}
+##
+def app_name(name:str):
+    # Check required app name
+    if not name:
+        return {
+            'result': False, 
+            'message': '- The app name is required!'
+        }
+
+    # Regular expression
+    regex = '^[a-z_]+$'
+
+    # Valid name
+    if re.match(regex, name):
+        return {
+            'result': True, 
+            'message': ''
+        }
+
+    # Invalid name
+    else:
+        return {
+            'result': False, 
+            'message': '- The app name is invalid!\n- Valid characters: a-z, _'
+        }
+
+
+##
+# @desc Validates app url
+#
+# @param {str} url -- The app url
+#
+# @retun {dict}
+##
+def app_url(url:str):
+    # Check required app URL
+    if not url:
+        return {
+            'result': False, 
+            'message': '- The app URL is required!'
+        }
+
+    # Regular expression
+    regex = '^[a-z-]+$'
+
+    # Valid URL
+    if re.match(regex, url):
+        return {
+            'result': True, 
+            'message': ''
+        }
+
+    # Invalid URL
+    else:
+        return {
+            'result': False, 
+            'message': '- The app URL is invalid!\n- Valid characters: a-z, -'
+        }
+
+
+##
+# @desc Validates controller name
+#
+# @param {str} name -- The controller name
+#
+# @retun {dict}
+##
+def controller_name(name:str):
+    # Check required controller name
+    if not name:
+        return {
+            'result': False, 
+            'message': '- The controller name is required!'
+        }
+
+    # Regular expression
+    regex = '^(?:[A-Z][a-z]+)+$'
+
+    # Valid name
+    if re.match(regex, name):
+        return {
+            'result': True, 
+            'message': ''
+        }
+
+    # Invalid name
+    else:
+        return {
+            'result': False, 
+            'message': '- The controller name must be in "CamelCase" form with at least two "a-z" and "A-Z" characters!'
+        }
+
+
+##
+# @desc Validates controller url
+#
+# @param {str} url -- The app name
+#
+# @retun {dict}
+##
+def controller_url(url:str):
+    # Optional base URL
+    if not url:
+        return {
+            'result': True, 
+            'message': ''
+        }
+
+    # Regular expression
+    regex = '^[a-z0-9<]+[a-z0-9-<>:/]*$'
+
+    # Valid URL
+    if re.match(regex, url):
+        return {
+            'result': True, 
+            'message': ''
+        }
+
+    # Invalid URL
+    else:
+        return {
+            'result': False, 
+            'message': '- The controller URL is invalid!\n- Valid characters: a-z, 0-9, -, /, <, :, >'
+        }
+
+
+##
+# @desc Validates controller methods
+#
+# @param {list} methods -- The controller methods
+#
+# @retun {dict}
+##
+def controller_methods(methods:list):
+    # Optional methods
+    if not methods:
+        return {
+            'result': True, 
+            'message': ''
+        }
+
+    # Valid methods
+    valid_methods = ['POST', 'PUT', 'GET', 'DELETE']
+
+    # Validate methods
+    for method in methods:
+        # Invalid methods
+        if not method.upper() in valid_methods:
+            return {
+                'result': False, 
+                'message': '- Valid Methods: POST, GET, PUT, DELETE'
+            }
+
+        # Valid name
+        else:
+            return {
+                'result': True, 
+                'message': ''
+            }
+
+
+##
+# @desc Validates view name
+#
+# @param {str} view -- The view name
+#
+# @retun {dict}
+##
+def view_name(view:str):
+    # Check required base URL
+    if not view:
+        return {
+            'result': False, 
+            'message': '- The view is required!'
+        }
+
+    # Regular expression
+    regex = '^[a-z-_]+$'
+
+    # Valid view
+    if re.match(regex, view):
+        return {
+            'result': True, 
+            'message': ''
+        }
+
+    # Invalid view
+    else:
+        return {
+            'result': False, 
+            'message': '- The view is invalid!\n- Valid characters: a-z, -, _'
+        }
+
+
+##
+# @desc Validates model name
+#
+# @param {str} name -- The model name
+#
+# @retun {dict}
+##
+def model_name(name:str):
+    # Check required model name
+    if not name:
+        return {
+            'result': False, 
+            'message': '- The model name is required!'
+        }
+
+    # Regular expression
+    regex = '^(?:[A-Z][a-z]+)+$'
+
+    # Valid name
+    if re.match(regex, name):
+        return {
+            'result': True, 
+            'message': ''
+        }
+
+    # Invalid name
+    else:
+        return {
+            'result': False, 
+            'message': '- The model name must be in "CamelCase" form with at least two "a-z" and "A-Z" characters!'
+        }
+
+
+##
+# @desc Validates form name
+#
+# @param {str} name -- The form name
+#
+# @retun {dict}
+##
+def form_name(name:str):
+    # Check required form name
+    if not name:
+        return {
+            'result': False, 
+            'message': '- The form name is required!'
+        }
+
+    # Regular expression
+    regex = '^(?:[A-Z][a-z]+)+$'
+
+    # Valid name
+    if re.match(regex, name):
+        return {
+            'result': True, 
+            'message': ''
+        }
+
+    # Invalid name
+    else:
+        return {
+            'result': False, 
+            'message': '- The form name must be in "CamelCase" form with at least two "a-z" and "A-Z" characters!'
+        }
+
+
+##
+# @desc Validates database table names
+#
+# @param {str} name -- The app name
+#
+# @retun {dict}
+##
+def table_name(name:str):
+    # Check required table name
+    if not name:
+        return {
+            'result': False, 
+            'message': '- The table name is required!'
+        }
+
+    # Regular expression
+    regex = '^[a-z_]+$'
+
+    # Valid name
+    if re.match(regex, name) and name == to_snake_case(name) and len(name) >= 2:
+        return {
+            'result': True, 
+            'message': ''
+        }
+
+    # Invalid name
+    else:
+        return {
+            'result': False, 
+            'message': '- Database table names must be in "snake_case" form with at least two a-z, _ characters!'
+        }
+
+
+##
+# @desc Validates database column names
+#
+# @param {str} name -- The app name
+#
+# @retun {dict}
+##
+def column_name(name:str):
+    # Check required column name
+    if not name:
+        return {
+            'result': False, 
+            'message': '- The column name is required!'
+        }
+
+    # Regular expression
+    regex = '^[a-z_]+$'
+
+    # Valid name
+    if re.match(regex, name) and name == to_snake_case(name) and len(name) >= 2:
+        return {
+            'result': True, 
+            'message': ''
+        }
+
+    # Invalid name
+    else:
+        return {
+            'result': False, 
+            'message': '- Database column names must be in "snake_case" form with at least two a-z, _ characters!'
+        }
+
+
 ###################
 # String Handling #
 ###################
 ##
-# @desc Generates random string
+# @desc Generates a random string
 # 
-# @param [size]: int -- The size of output (characters)
-# @param [chars]: str -- The type of characters
+# @param {int} size  -- The size of output (characters)
+# @param {str} chars -- The type of characters
 # 
-# @return str
+# @return {str}
 ##
 def random_string(size:int=8, chars:str=string.ascii_uppercase + string.digits):
     return ''.join(random.choice(chars) for _ in range(size))
 
 
 ##
-# @desc Converts CamelCase to snake_case
+# @desc Converts CamelCase string to snake_case string
 #
-# @param name: str - The name in CamelCase
+# @param {str} CamelCase - The string in CamelCase
 #
-# @retun str
+# @retun {str}
 ##
-def snake_case(name:str):
+def snake_case(CamelCase:str):
     result = ""
 
-    result = re.sub(r'(?<!^)(?=[A-Z])', '_', name).lower()
+    result = re.sub(r'(?<!^)(?=[A-Z])', '_', CamelCase).lower()
 
     return result
 
 
 ##
-# @desc Converts string to snake_case
+# @desc Converts a text to snake_case string
 #
-# @param name: str
+# @param {str} text
 #
-# @retun str
+# @retun {str}
 ##
-def to_snake_case(name:str):
+def to_snake_case(text:str):
     result = ''
     underscore = False
 
     # Remove the spaces
-    name = delete_chars(name, ' ')
+    name = delete_chars(text, ' ')
 
     # Loop the name characters
     for i in range(len(name)):
@@ -353,23 +690,23 @@ def to_snake_case(name:str):
 
 
 ##
-# @desc Delete characters from a string
+# @desc Deletes the sequences of a character from a text.
 #
-# @param string: str - The string to format
-# @param char: str - The character to delete in the string
+# @param {str} text -- The text to format
+# @param {str} char -- The character to delete in the text
 #
-# @retun str
+# @retun {str}
 ##
-def delete_chars(string:str, char:str):
-    return re.sub(r'{}'.format(char), '', string)
+def delete_chars(text:str, char:str):
+    return re.sub(r'{}'.format(char), '', text)
 
 
 ##
 # @desc Cleans keys for the WHERE clause for SQL Class
 #
-# @param key: str - The key to clean
+# @param {str} key - The key to clean
 #
-# @retun str
+# @retun {str}
 ##
 def clean_key(key:str):
     # Clean the key
@@ -381,18 +718,117 @@ def clean_key(key:str):
     return new_key
 
 
+##
+# @desc Removes HTML tags from a text
+#
+# @param {str} text -- The text to format
+#
+# @return {str}
+##
+def remove_html(text:str):
+    regex = re.compile('<.*?>') 
+    return re.sub(regex, '', text)
+
+
+##
+# @desc Returns a fixed sized text
+#
+# @param {str} text -- The text to format
+# @param {int} num  -- The number of characters to retrn
+#
+# @return {str}
+##
+def fixed_chars(text:str, num:int):
+    return text[:num]
+
+
+##
+# @desc Removes HTML tags from a text and returns a fixed sized text
+#
+# @param {str} text -- The text to format
+# @param {int} num  -- The number of characters to retrn
+#
+# @return {str}
+##
+def clean_text(text:str, num:int):
+    return fixed_chars(remove_html(text), num)
+
+
 ################
-# Collections  #
+# JSON Helpers #
 ################
+##
+# @desc Checks if a text is in correct JSON format
+# 
+# @param {str} text -- The text to execute
+# 
+# @var {bool} result -- The execution result
+#
+# @retun {bool}
+##
+def is_json(text:str):
+    result = True
+
+    # Is JSON
+    try:
+        json.loads(text)
+
+    # Is not JSON
+    except ValueError as e:
+        result = False
+
+    # Return the result
+    return result
+
+
+##
+# @desc Produces a dictionary from a json file
+#
+# @param {str} path -- The file path
+# 
+# @return {dict|bool}
+##
+def json_dict(path:str):
+    # No file
+    if not path:
+        return False
+
+    # Read file
+    text = read_file(path)
+
+    # Check file
+    if text:
+        # Convert to dict & return
+        return json_eval(text)
+
+    # File error
+    else:
+        return False
+
+
+##
+# @desc Evalutes a JSON object into python dictionary
+#
+# @param {str} text -- The JSON object
+# 
+# @return {dict}
+##
+def json_eval(text:str):
+    return json.loads(text)
+
+
+########################
+# Collection Hendling  #
+########################
 ##
 # @desc Convert tuple list into dictionary list, for SQLite Database
 #
-# @param cur: object - database connection cursor
-# @param row: object - database rows
+# @param {object} cur -- database connection cursor
+# @param {object} row -- database rows
 #
-# @var d: dict
+# @var {dict} d -- The output dictionary
 #
-# @retun dict
+# @retun {dict}
 ##
 def dict_factory(cur:object, row:object):
     d = {}
@@ -406,11 +842,11 @@ def dict_factory(cur:object, row:object):
 ##
 # @desc Convert named list into dictionary list, for Postgres Database
 #
-# @param cur: list - a named list
+# @param {list} cur -- a named list
 #
-# @var translate: list - a dictionary list
+# @var {list} translate -- a dictionary list
 #
-# @retun list (of dictionaries)
+# @retun {list} (of dictionaries)
 ##
 def real_dict(cur:list):
     translate = []
@@ -424,9 +860,9 @@ def real_dict(cur:list):
 ##
 # @desc Checks if there are duplicates in a list
 #
-# @param ls: list
+# @param {list} ls -- The list to check
 #
-# @retun bool
+# @retun {bool}
 ##
 def list_dup(ls:list):
     return len(ls) != len(set(ls))
@@ -435,9 +871,9 @@ def list_dup(ls:list):
 ##
 # @desc Checks if there are duplicate values in a dictionary
 #
-# @param dt: dict
+# @param {dict} dt -- The dictionary to check
 #
-# @retun bool
+# @retun {bool}
 ##
 def dict_dup_val(dt:dict):
     new_dt = {}
@@ -457,13 +893,13 @@ def dict_dup_val(dt:dict):
 ##
 # @desc Checks if a file exists
 #
-# @param file: str - The absolute file path
+# @param {str} path -- The absolute file path
 #
-# @retun bool
+# @retun {bool}
 ##
-def file_exist(file:str):
+def file_exist(path:str):
     # File exists
-    if os.path.exists(file):
+    if os.path.exists(path):
         return True
 
     # File not exists
@@ -474,13 +910,13 @@ def file_exist(file:str):
 ##
 # @desc Validates file name
 #
-# @param file_name: str - The file name to check
+# @param {str} file_name -- The file name to check (without extension)
 #
-# @var regex: str - Regular expression
+# @var {str} regex -- Regular expression
 #
-# @retun bool
+# @retun {bool}
 ##
-def check_name(file_name:str):
+def file_name(file_name:str):
     # Check required files
     if not file_name:
         return False
@@ -500,17 +936,17 @@ def check_name(file_name:str):
 ##
 # @desc Validates file name and extension
 #
-# @param src: str - The source file path (ex. 'example.py')
-# @param extension: str - The file extension (ex. '.py', '.*')
-# @param safe: bool - Safe character names (a-z, A-Z, _)
+# @param {str}  file_name -- The file full name (ex. 'example.py')
+# @param {str}  extension -- The file extension (ex. '.py', '.*')
+# @param {bool} safe      -- Safe character names (a-z, A-Z, _)
 #
-# @var regex: str - Regular expression
+# @var {str} regex -- Regular expression
 #
-# @retun bool
+# @retun {bool}
 ##
-def check_file(src:str, extension:str, safe:bool=True):
+def check_file(file_name:str, extension:str, safe:bool=True):
     # Check required files
-    if not src or not extension:
+    if not file_name or not extension:
         return False
 
     if extension == '.*':
@@ -520,7 +956,7 @@ def check_file(src:str, extension:str, safe:bool=True):
     regex = f'^[a-zA-Z_]+[a-zA-Z0-9_]*\{extension}$' if safe else f'.*\{extension}$'
 
     # Valid name and extension
-    if re.match(regex, src):
+    if re.match(regex, file_name):
         return True
 
     # Invalid name or extension
@@ -531,16 +967,16 @@ def check_file(src:str, extension:str, safe:bool=True):
 ##
 # @desc Creates a file if not exists
 #
-# @param file: str - The absolute file path
-# @param content: str - The content of the file
+# @param {str} file_path -- The absolute file path
+# @param {str} content   -- The content of the file
 #
-# @retun bool
+# @retun {bool}
 ##
-def create_file(file:str, content:str=''):
+def create_file(file_path:str, content:str=''):
     # File not exists
-    if not os.path.exists(file):
+    if not os.path.exists(file_path):
         # Create the file
-        f = open(file, 'x')
+        f = open(file_path, 'x')
         f.write(content)
         f.close()
 
@@ -556,16 +992,16 @@ def create_file(file:str, content:str=''):
 ##
 # @desc Writes to a file if exists
 #
-# @param file: str - The absolute file path
-# @param content: str - The content of the file
+# @param {str} file_path -- The absolute file path
+# @param {str} content   -- The content of the file
 #
-# @retun bool
+# @retun {bool}
 ##
-def write_file(file:str, content:str=''):
+def write_file(file_path:str, content:str=''):
     # File already exists
-    if os.path.exists(file):
+    if os.path.exists(file_path):
         # Write to the file
-        f = open(file, 'w')
+        f = open(file_path, 'w')
         f.write(content)
         f.close()
 
@@ -581,9 +1017,9 @@ def write_file(file:str, content:str=''):
 ##
 # @desc Reads a file and returns its content if exists
 #
-# @param file_path: str - The absolute file path
+# @param {str} file_path -- The absolute file path
 #
-# @retun any
+# @retun {any}
 ##
 def read_file(file_path:str):
     # File already exists
@@ -602,18 +1038,18 @@ def read_file(file_path:str):
 
 
 ##
-# @desc Writes to a file if exists
+# @desc Copies a file to a new destination
 #
-# @param src: str - The source file path
-# @param dst: str - The destination file path
+# @param {str} src  -- The source file path
+# @param {str} dist -- The destination file path
 #
-# @retun bool
+# @retun {bool}
 ##
-def copy_file(src:str, dst:str):
+def copy_file(src:str, dist:str):
     # Source file exists
     if os.path.exists(src):
         # Copy the source file to the destination file
-        shutil.copyfile(src, dst)
+        shutil.copyfile(src, dist)
 
         # Return result
         return True
@@ -625,20 +1061,20 @@ def copy_file(src:str, dst:str):
 
 
 ##
-# @desc Writes to a file if exists
+# @desc Moves a file to a new destination
 #
-# @param src: str - The absolute source path
-# @param dst: str - The absolute destination path
+# @param {str} src  -- The source file path
+# @param {str} dist -- The destination file path
 #
-# @retun bool
+# @retun {bool}
 ##
-def move_file(src:str, dst:str):
+def move_file(src:str, dist:str):
     # Source file exists
     if os.path.exists(src):
         # Check the file
-        if re.search('[.]', src) and re.search('[.]', dst):
+        if re.search('[.]', src) and re.search('[.]', dist):
             # Copy the source file to the destination file
-            shutil.move(src, dst)
+            shutil.move(src, dist)
 
             # Return result
             return True
@@ -657,18 +1093,18 @@ def move_file(src:str, dst:str):
 ##
 # @desc Renames a file if exists
 #
-# @param src: str - The absolute source path
-# @param dst: str - The absolute destination path
+# @param {str} src  -- The source file path
+# @param {str} dist -- The destination file path
 #
-# @retun bool
+# @retun {bool}
 ##
-def rename_file(src:str, dst:str):
+def rename_file(src:str, dist:str):
     # Source file exists
     if os.path.exists(src):
         # Check the file
-        if re.search('[.]', src) and re.search('[.]', dst):
+        if re.search('[.]', src) and re.search('[.]', dist):
             # Rename the source file to the destination file
-            os.rename(src, dst)
+            os.rename(src, dist)
 
             # Return result
             return True
@@ -685,17 +1121,17 @@ def rename_file(src:str, dst:str):
 
 
 ##
-# @desc Removes a file if exists
+# @desc Removes a file permanently if exists
 #
-# @param file: str - The absolute file path
+# @param {str} file_path -- The absolute file path
 #
-# @retun bool
+# @retun {bool}
 ##
-def delete_file(file:str):
+def delete_file(file_path:str):
     # File already exists
-    if os.path.exists(file):
+    if os.path.exists(file_path):
         # Remove the file
-        os.remove(file)
+        os.remove(file_path)
 
         # Return result
         return True
@@ -707,27 +1143,27 @@ def delete_file(file:str):
 
 
 ##
-# @descunzips a file to a directory
+# @desc unzips a zip file to a directory
 #
-# @param file_path: str - The absolute zip file path
-# @param dest_dir: str - The destination directory to unzip the file
+# @param {str} file_path -- The absolute zip file path
+# @param {str} dist_dir  -- The destination directory to unzip the file
 #
-# @retun bool -- True (on success), False (on error)
+# @retun {bool} -- True (on success), False (on error)
 ##
-def unzip_file(file_path:str, dest_dir:str):
+def unzip_file(file_path:str, dist_dir:str):
     with ZipFile(file_path, 'r') as zip_ref:
-        zip_ref.extractall(dest_dir)
+        zip_ref.extractall(dist_dir)
 
 
 ##
-# @desc Replace strings in a file with new ones
+# @desc Replaces strings in a file with new ones
 #
-# @param file_path: str - The absolute file path
-# @param old_str: str - The old string
-# @param new_str: str - The new string
-# @param regex: bool - For replacing a regular expression
+# @param {str}  file_path -- The absolute file path
+# @param {str}  old_str   -- The old string
+# @param {str}  new_str   -- The new string
+# @param {bool} regex     -- For replacing a regular expression
 #
-# @retun bool -- True (on success), False (on error)
+# @retun {bool} -- True (on success), False (on error)
 ##
 def replace_file_string(file_path:str, old_str:str, new_str:str, regex:bool=False):
     # Read the file
@@ -750,14 +1186,14 @@ def replace_file_string(file_path:str, old_str:str, new_str:str, regex:bool=Fals
 
 
 ##
-# @desc Replace lines in a file contain a string with new line data
+# @desc Replaces lines in a file contain a string with new line data
 #
-# @param file_path: str - The absolute file path
-# @param old_line: str - The character to match in the line
-# @param new_str: str - The new line data
-# @param regex: bool - For replacing a regular expression
+# @param {str}  file_path -- The absolute file path
+# @param {str}  old_line  -- The character to match in the line
+# @param {str}  new_str   -- The new line data
+# @param {bool} regex     -- For replacing a regular expression
 #
-# @retun bool -- True (on success), False (on error)
+# @retun {bool} -- True (on success), False (on error)
 ##
 def replace_file_line(file_path:str, old_line:str, new_line:str, regex:bool=False):
     # Open file
@@ -805,9 +1241,9 @@ def replace_file_line(file_path:str, old_line:str, new_line:str, regex:bool=Fals
 ##
 # @desc Checks if a directory exists
 #
-# @param dir: str - The directory string
+# @param {str} dir -- The directory string
 #
-# @retun bool -- True (directory exists), False (direcory does not exist)
+# @retun {bool} -- True (directory exists), False (direcory does not exist)
 ##
 def dir_exist(dir:str):
     # Directory exists
@@ -822,11 +1258,11 @@ def dir_exist(dir:str):
 ##
 # @desc Checks if a directory is empty
 #
-# @param dir: str - The directory string
+# @param {str} dir -- The directory string
 # 
-# @var dir_list: list - Lists the direcotry sub direcories and files
+# @var {list} dir_list -- Lists the direcotry sub direcories and files
 #
-# @retun bool -- True (directory is empty), False (direcory is not empty)
+# @retun {bool} -- True (directory is empty), False (direcory is not empty)
 ##
 def dir_empty(dir:str):
     # Directories list
@@ -844,9 +1280,9 @@ def dir_empty(dir:str):
 ##
 # @desc Creates a directory if not exists
 #
-# @param dir: str - The directory string
+# @param {str} dir -- The directory string
 #
-# @retun bool -- True (on success), False (on error)
+# @retun {bool} -- True (on success), False (on error)
 ##
 def create_dir(dir:str):
     # Try to create the directory
@@ -862,16 +1298,16 @@ def create_dir(dir:str):
 ##
 # @desc Renames a directory if exists
 #
-# @param src: str - The absolute source path
-# @param dst: str - The absolute destination path
+# @param {str} src  -- The absolute source path
+# @param {str} dist -- The absolute destination path
 #
 # @retun bool
 ##
-def rename_dir(src:str, dst:str):
+def rename_dir(src:str, dist:str):
     # Directory exists
     if dir_exist(src):
         # Rename directory
-        os.rename(src, dst)
+        os.rename(src, dist)
 
         # Return result
         return True
@@ -883,11 +1319,11 @@ def rename_dir(src:str, dst:str):
 
 
 ##
-# @desc removes a directory and all its contents
+# @desc Removes a directory and all its files and sub-directories permanently
 #
-# @param dir: str - The directory string
+# @param {str} dir -- The directory string
 #
-# @retun bool -- True (on success), False (on error)
+# @retun {bool} -- True (on success), False (on error)
 ##
 def delete_dir(dir:str):
     # Try to delete the directory
@@ -903,9 +1339,9 @@ def delete_dir(dir:str):
 ##
 # @desc Calculates a directory size (in Bytes)
 #
-# @param dir: str - The directory string
+# @param {str} dir -- The directory string
 #
-# @retun int|bool -- int (on success), False (on error)
+# @retun {int|bool} -- int (on success), False (on error)
 ##
 def dir_size(dir:str):
     # Check directory existance
@@ -934,348 +1370,13 @@ def dir_size(dir:str):
     return size
 
 
-###############
-# CLI Helpers #
-###############
-##
-# @desc Validates app name
-#
-# @param name: str - The app name
-#
-# @retun dict
-##
-def app_name(name:str):
-    # Check required app name
-    if not name:
-        return {
-            'result': False, 
-            'message': '- The app name is required!'
-        }
-
-    # Regular expression
-    regex = '^[a-z_]+$'
-
-    # Valid name
-    if re.match(regex, name):
-        return {
-            'result': True, 
-            'message': ''
-        }
-
-    # Invalid name
-    else:
-        return {
-            'result': False, 
-            'message': '- The app name is invalid!\n- Valid characters: a-z, _'
-        }
-
-
-##
-# @desc Validates app url
-#
-# @param url: str - The app url
-#
-# @retun dict
-##
-def app_url(url:str):
-    # Check required app URL
-    if not url:
-        return {
-            'result': False, 
-            'message': '- The app URL is required!'
-        }
-
-    # Regular expression
-    regex = '^[a-z-]+$'
-
-    # Valid URL
-    if re.match(regex, url):
-        return {
-            'result': True, 
-            'message': ''
-        }
-
-    # Invalid URL
-    else:
-        return {
-            'result': False, 
-            'message': '- The app URL is invalid!\n- Valid characters: a-z, -'
-        }
-
-
-##
-# @desc Validates controller name
-#
-# @param name: str - The controller name
-#
-# @retun dict
-##
-def controller_name(name:str):
-    # Check required controller name
-    if not name:
-        return {
-            'result': False, 
-            'message': '- The controller name is required!'
-        }
-
-    # Regular expression
-    regex = '^(?:[A-Z][a-z]+)+$'
-
-    # Valid name
-    if re.match(regex, name):
-        return {
-            'result': True, 
-            'message': ''
-        }
-
-    # Invalid name
-    else:
-        return {
-            'result': False, 
-            'message': '- The controller name must be in "CamelCase" form with at least two "a-z" and "A-Z" characters!'
-        }
-
-
-##
-# @desc Validates controller url
-#
-# @param url: str - The app name
-#
-# @retun dict
-##
-def controller_url(url:str):
-    # Optional base URL
-    if not url:
-        return {
-            'result': True, 
-            'message': ''
-        }
-
-    # Regular expression
-    regex = '^[a-z0-9<]+[a-z0-9-<>:/]*$'
-
-    # Valid URL
-    if re.match(regex, url):
-        return {
-            'result': True, 
-            'message': ''
-        }
-
-    # Invalid URL
-    else:
-        return {
-            'result': False, 
-            'message': '- The controller URL is invalid!\n- Valid characters: a-z, 0-9, -, /, <, :, >'
-        }
-
-
-##
-# @desc Validates controller methods
-#
-# @param methods: list - The controller methods
-#
-# @retun dict
-##
-def controller_methods(methods:list):
-    # Optional methods
-    if not methods:
-        return {
-            'result': True, 
-            'message': ''
-        }
-
-    # Valid methods
-    valid_methods = ['POST', 'PUT', 'GET', 'DELETE']
-
-    # Validate methods
-    for method in methods:
-        # Invalid methods
-        if not method.upper() in valid_methods:
-            return {
-                'result': False, 
-                'message': '- Valid Methods: POST, GET, PUT, DELETE'
-            }
-
-        # Valid name
-        else:
-            return {
-                'result': True, 
-                'message': ''
-            }
-
-
-##
-# @desc Validates view name
-#
-# @param view: str - The view name
-#
-# @retun dict
-##
-def view_name(view:str):
-    # Check required base URL
-    if not view:
-        return {
-            'result': False, 
-            'message': '- The view is required!'
-        }
-
-    # Regular expression
-    regex = '^[a-z-_]+$'
-
-    # Valid view
-    if re.match(regex, view):
-        return {
-            'result': True, 
-            'message': ''
-        }
-
-    # Invalid view
-    else:
-        return {
-            'result': False, 
-            'message': '- The view is invalid!\n- Valid characters: a-z, -, _'
-        }
-
-
-##
-# @desc Validates model name
-#
-# @param name: str - The model name
-#
-# @retun dict
-##
-def model_name(name:str):
-    # Check required model name
-    if not name:
-        return {
-            'result': False, 
-            'message': '- The model name is required!'
-        }
-
-    # Regular expression
-    regex = '^(?:[A-Z][a-z]+)+$'
-
-    # Valid name
-    if re.match(regex, name):
-        return {
-            'result': True, 
-            'message': ''
-        }
-
-    # Invalid name
-    else:
-        return {
-            'result': False, 
-            'message': '- The model name must be in "CamelCase" form with at least two "a-z" and "A-Z" characters!'
-        }
-
-
-##
-# @desc Validates form name
-#
-# @param name: str - The form name
-#
-# @retun dict
-##
-def form_name(name:str):
-    # Check required form name
-    if not name:
-        return {
-            'result': False, 
-            'message': '- The form name is required!'
-        }
-
-    # Regular expression
-    regex = '^(?:[A-Z][a-z]+)+$'
-
-    # Valid name
-    if re.match(regex, name):
-        return {
-            'result': True, 
-            'message': ''
-        }
-
-    # Invalid name
-    else:
-        return {
-            'result': False, 
-            'message': '- The form name must be in "CamelCase" form with at least two "a-z" and "A-Z" characters!'
-        }
-
-
-##
-# @desc Validates database table names
-#
-# @param name: str - The app name
-#
-# @retun dict
-##
-def table_name(name:str):
-    # Check required table name
-    if not name:
-        return {
-            'result': False, 
-            'message': '- The table name is required!'
-        }
-
-    # Regular expression
-    regex = '^[a-z_]+$'
-
-    # Valid name
-    if re.match(regex, name) and name == to_snake_case(name) and len(name) >= 2:
-        return {
-            'result': True, 
-            'message': ''
-        }
-
-    # Invalid name
-    else:
-        return {
-            'result': False, 
-            'message': '- Database table names must be in "snake_case" form with at least two a-z, _ characters!'
-        }
-
-
-##
-# @desc Validates database column names
-#
-# @param name: str - The app name
-#
-# @retun dict
-##
-def column_name(name:str):
-    # Check required column name
-    if not name:
-        return {
-            'result': False, 
-            'message': '- The column name is required!'
-        }
-
-    # Regular expression
-    regex = '^[a-z_]+$'
-
-    # Valid name
-    if re.match(regex, name) and name == to_snake_case(name) and len(name) >= 2:
-        return {
-            'result': True, 
-            'message': ''
-        }
-
-    # Invalid name
-    else:
-        return {
-            'result': False, 
-            'message': '- Database column names must be in "snake_case" form with at least two a-z, _ characters!'
-        }
-
-
 ################
 # Time Helpers #
 ################
 ##
 # @desc Generates current time in milliseconds
 #
-# @retun int
+# @retun {int}
 ##
 def current_time():
     return round(time.time() * 1000)
@@ -1284,7 +1385,10 @@ def current_time():
 ##
 # @desc Generates time in milliseconds from a date
 #
-# @retun int
+# @param {str} date   -- The date string
+# @param {str} format -- The date format
+#
+# @retun {int}
 ##
 def generate_time(date, format='%Y-%m-%d %H:%M:%S'):
     # Clean the date
@@ -1300,15 +1404,15 @@ def generate_time(date, format='%Y-%m-%d %H:%M:%S'):
 ##
 # @desc Creates a time in milliseconds from given parameters
 #
-# @param seconds -- The seconds from or before the current time
-# @param minutes -- The minutes from or before the current time
-# @param hours   -- The hours from or before the current time
-# @param days    -- The days from or before the current time
-# @param weeks   -- The weeks from or before the current time
-# @param months  -- The months from or before the current time
-# @param years   -- The years from or before the current time
+# @param {int} seconds -- The seconds from or before the current time
+# @param {int} minutes -- The minutes from or before the current time
+# @param {int} hours   -- The hours from or before the current time
+# @param {int} days    -- The days from or before the current time
+# @param {int} weeks   -- The weeks from or before the current time
+# @param {int} months  -- The months from or before the current time
+# @param {int} years   -- The years from or before the current time
 # 
-# @retun int|bool
+# @retun {int|bool}
 ##
 def create_time(seconds:int=0, minutes:int=0, hours:int=0, days:int=0, weeks:int=0, months:int=0, years:int=0):
     # Find today datetime
@@ -1414,9 +1518,9 @@ def create_time(seconds:int=0, minutes:int=0, hours:int=0, days:int=0, weeks:int
 ##
 # @desc Generates the current date
 # 
-# @param format  -- The date format
+# @param {str} format -- The date format
 #
-# @retun str
+# @retun {str}
 ##
 def current_date(format: str = '%Y-%m-%d %H:%M:%S'):
     # Return the result
@@ -1426,10 +1530,10 @@ def current_date(format: str = '%Y-%m-%d %H:%M:%S'):
 ##
 # @desc Generates datetime from a time in milliseconds
 # 
-# @param time_ms -- The time in milliseconds
-# @param format  -- The date format
+# @param {int} time_ms -- The time in milliseconds
+# @param {str} format  -- The date format
 #
-# @retun str
+# @retun {str}
 ##
 def generate_date(time_ms: int, format: str = '%Y-%m-%d %H:%M:%S'):
     # Return the result
@@ -1439,16 +1543,16 @@ def generate_date(time_ms: int, format: str = '%Y-%m-%d %H:%M:%S'):
 ##
 # @desc Creates datetime from given parameters
 # 
-# @param seconds -- The seconds from or before the current time
-# @param minutes -- The minutes from or before the current time
-# @param hours   -- The hours from or before the current time
-# @param days    -- The days from or before the current time
-# @param weeks   -- The weeks from or before the current time
-# @param months  -- The months from or before the current time
-# @param years   -- The years from or before the current time
-# @param format  -- The date format
+# @param {int} seconds -- The seconds from or before the current time
+# @param {int} minutes -- The minutes from or before the current time
+# @param {int} hours   -- The hours from or before the current time
+# @param {int} days    -- The days from or before the current time
+# @param {int} weeks   -- The weeks from or before the current time
+# @param {int} months  -- The months from or before the current time
+# @param {int} years   -- The years from or before the current time
+# @param {str} format  -- The date format
 #
-# @retun int|bool
+# @retun {int|bool}
 ##
 def create_date(seconds:int=0, minutes:int=0, hours:int=0, days:int=0, weeks:int=0, months:int=0, years:int=0, format: str = '%Y-%m-%d %H:%M:%S'):
     # Return the result
@@ -1456,13 +1560,13 @@ def create_date(seconds:int=0, minutes:int=0, hours:int=0, days:int=0, weeks:int
 
 
 ##
-# @desc Returns week number of a time (in milliseconds) or a date, starting from 1
+# @desc Returns week number of a time (in milliseconds) or a date, counting from 1
 # 
-# @param time: int|str  -- The time (or date)
-# @param first_day: str -- The first day of week (Sunday|Monday)
-# @param format: str    -- The date format if time is date
+# @param {int|str} time      -- The time (or date)
+# @param {int}     first_day -- The first day of week (Sunday|Monday)
+# @param {str}     format    -- The date format if time is date
 #
-# @retun int
+# @retun {int}
 ##
 def week_number(time, first_day='Sunday', format='%Y-%m-%d'):
     # Generates date
@@ -1488,11 +1592,11 @@ def week_number(time, first_day='Sunday', format='%Y-%m-%d'):
 ##
 # @desc Returns seconds difference between two times (in milliseconds) or dates
 # 
-# @param time_one: int|str -- The first time (or date)
-# @param time_two: int|str -- The second time (or date)
-# @param format: str       -- The date format if times are date
+# @param {int|str} time_one -- The first time (or date)
+# @param {int|str} time_two -- The second time (or date)
+# @param {str}     format   -- The date format if times are date
 #
-# @retun int
+# @retun {int}
 ##
 def delta_seconds(time_one, time_two, format='%Y-%m-%d %H:%M:%S'):
     # Generates dates
@@ -1513,11 +1617,11 @@ def delta_seconds(time_one, time_two, format='%Y-%m-%d %H:%M:%S'):
 ##
 # @desc Returns days difference between two times (in milliseconds) or dates
 # 
-# @param time_one: int|str -- The first time (or date)
-# @param time_two: int|str -- The second time (or date)
-# @param format: str       -- The date format if times are date
+# @param {int|str} time_one -- The first time (or date)
+# @param {int|str} time_two -- The second time (or date)
+# @param {str}     format   -- The date format if times are date
 #
-# @retun int
+# @retun {int}
 ##
 def delta_days(time_one, time_two, format='%Y-%m-%d'):
     # Generates dates
@@ -1538,12 +1642,12 @@ def delta_days(time_one, time_two, format='%Y-%m-%d'):
 ##
 # @desc Returns weeks difference between two times (in milliseconds) or dates
 # 
-# @param time_one: int|str -- The first time (or date)
-# @param time_two: int|str -- The second time (or date)
-# @param first_day: str    -- The first day of week (Sunday|Monday)
-# @param format: str       -- The date format if times are date
+# @param {int|str} time_one  -- The first time (or date)
+# @param {int|str} time_two  -- The second time (or date)
+# @param {str}     first_day -- The first day of week (Sunday|Monday)
+# @param {str}     format    -- The date format if times are date
 #
-# @retun int
+# @retun {int}
 ##
 def delta_weeks(time_one, time_two, first_day='Sunday', format='%Y-%m-%d'):
     # Generates dates
@@ -1580,11 +1684,11 @@ def delta_weeks(time_one, time_two, first_day='Sunday', format='%Y-%m-%d'):
 ##
 # @desc Returns months difference between two times (in milliseconds) or dates
 # 
-# @param time_one: int|str -- The first time (or date)
-# @param time_two: int|str -- The second time (or date)
-# @param format: str       -- The date format if times are date
+# @param {int|str} time_one -- The first time (or date)
+# @param {int|str} time_two -- The second time (or date)
+# @param {str}     format   -- The date format if times are date
 #
-# @retun int
+# @retun {int}
 ##
 def delta_months(time_one, time_two, format='%Y-%m-%d'):
     # Generates dates
@@ -1605,11 +1709,11 @@ def delta_months(time_one, time_two, format='%Y-%m-%d'):
 ##
 # @desc Returns years difference between two times (in milliseconds) or dates
 # 
-# @param time_one: int|str -- The first time (or date)
-# @param time_two: int|str -- The second time (or date)
-# @param format: str       -- The date format if times are date
+# @param {int|str} time_one -- The first time (or date)
+# @param {int|str} time_two -- The second time (or date)
+# @param {str}     format   -- The date format if times are date
 #
-# @retun int
+# @retun {int}
 ##
 def delta_years(time_one, time_two, format='%Y-%m-%d'):
     # Generates dates
@@ -1625,30 +1729,3 @@ def delta_years(time_one, time_two, format='%Y-%m-%d'):
 
     # Return delta years
     return delta
-
-
-##################
-# Useful Helpers #
-##################
-##
-# @desc Checks a text if it in correct JSON format
-# 
-# @param {str} text -- The text to execute
-# 
-# @var {boolean} result -- The execution result
-#
-# @retun boolean
-##
-def is_json(text:str):
-    result = True
-
-    # Is JSON
-    try:
-        json.loads(text)
-
-    # Is not JSON
-    except ValueError as e:
-        result = False
-
-    # Return the result
-    return result

@@ -2,7 +2,6 @@
 # Dependencies #
 ################
 import importlib
-from .helpers import snake_case
 config = importlib.import_module('config')
 
 

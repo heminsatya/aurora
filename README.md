@@ -1,10 +1,10 @@
-# Welcome to Aurora
+# Aurora Framework (v0.9.0 beta)
 
 Aurora is an MVC web framework for creating CRUD applications quickly and simply.
 
-It based on REST architecture. In another word it is a RESTFUL web framework.
+It is based on REST architecture. In another word it is a RESTFUL web framework.
 
-Aurora mostly is written in [Python](https://www.python.org/), and partially have used [Flask](https://flask.palletsprojects.com/).
+Aurora is written in [Python](https://www.python.org/), and partially used [Flask](https://flask.palletsprojects.com/).
 
 
 # Installation
@@ -30,10 +30,18 @@ $ mkdir my_app
 
 > Here *my_app* is a variable name. Change it to anything of your choice at any time you want.
 
-2. Install a python virtual environment in the same path that the project directory exists:
+2. Create a python virtual environment in the same path the project directory exists:
+
+**Linux / Mac:**
 
 ```
-$ python -m venv venv
+$ python3 -m venv venv
+```
+
+**Windows:**
+
+```
+$ py -m venv venv
 ```
 
 3. Activate the virtual environment:
@@ -41,7 +49,7 @@ $ python -m venv venv
 **Linux / Mac:**
 
 ```
-$ . venv/bin/activate
+$ source venv/bin/activate
 ```
 
 **Windows:**
@@ -60,18 +68,36 @@ $ venv\scripts\activate
 
 5. Initialize the root app with Aurora via python shell:
 
+**Linux / Mac:**
+
 ```
-(venv) python
->>> from aurora import init_app
->>> init_app.start()
+(venv) python3
+>>> from aurora import init
+>>> init.start()
+```
+
+**Windows:**
+
+```
+(venv) py
+>>> from aurora import init
+>>> init.start()
 ```
 
 > Congratulations! You successfully initialized the root app. Now you are ready to get started with Aurora.
 
 6. To start the root app run the following command:
 
+**Linux / Mac:**
+
 ```
-(venv) python app.py
+(venv) python3 -m app
+```
+
+**Windows:**
+
+```
+(venv) py -m app
 ```
 
 
@@ -97,18 +123,18 @@ PyPI: [Aurora PyPI Page](https://pypi.org/project/aurora-mvc/)
 
 ## Database APIs:
 - [sqlite3](https://docs.python.org/3/library/sqlite3.html) -- If you are using SQLite Database. *Included in the standard python library*
-- [psycopg2](https://pypi.org/project/psycopg2/) -- If you are using Postgres Database.
 - [mysql.connector](https://pypi.org/project/mysql-connector-python/) -- If you are using MySQL Database.
+- [psycopg2](https://pypi.org/project/psycopg2/) -- If you are using Postgres Database.
 
 
 # About The Author
 
-Hello World!
+Hello Everyone!
 
-I'm Hemin Satya, a freelance programmer. This is the first open-source project I have ever done.
-Aurora framework is currently on a beta version, and I'm trying my best to make it something magnificent. I hope you like it.
+I'm Hemin Satya, a freelance programmer.
+Aurora framework is currently in beta version, and I'm trying my best to make it something magnificent. I hope you like it.
 
-If you saw any bugs or mistakes, please let me know. I'll do my best to solve them or at least reduce them asap.
+If you saw any bugs or mistakes, please let me know. I'll do my best to solve them asap.
 
 Please let me know your precious comments, observations, and suggestions.
 ([GitHub](https://github.com/heminsatya))

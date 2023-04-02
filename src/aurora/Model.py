@@ -19,14 +19,15 @@ class Model:
     ##
     # @desc Constructor method
     #
-    # @property table: str -- The table name of the model
+    # @property {str}  model       -- The model name
+    # @property {str}  table       -- The table name of the model
+    # @property {str}  primary_key -- The table primary key
+    # @property {dict} repair      -- The repair dictionary
     #
-    # @var caller_path: str -- The caller path
-    # @var caller_file: str -- The caller file
-    # @var caller_name: str -- The caller name (the model name)
-    # @var Model: module -- The model module
-    # @var Class: type -- The model class
-    # @var attrs: dict -- The model class attributes
+    # @var {str}    caller_path -- The caller path
+    # @var {str}    caller_file -- The caller file
+    # @var {str}    caller_name -- The caller name (the model name)
+    # @var {module} model       -- The model module
     ##
     def __init__(self):
         # Find information about the caller
@@ -61,17 +62,17 @@ class Model:
     ##
     # @desc column method - for generating sql column and its data
     # 
-    # @param datatype: str -- *Required column datatype
-    # @param primary_key: bool -- Optional column PRIMARY KEY constraint (False by default)
-    # @param unique: bool -- Optional column UNIQUE constraint (False by default)
-    # @param not_null: bool -- Optional column NOT NULL constraint (False by default)
-    # @param default: any -- Optional column DEFAULT constraint (None by default)
-    # @param check: str -- Optional column CHECK constraint (None by default)
-    # @param foreign_key: str -- Optional column FOREIGN KEY constraint (None by default)
+    # @param {str}  datatype    -- Required column datatype
+    # @param {bool} primary_key -- Optional column PRIMARY KEY constraint (False by default)
+    # @param {bool} unique      -- Optional column UNIQUE constraint (False by default)
+    # @param {bool} not_null    -- Optional column NOT NULL constraint (False by default)
+    # @param {any}  default     -- Optional column DEFAULT constraint (None by default)
+    # @param {str}  check       -- Optional column CHECK constraint (None by default)
+    # @param {str}  foreign_key -- Optional column FOREIGN KEY constraint (None by default)
     # 
-    # @var result: dict -- The result dictionary
+    # @var {str} result: dict -- The result dictionary
     #
-    # @return dict
+    # @return {dict}
     ##
     @staticmethod
     def column(datatype:str, size:str="md", scale:int=2, unique:bool=False, not_null:bool=False, default:any=None, check:str=None, 
@@ -464,11 +465,11 @@ class Model:
     ##
     # @desc query method
     #
-    # @param sql: str -- *Required SQL statement (ex. "SELECT * FROM users")
+    # @param {str} sql -- Required SQL statement (ex. "SELECT * FROM users")
     #
-    # @var result: object -- Database query
+    # @var {object} result -- Database query
     #
-    # @return any -- Query result
+    # @return {any} -- The query result
     ##
     def query(self, *class_args, **class_kwargs):
         return Database.query(self, *class_args, **class_kwargs)
@@ -486,7 +487,7 @@ class Model:
     #
     # @desc Checks if a column exists
     #
-    # @return bool
+    # @return {bool}
     ##
     def _exist_column(self, *class_args, **class_kwargs):
         return Database._exist_column(self, *class_args, **class_kwargs)
@@ -497,7 +498,7 @@ class Model:
     #
     # @desc Checks if a table exist
     #
-    # @return bool
+    # @return {bool}
     ##
     def _exist_table(self, *class_args, **class_kwargs):
         return Database._exist_table(self, *class_args, **class_kwargs)
@@ -508,7 +509,7 @@ class Model:
     #
     # @desc Checks if a database (file - SQLite) exists
     #
-    # @return bool -- Query result
+    # @return {bool}
     ##
     def _exist_database(self, *class_args, **class_kwargs):
         return Database._exist_database(self, *class_args, **class_kwargs)
@@ -517,10 +518,10 @@ class Model:
     ##
     # @desc Inserts single row
     #
-    # @param data: dict -- *Required data (ex. {"username": "john-doe", "password": "123456"})
+    # @param {dict} data -- Required data (ex. {"username": "john-doe", "password": "123456"})
     # 
-    # @return int -- Last inserted id as query result on success
-    # @return False: bool -- As query result on error
+    # @return {int}   -- Last inserted id as query result on success
+    # @return {False} -- As query result on error
     ##
     def create(self, data:dict):
         return Database.create(self, table=self.table, data=data)
@@ -529,10 +530,10 @@ class Model:
     ##
     # @desc Inserts multi rows
     #
-    # @param table: str -- *Required Table name (ex. "users")
-    # @param data: list -- *Required data (ex. [{...}, {...}, ...])
+    # @param {str}  table -- Required Table name (ex. "users")
+    # @param {list} data  -- Required data (ex. [{...}, {...}, ...])
     #
-    # @return int -- Last inserted id
+    # @return {int} -- Last inserted id
     ##
     def create_multi(self, data:list):
         # Loop data
@@ -550,12 +551,14 @@ class Model:
     ##
     # @desc Selects rows
     #
-    # @param cols: list -- Optional Columns (ex. ["id", "first_name", "last_name"])
-    # @param where: dict -- Optional WHERE statement (ex. {"id": "2", "username": "admin"})
-    # @param order_by: dict -- Optional ORDER BY statement (ex. {"id": "ASC", "date": "DESC"})
-    # @param limit: int -- Optional LIMIT statement (ex. "10")
+    # @param {list} cols     -- Optional Columns (ex. ["id", "first_name", "last_name"])
+    # @param {dict} where    -- Optional WHERE statement (ex. {"id": "2", "username": "admin"})
+    # @param {dict} order_by -- Optional ORDER BY statement (ex. {"id": "ASC", "date": "DESC"})
+    # @param {str}  group_by -- Optional GROUP BY statement (ex. 'country')
+    # @param {int}  limit    -- Optional LIMIT statement (ex. "10")
+    # @param {int}  offset   -- Optional OFFSET statement (ex. "10")
     #
-    # @return class: type -- Query result
+    # @return {class}
     ##
     def read(self, cols:list=[], where:dict={}, order_by:dict={}, group_by:str=None, limit:int=None, offset:int=None):
         return Database.read(self, table=self.table, cols=cols, where=where, order_by=order_by, group_by=group_by, 
@@ -563,31 +566,31 @@ class Model:
 
 
     ##
-    # @desc Joins tables
+    # @desc Joins related tables
     #
-    # @param Models: list -- *Required foreign tables (ex. ["Model1", "Model2"])
-    # @param cols: list -- Optional Columns (ex. ["Model.*", "Model1.name", "Model2.address"])
+    # @param {list} Models -- Required foreign tables (ex. ["Model1", "Model2"])
+    # @param {list} cols   -- Optional Columns (ex. ["Model.*", "Model1.name", "Model2.address"])
     #
-    # @param join_stmt: str -- The join statement:
+    # @param {str}  join_stmt -- The join statement:
     #        SQLite: INNER JOIN, LEFT JOIN, CROSS JOIN (Learn More: https://www.sqlitetutorial.net/sqlite-join/)
     #        MySQL: INNER JOIN, LEFT JOIN, RIGHT JOIN, CROSS JOIN (Learn More: https://www.w3schools.com/mysql/mysql_join.asp)
     #        Postgres: INNER JOIN, LEFT JOIN, RIGHT JOIN, FULL JOIN (Learn More: https://www.postgresqltutorial.com/postgresql-tutorial/postgresql-joins/)
     #        JOIN vs INNER JOIN: https://stackoverflow.com/questions/565620/difference-between-join-and-inner-join
     #
-    # @param where: dict -- Optional WHERE statement (ex. {"Model.id": "2", "Model1.name": "John"})
-    # @param order_by: dict -- Optional ORDER BY statement (ex. {"Model.id": "ASC", "Model.date": "DESC"})
-    # @param group_by: str -- Optional GROUP BY statement (ex. 'Model.country')
-    # @param limit: int -- Optional LIMIT statement (ex. "10")
-    # @param offset: int -- Optional OFFSET statement (ex. "10")
+    # @param {dict} where    -- Optional WHERE statement (ex. {"table.id": "2", "table_2.name": "John"})
+    # @param {dict} order_by -- Optional ORDER BY statement (ex. {"table.id": "ASC", "table.date": "DESC"})
+    # @param {str}  group_by -- Optional GROUP BY statement (ex. 'table.country')
+    # @param {int}  limit    -- Optional LIMIT statement (ex. "10")
+    # @param {int}  offset   -- Optional OFFSET statement (ex. "10")
     #
-    # @var sql: str -- The sql statement
-    # @var data_bind: list -- Data binding against SQL Injection
-    # @var where_sql: list -- A placeholder for the WHERE clause
-    # @var order_by_sql: list -- A placeholder for the ORDER BY clause
-    # @var in_bind: list -- A placeholder IN operator
-    # @var in_sql: str -- The sql statement for IN operator
+    # @var {str}  sql: str     -- The sql statement
+    # @var {list} data_bind    -- Data binding against SQL Injection
+    # @var {list} where_sql    -- A placeholder for the WHERE clause
+    # @var {list} order_by_sql -- A placeholder for the ORDER BY clause
+    # @var {list} in_bind      -- A placeholder IN operator
+    # @var {str}  in_sql       -- The sql statement for IN operator
     #
-    # @return class: type
+    # @return {class}
     ##
     def join(self, models:list, cols:list=[], join_stmt:str='INNER JOIN', where:dict={}, order_by:dict={}, group_by:str=None, limit:int=None, offset:int=None):
         # Find last last migration
@@ -666,10 +669,11 @@ class Model:
     #
     # @desc Updates row(s)
     #
-    # @param data: dict -- *Required data (ex. {"first_name": "John", "last_name": "Doe"})
-    # @param where: dict -- Optional (*CAUTION!) WHERE statement (ex. {"id": "2", "username": "admin"})
+    # @param {dict} data    -- Required data (ex. {"first_name": "John", "last_name": "Doe"})
+    # @param {dict} where   -- Optional (*CAUTION!) WHERE statement (ex. {"id": "2", "username": "admin"})
+    # @param {bool} confirm -- Optional|Required confirm (if not where it will be Required)
     #
-    # @return bool -- Query result
+    # @return {bool}
     ##
     def update(self, data:dict, where:dict={}, confirm:bool=False):
         return Database.update(self, table=self.table, data=data, where=where, confirm=confirm)
@@ -680,11 +684,10 @@ class Model:
     #
     # @desc Deletes row(s)
     #
-    # @param table: str -- *Required Table name (ex. "users")
-    # @param where: dict -- Optional (*WARNING!) WHERE statement (ex. {"id": "2", "username": "admin"})
-    # @param confirm: bool -- Required|Optional confirm (if not where it will be Required)
+    # @param {dict} where   -- Optional (*WARNING!) WHERE statement (ex. {"id": "2", "username": "admin"})
+    # @param {bool} confirm -- Optional|Required confirm (if not where it will be Required)
     #
-    # @return bool -- Query result
+    # @return {bool}
     ##
     def delete(self, where:dict={}, confirm:dict=False):
         return Database.delete(self, table=self.table, where=where, confirm=confirm)

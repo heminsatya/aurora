@@ -29,7 +29,7 @@ if platform.system() == 'Windows':
 # Unix
 else:
     sep = '/'
-    py_cli = 'python -m'
+    py_cli = 'python3 -m'
 
 # Arguments
 args: List[str] = sys.argv
