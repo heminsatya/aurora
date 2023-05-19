@@ -452,18 +452,40 @@ class CLI:
                 # Database is OK
                 else:
                     db_changed = False
+                    miss_module = False
                     
                     # Fetch migration models data
                     try:
                         m_version = db.read(table="_migrations", cols=['version'], where={"current":True}).first()['version']
+
+                        # Missing migration module
+                        if not file_exist(app_path + sep + f'_migrations{sep + m_version}.py'):
+                            miss_module = True
+
                         m_module = importlib.import_module(f'_migrations.{m_version}')
                         m_models = m_module._models
                         m_db_system =  m_module.DB_SYSTEM
+
+                    # Unknown database system
                     except:
                         m_db_system = 'Unknown'
 
+                    # Missing migration module
+                    if miss_module:
+                        alert = '''----------------------------------------------------------\n'''
+                        alert += '''ERROR!\n'''
+                        alert += '''The migration module is missed!\n'''
+                        alert += '''----------------------------------------------------------'''
+                        
+                        # Alert the user
+                        print(alert)
+                        time.sleep(0.1)
+
+                        # Exit the program
+                        exit()
+
                     # Unknown database system
-                    if not m_db_system in db_systems:
+                    elif not m_db_system in db_systems:
                         alert = '''----------------------------------------------------------\n'''
                         alert += '''WARNING!\n'''
                         alert += '''Unknown database system has been selected!\n'''
@@ -520,27 +542,28 @@ class CLI:
         m_tables = []
         f_tables = []
 
-        # Find migration tables
-        for model in m_models:
-            m_tables.append(getattr(m_module, model)['table'])
+        # Not "init" pattern
+        if not pattern == "init":
+            # Find migration tables
+            for model in m_models:
+                m_tables.append(getattr(m_module, model)['table'])
 
-            for x in getattr(m_module, model)['foreign_key']:
-                if not getattr(m_module, model)['foreign_key'][x]['r_table'] in f_tables:
-                    f_tables.append(getattr(m_module, model)['foreign_key'][x]['r_table'])
+                for x in getattr(m_module, model)['foreign_key']:
+                    if not getattr(m_module, model)['foreign_key'][x]['r_table'] in f_tables:
+                        f_tables.append(getattr(m_module, model)['foreign_key'][x]['r_table'])
 
         # Loop models
         for model in models:
+            # Local placeholders
+            cols    = []
+            attrs   = {}
+            m_attrs = {}
+
             # Not "init" pattern & not database changed & not database corrupted
             if not pattern == "init" and not db_changed and not db_corrupted:
                 # Migration model attributes
                 if model in m_models:
                     m_attrs = getattr(m_module, model)
-                else:
-                    m_attrs = {}
-
-            # Local placeholders
-            cols = []
-            attrs = {}
 
             # Model class
             Model = importlib.import_module(f'models.{model}')
@@ -1638,17 +1661,31 @@ class CLI:
                     print(f'- Corrupted "{table}" table for "{model}" model detected!')
                     time.sleep(0.1)
 
-                    # For only the repair pattern
+                    # Repair pattern
                     if pattern == "repair":
                         print(f'Repairing "{table}" table in the database...')
                         time.sleep(0.1)
 
-                        db._delete_table(f"{table}__temp", True)
+                        # Main table exists
+                        if db._exist_table(f"{table}"):
+                            db._delete_table(f"{table}__temp", True)
+                            
+                        # Main table not exists
+                        else:
+                            db._update_table(f"{table}__temp", f"{table}")
 
-                        # Search for temporary columns
-                        for col in m_attrs['col_type']:
-                            if db._exist_column(table, f"{col}__temp"):
-                                db._delete_column(table, f"{col}__temp", True)
+                # Search for temporary columns
+                for col in m_attrs['col_type']:
+                    if db._exist_column(table, f"{col}__temp"):
+                        print(f'- Corrupted "{col}" column of "{table}" table for "{model}" model detected!')
+                        time.sleep(0.1)
+
+                        # Repair pattern
+                        if pattern == "repair":
+                            print(f'Repairing "{col}" column of "{table}" table in the database...')
+
+                            time.sleep(0.1)
+                            db._delete_column(table, f"{col}__temp", True)
 
                 # Find the current model repair attribute
                 c_model = importlib.import_module(f'models.{model}')
@@ -1789,29 +1826,35 @@ class CLI:
                             
                             # On error
                             except:
-                                # Rename table to a temporary table
-                                db._update_table(table, f"{table}__temp")
+                                try:
+                                    # Rename table to a temporary table
+                                    db._update_table(table, f"{table}__temp")
 
-                                # Create a new table with latest constraints (renamed)
-                                db._create_table(table, r_attrs['col_type'], r_attrs['primary_key'], r_attrs['unique'], 
-                                    r_attrs['not_null'], r_attrs['default'], r_attrs['check'], r_attrs['foreign_key'])
+                                    # Create a new table with latest constraints (renamed)
+                                    db._create_table(table, r_attrs['col_type'], r_attrs['primary_key'], r_attrs['unique'], 
+                                        r_attrs['not_null'], r_attrs['default'], r_attrs['check'], r_attrs['foreign_key'])
 
-                                # Insert the temp table data into the new table
-                                db.query(f"INSERT INTO {table}({r_cols}) SELECT {c_cols} FROM {table}__temp;")
-                                
-                                # Remove the temp table
-                                db._delete_table(f"{table}__temp", True)
+                                    # Insert the temp table data into the new table
+                                    db.query(f"INSERT INTO {table}({r_cols}) SELECT {c_cols} FROM {table}__temp;")
+                                    
+                                    # Remove the temp table
+                                    db._delete_table(f"{table}__temp", True)
+                                except NameError as e:
+                                    print(e)
+                                    exit()
                             
                             model_file = f'{app_path + sep}models{sep + model}.py'
 
+                            ##
                             # Update the model file
+                            ##
+                            # Update the columns
                             old_str = rf"^[ ]*{col}+[ ]*[=]+[ ]*Model+\.+"
                             new_str = f"    {repair[col]} = Model."
                             replace_file_string(model_file, old_str, new_str, True)
 
-                            old_line = rf"^[ ]*'{col}'+[ ]*[:]+[ ]*'{repair[col]}'+\,*"
-                            new_line = ""
-                            replace_file_line(model_file, old_line, new_line, True)
+                            # Update the map
+                            replace_file_lines(model_file, "{", "}", "")
 
             # Column repair detected
             if column_repair and pattern == "repair":
@@ -2956,8 +2999,10 @@ class CLI:
                 print('Reseting the database...')
                 time.sleep(0.1)
 
-                # Delete the migrations
+                # Fetch the migrations
                 migrations = db.read(table="_migrations").all()
+
+                # Delete the migrations
                 for migration in migrations:
                     # Delete the migration files
                     delete_file(f"""{app_path + sep}_migrations{sep + migration['version']}.py""")

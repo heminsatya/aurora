@@ -1232,6 +1232,35 @@ def replace_file_line(file_path:str, old_line:str, new_line:str, regex:bool=Fals
         # Resize the file to the current file stream position
         f.truncate()
 
+    # Close file
+    return f.close()
+
+
+##
+# @desc Replaces multiple lines in a file between two strings with new data
+#
+# @param {str}  starting_str -- The starting string
+# @param {str}  ending_str   -- The ending string
+# @param {str}  replace_to   -- The new data to replace
+#
+# @retun {bool} -- True (on success), False (on error)
+##
+def replace_file_lines(file_path:str, starting_str, ending_str, replace_to):
+    # Read the file
+    content = read_file(file_path)
+
+    # Write the file
+    with open(file_path, 'w') as f:
+        # Find lines
+        replace_from = content[content.find(starting_str)+len(starting_str):content.rfind(ending_str)]
+
+        # Replace lines
+        content = content.replace(replace_from, replace_to)
+
+        # Rewrite the file
+        f.writelines(content)
+
+    # Close the file
     return f.close()
 
 
