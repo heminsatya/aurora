@@ -38,7 +38,7 @@ class Controller(View):
         self.app_name = pathlib.PurePath(caller).parent.name
         self.app_url = app_exists(self.app_name)['url'] if app_exists(self.app_name)['result'] else False
 
-        # Check the language
+        # Multi language
         if self.multi_lang:
             # Fetch the lang
             path = request.path
@@ -72,6 +72,10 @@ class Controller(View):
 
             # Set active language URL
             self.LANGUAGE = '/' + self.active_lang
+
+        # Single language
+        else:
+            set_session('active_lang', self.default_lang)
 
 
     ##
