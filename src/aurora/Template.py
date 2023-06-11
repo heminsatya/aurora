@@ -27,7 +27,7 @@ class Template():
     # 
     # @param view: str -- The view template (ex. 'index')
     # @param app: str -- The app name
-    # @param code: int -- The http status code (ex. 302)
+    # @param code: int -- The http status code (ex. 200)
     # 
     # @var caller: str -- The caller file path
     # @var app: str -- The caller app name
@@ -35,7 +35,7 @@ class Template():
     # 
     # @return text/html: str -- The rendered template
     ##
-    def render(self, view:str, app:str=None, code:int=302, *class_args, **class_kwargs):
+    def render(self, view:str, app:str=None, code:int=200, *class_args, **class_kwargs):
         # Remove .html
         view = delete_chars(view, '.html')
 

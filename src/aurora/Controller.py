@@ -26,26 +26,23 @@ class Controller(View):
 
         # Required attributes
         self.default_lang = getattr(config, 'DEFAULT_LANG') 
-        self.multi_lang = getattr(config, "MULTI_LANG")
-        self.languages = getattr(config, 'LANGUAGES') 
+        self.multi_lang   = getattr(config, "MULTI_LANG")
+        self.languages    = getattr(config, 'LANGUAGES') 
 
         # Public properties
         self.active_lang = self.default_lang
-        self.LANGUAGE = ''
+        self.LANGUAGE    = ''
+        self.path        = request.path
 
         # Inspect the app name from caller file
-        caller = sys._getframe().f_back.f_code.co_filename
+        caller        = sys._getframe().f_back.f_code.co_filename
         self.app_name = pathlib.PurePath(caller).parent.name
-        self.app_url = app_exists(self.app_name)['url'] if app_exists(self.app_name)['result'] else False
+        self.app_url  = app_exists(self.app_name)['url'] if app_exists(self.app_name)['result'] else False
 
         # Multi language
         if self.multi_lang:
-            # Fetch the lang
-            path = request.path
-            lang = path.split('/')[1]
-
             # The root path and apps path
-            if path == '/' or lang == self.app_url or app_exists(lang)['result']:
+            if self.path == '/' or self.path.split('/')[1] == self.app_url or app_exists(self.path.split('/')[1])['result']:
                 # active_lang cookie exists
                 if check_cookie('active_lang'):
                     self.active_lang = get_cookie('active_lang')
@@ -57,17 +54,17 @@ class Controller(View):
 
                 # Neighter active_lang cookie nor active_lang session exists
                 else:
-                    self.active_lang = self.default_lang
+                    # self.active_lang = self.default_lang
                     set_session('active_lang', self.default_lang)
 
             # Languages path
-            elif lang in self.languages:
-                self.active_lang = lang
-                set_session('active_lang', lang)
+            elif self.path.split('/')[1] in self.languages:
+                self.active_lang = self.path.split('/')[1]
+                set_session('active_lang', self.path.split('/')[1])
 
             # Other paths
             else:
-                self.active_lang = self.default_lang
+                # self.active_lang = self.default_lang
                 set_session('active_lang', self.default_lang)
 
             # Set active language URL
@@ -91,20 +88,16 @@ class Controller(View):
         elif request.method == 'GET':
             # Check the language
             if self.multi_lang:
-                # Fetch the path
-                path = request.path
-
                 # The root path
-                # if path == '/' or app_exists(path.split('/')[1])['result']:
-                if path == '/' or path.split('/')[1] == self.app_url or app_exists(path.split('/')[1])['result']:
+                if self.path == '/' or self.path.split('/')[1] == self.app_url or app_exists(self.path.split('/')[1])['result']:
                     if check_cookie('active_lang'):
-                        return redirect('/' + get_cookie('active_lang') + path)
+                        return redirect('/' + get_cookie('active_lang') + self.path)
 
                     elif check_session('active_lang'):
-                        return redirect('/' + get_session('active_lang') + path)
+                        return redirect('/' + get_session('active_lang') + self.path)
 
                     else:
-                        return redirect('/' + self.default_lang + path)
+                        return redirect('/' + self.default_lang + self.path)
 
             return self.get(*class_args, **class_kwargs)
 
