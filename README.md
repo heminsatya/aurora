@@ -1,4 +1,4 @@
-# Aurora Framework (v0.9.3 beta)
+# Aurora Framework (v0.9.4 beta)
 
 Aurora is an MVC web framework for creating CRUD applications quickly and simply.
 

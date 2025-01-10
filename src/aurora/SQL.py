@@ -3638,6 +3638,7 @@ class Read:
         self.db_system = parent.db_system
         self.regex = regex
         self.col = cols[0]
+        self.cols = cols
 
 
     ##
@@ -3689,128 +3690,116 @@ class Read:
 
 
     ##
-    # @desc Fetches the minimum of the first given column (must be of type int or float)
-    #
-    # @param {int} option -- Optional -- 0(@return int|float) 1(@return dict) 2 (@return list)
-    #
-    # @return {int|float|dict|list}
-    ##
-    def min(self, option=0):
-        # Prepare the sql query
-        sql = re.sub(self.regex, f'''SELECT min({self.col}) as {self.col} FROM''', self.sql)
-
-        # Return the first match as a dictionary
-        if option == 1:
-            # Postgres
-            if self.db_system == 'Postgres':
-                return real_dict(self.query(sql, self.data_bind).fetchall())[0]
-
-            # SQLite or MySQL
-            elif self.db_system == 'SQLite' or self.db_system == 'MySQL':
-                return self.query(sql, self.data_bind).fetchone()
-
-        # Return the matches as a list
-        elif option == 2:
-            # Postgres
-            if self.db_system == 'Postgres':
-                return real_dict(self.query(sql, self.data_bind).fetchall())
-
-            # SQLite or MySQL
-            elif self.db_system == 'SQLite' or self.db_system == 'MySQL':
-                return self.query(sql, self.data_bind).fetchall()
-
-        # Return the first match result as the number (default)
-        else:
-            # Produce final column
-            col = delete_chars(self.col, "'")
-            col = delete_chars(col, "`")
-            col = delete_chars(col, '"')
-
-            return self.query(sql, self.data_bind).fetchone()[col]
-
-
-    ##
-    # @desc Fetches the maximum of the first given column (must be of type int or float)
-    #
-    # @param {int} option -- Optional -- 0(@return int|float) 1(@return dict) 2 (@return list)
-    #
-    # @return {int|float|dict|list}
-    ##
-    def max(self, option=0):
-        # Prepare the sql query
-        sql = re.sub(self.regex, f'''SELECT max({self.col}) as {self.col} FROM''', self.sql)
-
-        # Return the first match as a dictionary
-        if option == 1:
-            # Postgres
-            if self.db_system == 'Postgres':
-                return real_dict(self.query(sql, self.data_bind).fetchall())[0]
-
-            # SQLite or MySQL
-            elif self.db_system == 'SQLite' or self.db_system == 'MySQL':
-                return self.query(sql, self.data_bind).fetchone()
-
-        # Return the matches as a list
-        elif option == 2:
-            # Postgres
-            if self.db_system == 'Postgres':
-                return real_dict(self.query(sql, self.data_bind).fetchall())
-
-            # SQLite or MySQL
-            elif self.db_system == 'SQLite' or self.db_system == 'MySQL':
-                return self.query(sql, self.data_bind).fetchall()
-
-        # Return the first match result as the number (default)
-        else:
-            # Produce final column
-            col = delete_chars(self.col, "'")
-            col = delete_chars(col, "`")
-            col = delete_chars(col, '"')
-
-            return self.query(sql, self.data_bind).fetchone()[col]
-
-
-    ##
-    # @desc Fetches the average of the first given column (must be of type int or float)
-    #
-    # @param {int} option -- Optional -- 0(@return float) 1(@return dict)
-    #
-    # @return {float}
-    ##
-    def avg(self, option=0):
-        # Prepare the sql query
-        sql = re.sub(self.regex, f'''SELECT avg({self.col}) as {self.col} FROM''', self.sql)
-
-        # Return the first match as a dictionary
-        if option == 1:
-            # Postgres
-            if self.db_system == 'Postgres':
-                return real_dict(self.query(sql, self.data_bind).fetchall())[0]
-
-            # SQLite or MySQL
-            elif self.db_system == 'SQLite' or self.db_system == 'MySQL':
-                return self.query(sql, self.data_bind).fetchone()
-
-        # Return the first match result as the number (default)
-        else:
-            # Produce final column
-            col = delete_chars(self.col, "'")
-            col = delete_chars(col, "`")
-            col = delete_chars(col, '"')
-
-            return self.query(sql, self.data_bind).fetchone()[col]
-
-
-    ##
-    # @desc Fetches the summary of the first given column (must be of type int or float)
+    # @desc Fetches the minimum of the given column(s) (must be of type int or float)
     #
     # @param {int} option -- Optional -- 0(@return int|float) 1(@return dict)
     #
-    # @return {int|float}
+    # @return {dict|int|float}
+    ##
+    def min(self, option=0):
+        # Prepare the sql query
+        temp_sql = f'''min({self.col}) as {self.col}'''
+        for col in self.cols[1:]: temp_sql += f''', min({col}) as {col}'''
+        sql = re.sub(self.regex, f'''SELECT {temp_sql} FROM''', self.sql)
+
+        # Return the matches as a dictionary
+        if option == 1:
+            # Postgres
+            if self.db_system == 'Postgres':
+                return real_dict(self.query(sql, self.data_bind).fetchall())[0]
+
+            # SQLite or MySQL
+            elif self.db_system == 'SQLite' or self.db_system == 'MySQL':
+                return self.query(sql, self.data_bind).fetchone()
+
+        # Return the first match result as the number (default)
+        else:
+            # Produce final column
+            col = delete_chars(self.col, "'")
+            col = delete_chars(col, "`")
+            col = delete_chars(col, '"')
+
+            return self.query(sql, self.data_bind).fetchone()[col]
+
+
+    ##
+    # @desc Fetches the maximum of the given column(s) (must be of type int or float)
+    #
+    # @param {int} option -- Optional -- 0(@return int|float) 1(@return dict)
+    #
+    # @return {dict|int|float}
+    ##
+    def max(self, option=0):
+        # Prepare the sql query
+        temp_sql = f'''max({self.col}) as {self.col}'''
+        for col in self.cols[1:]: temp_sql += f''', max({col}) as {col}'''
+        sql = re.sub(self.regex, f'''SELECT {temp_sql} FROM''', self.sql)
+
+        # Return the matches as a dictionary
+        if option == 1:
+            # Postgres
+            if self.db_system == 'Postgres':
+                return real_dict(self.query(sql, self.data_bind).fetchall())[0]
+
+            # SQLite or MySQL
+            elif self.db_system == 'SQLite' or self.db_system == 'MySQL':
+                return self.query(sql, self.data_bind).fetchone()
+
+        # Return the first match result as the number (default)
+        else:
+            # Produce final column
+            col = delete_chars(self.col, "'")
+            col = delete_chars(col, "`")
+            col = delete_chars(col, '"')
+
+            return self.query(sql, self.data_bind).fetchone()[col]
+
+
+    ##
+    # @desc Fetches the average of the given column(s) (must be of type int or float)
+    #
+    # @param {int} option -- Optional -- 0(@return float) 1(@return dict)
+    #
+    # @return {dict|float}
+    ##
+    def avg(self, option=0):
+        # Prepare the sql query
+        temp_sql = f'''avg({self.col}) as {self.col}'''
+        for col in self.cols[1:]: temp_sql += f''', avg({col}) as {col}'''
+        sql = re.sub(self.regex, f'''SELECT {temp_sql} FROM''', self.sql)
+
+        # Return the first match as a dictionary
+        if option == 1:
+            # Postgres
+            if self.db_system == 'Postgres':
+                return real_dict(self.query(sql, self.data_bind).fetchall())[0]
+
+            # SQLite or MySQL
+            elif self.db_system == 'SQLite' or self.db_system == 'MySQL':
+                return self.query(sql, self.data_bind).fetchone()
+
+        # Return the first match result as the number (default)
+        else:
+            # Produce final column
+            col = delete_chars(self.col, "'")
+            col = delete_chars(col, "`")
+            col = delete_chars(col, '"')
+
+            return self.query(sql, self.data_bind).fetchone()[col]
+
+
+    ##
+    # @desc Fetches the summary of the given column(s) (must be of type int or float)
+    #
+    # @param {int} option -- Optional -- 0(@return int|float) 1(@return dict)
+    #
+    # @return {dict|int|float}
     ##
     def sum(self, option=0):
         # Prepare the sql query
-        sql = re.sub(self.regex, f'''SELECT sum({self.col}) as {self.col} FROM''', self.sql)
+        temp_sql = f'''sum({self.col}) as {self.col}'''
+        for col in self.cols[1:]: temp_sql += f''', sum({col}) as {col}'''
+        sql = re.sub(self.regex, f'''SELECT {temp_sql} FROM''', self.sql)
 
         # Return the first match as a dictionary
         if option == 1:
