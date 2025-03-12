@@ -976,7 +976,7 @@ def create_file(file_path:str, content:str=''):
     # File not exists
     if not os.path.exists(file_path):
         # Create the file
-        f = open(file_path, 'x')
+        f = open(file_path, mode='x', encoding='utf-8')
         f.write(content)
         f.close()
 
@@ -1001,7 +1001,7 @@ def write_file(file_path:str, content:str=''):
     # File already exists
     if os.path.exists(file_path):
         # Write to the file
-        f = open(file_path, 'w')
+        f = open(file_path, mode='w', encoding='utf-8')
         f.write(content)
         f.close()
 
@@ -1025,7 +1025,7 @@ def read_file(file_path:str):
     # File already exists
     if os.path.exists(file_path):
         # Read file
-        with open(file_path, 'r') as file:
+        with open(file_path, mode='r', encoding='utf-8') as file:
             f = file.read()
 
         # Return result
@@ -1167,7 +1167,7 @@ def unzip_file(file_path:str, dist_dir:str):
 ##
 def replace_file_string(file_path:str, old_str:str, new_str:str, regex:bool=False):
     # Read the file
-    with open(file_path, 'r') as file :
+    with open(file_path, mode='r', encoding='utf-8') as file :
         f = file.read()
 
     # Replace regular expression
@@ -1179,7 +1179,7 @@ def replace_file_string(file_path:str, old_str:str, new_str:str, regex:bool=Fals
         f = f.replace(old_str, new_str)
 
     # Write the file out again
-    with open(file_path, 'w') as file:
+    with open(file_path, mode='w', encoding='utf-8') as file:
         file.write(f)
 
     return file.close()
@@ -1197,7 +1197,7 @@ def replace_file_string(file_path:str, old_str:str, new_str:str, regex:bool=Fals
 ##
 def replace_file_line(file_path:str, old_line:str, new_line:str, regex:bool=False):
     # Open file
-    with open(file_path, 'r+') as f:
+    with open(file_path, mode='r+', encoding='utf-8') as f:
         
         # Read lines
         lines = f.readlines()
@@ -1250,7 +1250,7 @@ def replace_file_lines(file_path:str, starting_str, ending_str, replace_to):
     content = read_file(file_path)
 
     # Write the file
-    with open(file_path, 'w') as f:
+    with open(file_path, mode='w', encoding='utf-8') as f:
         # Find lines
         replace_from = content[content.find(starting_str)+len(starting_str):content.rfind(ending_str)]
 
