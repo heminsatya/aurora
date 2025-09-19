@@ -48,30 +48,12 @@ if db_system in ('sqlite', 'sqlite3'):
 # MySQL Database
 elif db_system in ('mysql', 'mariadb'):
     try:
-        from mysql import connector as DatabaseAPI
-        from mysql.connector import Error as DatabaseError
-
-    except:
-        pass
-
-    # Prefer mysql-connector-python
-    try:
         import mysql.connector as _mysql
         DatabaseAPI   = _mysql
         DatabaseError = _mysql.Error
 
     except Exception:
-        # Fallback: MySQLdb
-        try:
-            import MySQLdb as _mysqldb
-            DatabaseAPI   = _mysqldb
-            DatabaseError = _mysqldb.Error
-
-        # Fallback: PyMySQL
-        except Exception:
-            import pymysql as _pymysql
-            DatabaseAPI   = _pymysql
-            DatabaseError = _pymysql.MySQLError
+        pass
 
 # Postgres Database
 elif db_system in ('postgres', 'postgresql'):
